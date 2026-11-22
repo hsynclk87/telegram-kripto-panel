@@ -126,10 +126,10 @@
     renderAnalysis(s.analysis||[]);renderMarketSignals(s.marketSignals||[]);
     if(s.latestWhales) renderWhales(s.latestWhales);
     if(s.latestLiquidations) renderLiquidations(s.latestLiquidations);
-    if(m.BTCUSDT) {
-      renderLiveMarket({symbol:"BTCUSDT",exchange:"binanceSpot",...m.BTCUSDT.binanceSpot});
-      renderLiveMarket({symbol:"BTCUSDT",exchange:"binanceFutures",...m.BTCUSDT.binanceFutures});
-      renderLiveMarket({symbol:"BTCUSDT",exchange:"bybitLinear",...m.BTCUSDT.bybitLinear});
+    for(const [symbol,market] of Object.entries(m)) {
+      for(const exchange of ["binanceSpot","binanceFutures","bybitLinear"]) {
+        if(market?.[exchange]) renderLiveMarket({symbol,exchange,...market[exchange]});
+      }
     }
   }
   function renderAnalysis(items) {
