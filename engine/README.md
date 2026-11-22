@@ -73,7 +73,7 @@ Dağıtım sonrası servis URL'si `https://...` olur; WebSocket adresi `wss://..
 
 ## Bilinen sınırlar / sonraki faz
 
-- PostgreSQL için `DATABASE_URL` verilirse işlemler, likidasyonlar, büyük işlemler ve kapanmış 1 dakikalık mumlar kalıcı kaydedilir. Veritabanı ayarlı değilse bellek modunda çalışır. Başlangıçta Binance REST geçmişi yüklenir; REST başarısızsa kayıtlı mumlar kullanılır.
+- PostgreSQL için `DATABASE_URL` verilirse işlemler, likidasyonlar, büyük işlemler ve kapanmış 1 dakikalık mumlar kalıcı kaydedilir. Veritabanı ayarlı değilse bellek modunda çalışır. Başlangıçta Binance Market Data REST geçmişi yüklenir; REST başarısızsa kayıtlı mumlar kullanılır.
 - Kalıcı PostgreSQL/Redis saklama, geçmiş mumların REST ile yüklenmesi, gelişmiş likidite/whale/false-breakout modülleri, alarm kuralları, kullanıcı bazlı erişim ve Mini App UI entegrasyonu sonraki fazlardır.
 - İlk dağıtımda Binance/Bybit gerçek payload'ları ve reconnect davranışı canlı ortamda ayrıca doğrulanmalıdır.
 - Mevcut kök `index.html` korunur; bu branch onu değiştirmez.
