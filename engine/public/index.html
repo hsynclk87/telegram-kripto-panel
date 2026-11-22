@@ -62,14 +62,14 @@ const s=coin+'USDT';
 const jobs=await Promise.allSettled([
 futuresJson('/fapi/v1/openInterest?symbol='+s),
 futuresJson('/fapi/v1/klines?symbol='+s+'&interval=5m&limit=2'),
-futuresJson('/futures/data/openInterestHist?symbol='+s+'&period='+(tf==='1w'?'1d':tf)+'&limit=6'),
+futuresJson('/futures/data/openInterestHist?symbol='+s+'&period=5m&limit=6'),
 futuresJson('/futures/data/takerlongshortRatio?symbol='+s+'&period=5m&limit=6'),
 futuresJson('/futures/data/globalLongShortAccountRatio?symbol='+s+'&period=5m&limit=6'),
 futuresJson('/futures/data/topLongShortPositionRatio?symbol='+s+'&period=5m&limit=6'),
 futuresJson('/fapi/v1/fundingRate?symbol='+s+'&limit=1'),
 futuresJson('/fapi/v1/premiumIndex?symbol='+s)
 ]);
-const [oiR,histR,price5mR,takerR,globalR,topR,fundingR,markR]=jobs;let updated=0;
+const [oiR,price5mR,histR,takerR,globalR,topR,fundingR,markR]=jobs;let updated=0;
 if(oiR.status==='fulfilled'&&histR.status==='fulfilled'){
 const oi=oiR.value,h=histR.value,mark=markR.status==='fulfilled'?+markR.value.markPrice:NaN;
 const oiNow=+oi.openInterest,oiPrev=h.length>1?+h[h.length-2].sumOpenInterest:oiNow,delta=oiPrev?(oiNow/oiPrev-1)*100:0;
@@ -92,7 +92,7 @@ if(fundingR.status==='fulfilled'&&fundingR.value.length){
 const rate=+fundingR.value[0].fundingRate*100;futuresState.fundingRate=rate;futuresState.fundingAt=Date.now();updated++;
 setMetric('funding',(rate>=0?'+':'')+rate.toFixed(4)+'%',rate>0.03?'negative':rate<-.03?'positive':'neutral');setText('fundingState','Mark '+(markR.status==='fulfilled'?fmt(+markR.value.markPrice):'—')+' · fonlama oranı');
 }else setText('fundingState','Funding verisi alınamadı');
-setText('futuresUpdated',updated?'Güncel: '+new Date().toLocaleTimeString('tr-TR',{hour12:false})+' · '+updated+'/4 veri grubu · sinyal filtresi aktif':'Futures verileri güncellenemedi; sinyal filtresi nötr.');
+setText('futuresUpdated',updated?'Güncel: '+new Date().toLocaleTimeString('tr-TR',{hour12:false})+' · '+updated+'/4 veri grubu · OI, global/top trader ve funding ayrı':'Futures verileri güncellenemedi; sinyal filtresi nötr.');
 }
 async function refreshBook(){
 try{const d=await futuresJson('/fapi/v1/depth?symbol='+coin+'USDT&limit=20');let bid=0,ask=0;const bids=d.bids.map(([p,q])=>({price:+p,qty:+q,notional:+p*+q})),asks=d.asks.map(([p,q])=>({price:+p,qty:+q,notional:+p*+q}));
@@ -126,6 +126,7 @@ const fresh=(at,maxAge)=>at>0&&now-at<=maxAge;
 if(fresh(futuresState.takerAt,45000)&&Number.isFinite(futuresState.takerRatio)){if(futuresState.takerRatio>1.08){score+=.55;classes.add('flow');parts.push('taker alış baskısı');}else if(futuresState.takerRatio<.92){score-=.55;classes.add('flow');parts.push('taker satış baskısı');}}
 if(fresh(futuresState.flowAt,15000)&&Number.isFinite(futuresState.flowImbalance)){if(futuresState.flowImbalance>12){score+=.45;classes.add('flow');parts.push('agresif alıcı akışı');}else if(futuresState.flowImbalance< -12){score-=.45;classes.add('flow');parts.push('agresif satıcı akışı');}}
 if(fresh(futuresState.bookAt,15000)&&Number.isFinite(futuresState.bookImbalance)){if(futuresState.bookImbalance>12){score+=.35;classes.add('book');parts.push('alış derinliği güçlü');}else if(futuresState.bookImbalance< -12){score-=.35;classes.add('book');parts.push('satış derinliği güçlü');}}
+if(fresh(futuresState.bookAt,15000)&&lastPrice){const hist=futuresState.bookHistory,bw=hist.filter(x=>x.bid&&Math.abs(x.bid-lastPrice)/lastPrice<.012).length,aw=hist.filter(x=>x.ask&&Math.abs(x.ask-lastPrice)/lastPrice<.012).length;if(bw>=3){score+=.25;classes.add('walls');parts.push('fiyata yakın kalıcı alış duvarı ('+bw+' ölçüm)');}if(aw>=3){score-=.25;classes.add('walls');parts.push('fiyata yakın kalıcı satış duvarı ('+aw+' ölçüm)');}}
 if(fresh(futuresState.oiAt,45000)&&Number.isFinite(futuresState.oiDelta)&&Number.isFinite(futuresState.oiPriceMove)){const od=futuresState.oiDelta,pm=futuresState.oiPriceMove;if(od>.15&&pm<-.08){score-=.4;classes.add('oi');parts.push('fiyat düşüşü + OI artışı: yeni Short baskısı');}else if(od<-.15&&pm<-.08){score+=.05;classes.add('oi');parts.push('fiyat düşüşü + OI azalışı: Long kapanışı, yeni satış değil');}else if(od>.15&&pm>.08){score+=.35;classes.add('oi');parts.push('fiyat yükselişi + OI artışı: yeni Long katılımı');}else if(od<-.15&&pm>.08){score-=.05;classes.add('oi');parts.push('fiyat yükselişi + OI azalışı: Short kapanışı');}}
 if(fresh(futuresState.fundingAt,120000)&&Number.isFinite(futuresState.fundingRate)){if(futuresState.fundingRate>.04){score-=.2;parts.push('long tarafı kalabalık (funding)');}else if(futuresState.fundingRate<-.04){score+=.2;parts.push('short tarafı kalabalık (funding)');}}
 if(fresh(futuresState.sentimentAt,90000)&&Number.isFinite(futuresState.globalLongShort)){if(futuresState.globalLongShort>2){score-=.25;parts.push('global Long kalabalığı yüksek: squeeze riski');}else if(futuresState.globalLongShort<.5){score+=.2;parts.push('global Short kalabalığı yüksek');}}
