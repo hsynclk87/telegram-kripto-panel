@@ -155,6 +155,9 @@ async function load() {
 
     // Fiyat
     const last = Number(t.lastPrice);
+    baseOpen = Number(t.openPrice);
+    baseHigh = Number(t.highPrice);
+    baseLow = Number(t.lowPrice);
     const chg = Number(t.priceChangePercent);
     document.getElementById('price').textContent = fmt(last);
     const ch = document.getElementById('change');
@@ -209,23 +212,37 @@ async function load() {
 
 // Canlı fiyat: Binance WebSocket ticker akışı (her ~1 sn güncellenir)
 let liveSym = null, liveWs = null, liveTimer = null;
+let baseOpen = 0, baseHigh = 0, baseLow = 0, pendingPrice = null, framePending = false;
+
+function paintLive() {
+  framePending = false;
+  if (pendingPrice === null) return;
+  const p = pendingPrice;
+  document.getElementById('price').textContent = fmt(p);
+  const chg = baseOpen ? (p - baseOpen) / baseOpen * 100 : 0;
+  const ch = document.getElementById('change');
+  ch.textContent = '24s: %' + chg.toFixed(2);
+  ch.className = chg >= 0 ? 'green' : 'red';
+  document.getElementById('range').textContent = '24s aralık: ' + fmt(baseLow) + ' - ' + fmt(baseHigh);
+  document.getElementById('updated').textContent = 'Canlı (her işlemde) | ' + new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul' });
+}
+
 function startLive(sym) {
   if (sym === liveSym) return;
   liveSym = sym;
   if (liveWs) { liveWs.onclose = null; liveWs.close(); }
   clearTimeout(liveTimer);
-  const ws = new WebSocket('wss://stream.binance.com:9443/ws/' + sym.toLowerCase() + '@ticker');
+  // @trade: her gerçekleşen işlemde anında veri gelir (milisaniye seviyesi)
+  const ws = new WebSocket('wss://stream.binance.com:9443/ws/' + sym.toLowerCase() + '@trade');
   liveWs = ws;
   ws.onmessage = (e) => {
     const d = JSON.parse(e.data);
-    const last = Number(d.c);
-    const chg = Number(d.P);
-    document.getElementById('price').textContent = fmt(last);
-    const ch = document.getElementById('change');
-    ch.textContent = '24s: %' + chg.toFixed(2);
-    ch.className = chg >= 0 ? 'green' : 'red';
-    document.getElementById('range').textContent = '24s aralık: ' + fmt(Number(d.l)) + ' - ' + fmt(Number(d.h));
-    document.getElementById('updated').textContent = 'Canlı fiyat | Son güncelleme: ' + new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul' });
+    const p = Number(d.p);
+    if (p > baseHigh) baseHigh = p;
+    if (baseLow === 0 || p < baseLow) baseLow = p;
+    pendingPrice = p;
+    // Ekran her karede bir kez güncellenir, işlem sayısı çoksa bile takılmaz
+    if (!framePending) { framePending = true; requestAnimationFrame(paintLive); }
   };
   ws.onclose = () => {
     if (liveWs === ws) liveTimer = setTimeout(() => { liveSym = null; startLive(sym); }, 3000);
