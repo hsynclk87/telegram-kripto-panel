@@ -1,0 +1,29 @@
+name: Deploy analysis engine to Render
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "engine/**"
+      - "render.yaml"
+      - ".github/workflows/deploy-render.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deployment
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK"
+          echo "Render deployment triggered."
+  setup-required:
+    if: ${{ secrets.RENDER_DEPLOY_HOOK == '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain required setup
+        run: |
+          echo "::notice::Add the Render deploy hook URL as the GitHub Actions secret RENDER_DEPLOY_HOOK after creating the Render service."
