@@ -227,14 +227,22 @@ function paintLive() {
   document.getElementById('updated').textContent = 'Canlı (her işlemde) | ' + new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul' });
 }
 
+let livePort = 443;
 function startLive(sym) {
   if (sym === liveSym) return;
   liveSym = sym;
   if (liveWs) { liveWs.onclose = null; liveWs.close(); }
   clearTimeout(liveTimer);
   // @trade: her gerçekleşen işlemde anında veri gelir (milisaniye seviyesi)
-  const ws = new WebSocket('wss://stream.binance.com:9443/ws/' + sym.toLowerCase() + '@trade');
+  const ws = new WebSocket('wss://stream.binance.com:' + livePort + '/ws/' + sym.toLowerCase() + '@trade');
   liveWs = ws;
+  ws.onopen = () => {
+    document.getElementById('updated').textContent = 'Canlı bağlantı açık';
+  };
+  ws.onerror = () => {
+    // Bağlantı açılamazsa diğer porta geç
+    livePort = livePort === 443 ? 9443 : 443;
+  };
   ws.onmessage = (e) => {
     const d = JSON.parse(e.data);
     const p = Number(d.p);
