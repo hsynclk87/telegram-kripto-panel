@@ -2,6 +2,7 @@ import http from "node:http";
 import { WebSocket, WebSocketServer } from "ws";
 import { analyzeMarkets } from "./analysis.js";
 import { detectWhaleTrade } from "./whales.js";
+import { analyzeCandleMarket } from "./market-signals.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -25,7 +26,7 @@ const state = {
 
 for (const symbol of SYMBOLS) {
   state.markets[symbol] = {
-    symbol, binanceSpot: {}, binanceFutures: {}, bybitLinear: {}, updatedAt: null
+    symbol, binanceSpot: {}, binanceFutures: {}, bybitLinear: {}, candles1m: [], updatedAt: null
   };
 }
 
@@ -62,6 +63,50 @@ function updateMarket(symbol, exchange, patch) {
   publish("market", { symbol: key, exchange, ...state.markets[key][exchange] });
 }
 
+function updateCandle(symbol, exchange, k) {
+  const key = symbolFrom(symbol);
+  if (!key || !state.markets[key]) return;
+  const candle = {
+    openTime: Number(k.t), closeTime: Number(k.T),
+    open: Number(k.o), high: Number(k.h), low: Number(k.l),
+    close: Number(k.c), volume: Number(k.v), quoteVolume: Number(k.q),
+    closed: Boolean(k.x)
+  };
+  updateMarket(key, exchange, { candle1m: candle });
+  if (!candle.closed) return;
+
+  const history = state.markets[key].candles1m;
+  const existing = history.findIndex((item) => item.openTime === candle.openTime);
+  if (existing >= 0) history[existing] = candle;
+  else history.push(candle);
+  history.sort((a, b) => a.openTime - b.openTime);
+  if (history.length > 200) history.splice(0, history.length - 200);
+  publish("candle", { symbol: key, candle });
+}
+
+async function loadCandleHistory() {
+  const results = await Promise.allSettled(SYMBOLS.map(async (symbol) => {
+    const endpoint = "https://fapi.binance.com/fapi/v1/klines?symbol="
+      + encodeURIComponent(symbol) + "&interval=1m&limit=100";
+    const response = await fetch(endpoint, { signal: AbortSignal.timeout(12000) });
+    if (!response.ok) throw new Error("Binance kline history HTTP " + response.status);
+    const rows = await response.json();
+    const history = rows
+      .filter((row) => Number(row[6]) < Date.now())
+      .map((row) => ({
+        openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]),
+        low: Number(row[3]), close: Number(row[4]), volume: Number(row[5]),
+        closeTime: Number(row[6]), quoteVolume: Number(row[7]), closed: true
+      }));
+    state.markets[symbol].candles1m = history.slice(-200);
+    return { symbol, candles: history.length };
+  }));
+  for (const result of results) {
+    if (result.status === "fulfilled") log("info", "Candle history loaded", result.value);
+    else log("warn", "Candle history load failed", { error: result.reason?.message });
+  }
+}
+
 function addTrade(trade) {
   state.trades.unshift(trade);
   if (state.trades.length > 3000) state.trades.length = 3000;
@@ -78,6 +123,14 @@ function addLiquidation(item) {
   state.liquidations.unshift(item);
   if (state.liquidations.length > 1000) state.liquidations.length = 1000;
   publish("liquidation", item);
+}
+
+function getMarketSignals() {
+  return SYMBOLS.map((symbol) => {
+    const market = state.markets[symbol];
+    const current = market?.binanceFutures?.candle1m || market?.binanceSpot?.candle1m;
+    return { symbol, ...analyzeCandleMarket(market?.candles1m || [], current) };
+  });
 }
 
 function getAnalysis() {
@@ -165,13 +218,7 @@ function startBinanceSpot() {
         });
       } else if (d.e === "kline") {
         const k = d.k;
-        updateMarket(symbol, "binanceSpot", {
-          candle1m: {
-            openTime: k.t, open: Number(k.o), high: Number(k.h),
-            low: Number(k.l), close: Number(k.c), volume: Number(k.v),
-            quoteVolume: Number(k.q), closed: Boolean(k.x)
-          }
-        });
+        updateCandle(symbol, "binanceSpot", k);
       }
     }
   );
@@ -202,13 +249,7 @@ function startBinanceFutures() {
         });
       } else if (d.e === "kline") {
         const k = d.k;
-        updateMarket(d.s, "binanceFutures", {
-          candle1m: {
-            openTime: k.t, open: Number(k.o), high: Number(k.h),
-            low: Number(k.l), close: Number(k.c), volume: Number(k.v),
-            quoteVolume: Number(k.q), closed: Boolean(k.x)
-          }
-        });
+        updateCandle(d.s, "binanceFutures", k);
       } else if (d.e === "forceOrder" && d.o) {
         const o = d.o;
         addLiquidation({
@@ -317,10 +358,18 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({
       time: now(), symbols: SYMBOLS, markets,
       analysis: getAnalysis().filter((item) => !key || item.symbol === key),
+      marketSignals: getMarketSignals().filter((item) => !key || item.symbol === key),
       latestTrades: state.trades.slice(0, 50),
       latestLiquidations: state.liquidations.slice(0, 50),
       exchanges: state.exchanges
     }));
+  }
+
+  if (url.pathname === "/api/v1/market-signals") {
+    const requested = url.searchParams.get("symbol");
+    const key = requested ? symbolFrom(requested) : null;
+    res.writeHead(200);
+    return res.end(JSON.stringify(getMarketSignals().filter((item) => !key || item.symbol === key)));
   }
 
   if (url.pathname === "/api/v1/analysis") {
@@ -357,16 +406,20 @@ wss.on("connection", (socket) => {
   clients.add(socket);
   socket.send(JSON.stringify({
     type: "snapshot", time: now(),
-    data: { markets: state.markets, exchanges: state.exchanges, analysis: getAnalysis(), latestWhales: state.whales.slice(0, 50) }
+    data: { markets: state.markets, exchanges: state.exchanges, analysis: getAnalysis(), marketSignals: getMarketSignals(), latestWhales: state.whales.slice(0, 50) }
   }));
   socket.on("close", () => clients.delete(socket));
   socket.on("error", () => clients.delete(socket));
 });
 
-const analysisTimer = setInterval(() => publish("analysis", getAnalysis()), 5000);
+const analysisTimer = setInterval(() => {
+  publish("analysis", getAnalysis());
+  publish("marketSignals", getMarketSignals());
+}, 5000);
 
 server.listen(PORT, HOST, () => {
   log("info", "Analysis engine API listening", { host: HOST, port: PORT, symbols: SYMBOLS });
+  void loadCandleHistory();
   upstreamStops.push(startBinanceSpot(), startBinanceFutures(), startBybit());
 });
 
