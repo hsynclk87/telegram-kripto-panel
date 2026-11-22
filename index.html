@@ -24,6 +24,7 @@
   td.r { text-align: right; }
   .note { font-size: 12px; color: #9aa4af; margin-top: 8px; }
   #chart { width: 100%; height: 300px; }
+  td.heat { text-align: center; border-bottom: none; padding: 8px 4px; border-radius: 6px; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -56,6 +57,17 @@
 <div class="card">
   <div class="muted">Vadeli fonlama</div>
   <table id="funding"><tr><td class="muted">yükleniyor...</td></tr></table>
+</div>
+
+<div class="card">
+  <div class="muted">Fonlama ısı haritası (kırmızı = long kalabalık, yeşil = short kalabalık)</div>
+  <table id="heat"><tr><td class="muted">yükleniyor...</td></tr></table>
+</div>
+
+<div class="card">
+  <div class="muted">Likidasyonlar (canlı, son 1 saat, sayfa açıkken)</div>
+  <table id="liq"><tr><td class="muted">bağlanıyor...</td></tr></table>
+  <div class="note">Long tasfiye = zorla satış, short tasfiye = zorla alım.</div>
 </div>
 
 <div class="note" id="updated"></div>
@@ -148,9 +160,77 @@ function fundingComment(p) {
   return 'Aşırı negatif: short tarafı kalabalık';
 }
 
+// Fonlama ısı haritası: tüm vadeli sembollerden COINS listesini çeker
+async function loadHeat() {
+  try {
+    const all = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex').then(r => r.json());
+    const map = {};
+    all.forEach(x => { map[x.symbol] = Number(x.lastFundingRate) * 100; });
+    let h = '';
+    COINS.forEach(c => {
+      const v = map[c + 'USDT'];
+      if (v === undefined) return;
+      h += '<td class="heat" style="background:' + heatColor(v) + '">' + c + '<br>%' + v.toFixed(4) + '</td>';
+    });
+    document.getElementById('heat').innerHTML = '<tr>' + h + '</tr>';
+  } catch (e) {
+    document.getElementById('heat').innerHTML = '<tr><td class="muted">veri alınamadı</td></tr>';
+  }
+}
+function heatColor(v) {
+  // Yoğunluk 0.05% fonlamada tam doygunluğa ulaşır
+  const a = (Math.min(Math.abs(v) / 0.05, 1) * 0.6).toFixed(2);
+  return v >= 0 ? 'rgba(248,113,113,' + a + ')' : 'rgba(74,222,128,' + a + ')';
+}
+
+// Likidasyon akışı: tüm vadeli piyasa (USDS-M), sayfa açık olduğu sürece bellekte tutulur
+const liq = [];
+let liqWs = null;
+function startLiqStream() {
+  if (liqWs) return;
+  const ws = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
+  liqWs = ws;
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.st !== undefined && msg.st !== 1) return; // sadece USDS-M
+    const o = msg.o;
+    if (!o) return;
+    const usd = (Number(o.ap) || Number(o.p)) * Number(o.z);
+    liq.push({ t: o.T, sym: o.s, side: o.S, usd });
+    const cut = Date.now() - 3600000;
+    while (liq.length && liq[0].t < cut) liq.shift();
+    renderLiq();
+  };
+  ws.onclose = () => {
+    liqWs = null;
+    setTimeout(startLiqStream, 5000);
+  };
+}
+function renderLiq() {
+  const sym = coin + 'USDT';
+  const cut = Date.now() - 3600000;
+  const mine = liq.filter(x => x.sym === sym && x.t >= cut);
+  let longs = 0, shorts = 0;
+  mine.forEach(x => { if (x.side === 'SELL') longs += x.usd; else shorts += x.usd; });
+  let h = '<tr><td>Long tasfiye (1 sa)</td><td class="r red">' + (longs / 1e6).toFixed(2) + 'M</td></tr>' +
+    '<tr><td>Short tasfiye (1 sa)</td><td class="r green">' + (shorts / 1e6).toFixed(2) + 'M</td></tr>';
+  const recent = mine.slice(-5).reverse();
+  if (recent.length === 0) {
+    h += '<tr><td colspan="2" class="muted">Bu coinde son 1 saatte tasfiye yok</td></tr>';
+  } else {
+    recent.forEach(x => {
+      const t0 = new Date(x.t).toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
+      h += '<tr><td class="muted">' + t0 + ' ' + (x.side === 'SELL' ? 'Long' : 'Short') + '</td><td class="r">' + (x.usd / 1e3).toFixed(0) + 'K USD</td></tr>';
+    });
+  }
+  document.getElementById('liq').innerHTML = h;
+}
+
 async function load() {
   const sym = coin + 'USDT';
   startLive(sym);
+  renderLiq();
+  loadHeat();
   document.getElementById('sym').textContent = sym + ' | ' + TFLABEL[tf];
   try {
     const [t, kl, f] = await Promise.all([
@@ -315,6 +395,7 @@ function startKline(sym, interval) {
 }
 
 drawButtons();
+startLiqStream();
 load();
 setInterval(load, 30000);
 </script>
