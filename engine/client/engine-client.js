@@ -70,6 +70,7 @@ export function createEngineClient(baseUrl) {
     snapshot: (symbol) => get("/api/v1/snapshot" + (symbol ? "?symbol=" + encodeURIComponent(symbol) : "")),
     analysis: (symbol) => get("/api/v1/analysis" + (symbol ? "?symbol=" + encodeURIComponent(symbol) : "")),
     trades: (limit = 50) => get("/api/v1/trades?limit=" + encodeURIComponent(limit)),
-    liquidations: (limit = 50) => get("/api/v1/liquidations?limit=" + encodeURIComponent(limit))
+    liquidations: (limit = 50) => get("/api/v1/liquidations?limit=" + encodeURIComponent(limit)),
+    whales: (limit = 50) => get("/api/v1/whales?limit=" + encodeURIComponent(limit))
   };
 }
