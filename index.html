@@ -144,6 +144,7 @@ function fundingComment(p) {
 
 async function load() {
   const sym = coin + 'USDT';
+  startLive(sym);
   document.getElementById('sym').textContent = sym + ' | ' + TFLABEL[tf];
   try {
     const [t, kl, f] = await Promise.all([
@@ -204,6 +205,31 @@ async function load() {
   } catch (e) {
     document.getElementById('updated').textContent = 'Veri alınamadı, tekrar denenecek.';
   }
+}
+
+// Canlı fiyat: Binance WebSocket ticker akışı (her ~1 sn güncellenir)
+let liveSym = null, liveWs = null, liveTimer = null;
+function startLive(sym) {
+  if (sym === liveSym) return;
+  liveSym = sym;
+  if (liveWs) { liveWs.onclose = null; liveWs.close(); }
+  clearTimeout(liveTimer);
+  const ws = new WebSocket('wss://stream.binance.com:9443/ws/' + sym.toLowerCase() + '@ticker');
+  liveWs = ws;
+  ws.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+    const last = Number(d.c);
+    const chg = Number(d.P);
+    document.getElementById('price').textContent = fmt(last);
+    const ch = document.getElementById('change');
+    ch.textContent = '24s: %' + chg.toFixed(2);
+    ch.className = chg >= 0 ? 'green' : 'red';
+    document.getElementById('range').textContent = '24s aralık: ' + fmt(Number(d.l)) + ' - ' + fmt(Number(d.h));
+    document.getElementById('updated').textContent = 'Canlı fiyat | Son güncelleme: ' + new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul' });
+  };
+  ws.onclose = () => {
+    if (liveWs === ws) liveTimer = setTimeout(() => { liveSym = null; startLive(sym); }, 3000);
+  };
 }
 
 drawButtons();
