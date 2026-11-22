@@ -44,7 +44,9 @@
       '<div class="ep-box"><span class="ep-muted">Sinyal skoru</span><b id="epScore">—</b></div>' +
       '<div class="ep-box"><span class="ep-muted">Veri kalitesi</span><b id="epQuality">—</b></div></div>' +
       '<div class="ep-section">Coin analizleri</div><table id="epAnalysis" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
-      '<div class="ep-section">Hacim ve destek / direnç sinyalleri</div><table id="epMarketSignals" class="ep-table"><tbody><tr><td class="ep-muted">Veri bekleniyor</td></tr></tbody></table><div class="ep-section">Son balina işlemleri</div><table id="epWhales" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
+      '<div class="ep-section">Hacim ve destek / direnç sinyalleri</div><table id="epMarketSignals" class="ep-table"><tbody><tr><td class="ep-muted">Veri bekleniyor</td></tr></tbody></table>' +
+      '<div class="ep-section">Canlı emir defteri · BTCUSDT</div><div class="ep-muted" id="epBookUpdated">WebSocket bekleniyor</div><table id="epOrderBook" class="ep-table"><tbody><tr><td class="ep-muted">Emir defteri bekleniyor</td></tr></tbody></table>' +
+      '<div class="ep-section">Canlı balina işlemleri</div><div class="ep-muted" id="epWhaleUpdated">WebSocket bekleniyor</div><table id="epWhales" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
       '<div class="ep-section">Son likidasyonlar</div><table id="epLiquidations" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
       '<div class="ep-muted" id="epUpdated" style="margin-top:9px">Henüz veri alınmadı.</div>';
     const tabs = document.querySelector("nav.tabs");
@@ -80,8 +82,10 @@
         if(p.type==="snapshot") renderSnapshot(p.data);
         else if(p.type==="analysis") renderAnalysis(p.data);
         else if(p.type==="marketSignals") renderMarketSignals(p.data);
-        else if(p.type==="whale") refresh();
-        else if(p.type==="liquidation") refresh();
+        else if(p.type==="market") renderLiveMarket(p.data);
+        else if(p.type==="trade") renderLiveTrade(p.data);
+        else if(p.type==="whale") prependLiveWhale(p.data);
+        else if(p.type==="liquidation") prependLiveLiquidation(p.data);
         else if(p.type==="connection") renderExchangeStatus({[p.data.exchange]:p.data});
       } catch(_) {}
     });
@@ -121,6 +125,11 @@
     renderAnalysis(s.analysis||[]);renderMarketSignals(s.marketSignals||[]);
     if(s.latestWhales) renderWhales(s.latestWhales);
     if(s.latestLiquidations) renderLiquidations(s.latestLiquidations);
+    if(m.BTCUSDT) {
+      renderLiveMarket({symbol:"BTCUSDT",exchange:"binanceSpot",...m.BTCUSDT.binanceSpot});
+      renderLiveMarket({symbol:"BTCUSDT",exchange:"binanceFutures",...m.BTCUSDT.binanceFutures});
+      renderLiveMarket({symbol:"BTCUSDT",exchange:"bybitLinear",...m.BTCUSDT.bybitLinear});
+    }
   }
   function renderAnalysis(items) {
     if(!Array.isArray(items)) return;
@@ -139,13 +148,71 @@
       return "<tr><td>"+esc(x.symbol)+"</td><td>"+esc(flags.join(" · "))+"</td><td class='ep-right'>D: "+fmt(x.support,2)+"</td><td class='ep-right'>R: "+fmt(x.resistance,2)+"</td></tr>";
     }).join("")||'<tr><td class="ep-muted">Piyasa sinyali yok</td></tr>';
   }
+  let liveWhales=[], liveLiquidations=[];
+  const exchangeLabel = (x) => x==="binanceSpot"?"Binance Spot":x==="binanceFutures"?"Binance Futures":x==="bybitLinear"?"Bybit":x||"—";
   function renderWhales(items) {
     if(!Array.isArray(items)) return;
-    $("epWhales").innerHTML=items.slice(0,12).map(x=>"<tr><td>"+esc(x.symbol)+" · "+esc(x.exchange||"—")+"</td><td>"+esc(x.side||"—")+"</td><td class='ep-right'>"+money(x.quoteValue)+" USDT</td></tr>").join("")||'<tr><td class="ep-muted">Henüz eşik üstü işlem yok</td></tr>';
+    liveWhales=items.slice(0,50);
+    drawWhales();
+  }
+  function drawWhales() {
+    $("epWhales").innerHTML=liveWhales.slice(0,12).map(x=>"<tr><td>"+esc(x.symbol)+" · "+esc(x.exchange||"—")+"</td><td class='"+(x.side==="BUY"?"ep-buy":"ep-sell")+"'>"+esc(x.side||"—")+"</td><td class='ep-right'>"+money(x.quoteValue)+" USDT</td></tr>").join("")||'<tr><td class="ep-muted">Henüz eşik üstü işlem yok</td></tr>';
+  }
+  function prependLiveWhale(item) {
+    if(!item) return;
+    liveWhales=[item,...liveWhales.filter(x=>!(x.timestamp===item.timestamp&&x.symbol===item.symbol&&x.exchange===item.exchange&&x.quoteValue===item.quoteValue))].slice(0,50);
+    drawWhales();
+    const el=$("epWhaleUpdated"); if(el) el.textContent="Son balina olayı: "+new Date().toLocaleTimeString("tr-TR",{hour12:false});
   }
   function renderLiquidations(items) {
     if(!Array.isArray(items)) return;
-    $("epLiquidations").innerHTML=items.slice(0,12).map(x=>"<tr><td>"+esc(x.symbol)+" · "+esc(x.exchange||"—")+"</td><td>"+esc(x.side||"—")+"</td><td class='ep-right'>"+money(x.quoteValue)+" USDT</td></tr>").join("")||'<tr><td class="ep-muted">Henüz likidasyon verisi yok</td></tr>';
+    liveLiquidations=items.slice(0,50);
+    drawLiquidations();
+  }
+  function drawLiquidations() {
+    $("epLiquidations").innerHTML=liveLiquidations.slice(0,12).map(x=>"<tr><td>"+esc(x.symbol)+" · "+esc(x.exchange||"—")+"</td><td>"+esc(x.side||"—")+"</td><td class='ep-right'>"+money(x.quoteValue)+" USDT</td></tr>").join("")||'<tr><td class="ep-muted">Henüz likidasyon verisi yok</td></tr>';
+  }
+  function prependLiveLiquidation(item) {
+    if(!item) return;
+    liveLiquidations=[item,...liveLiquidations].slice(0,50);
+    drawLiquidations();
+  }
+  function renderLiveTrade(trade) {
+    if(!trade || trade.symbol!=="BTCUSDT") return;
+    $("epPrice").textContent=fmt(trade.price,Number(trade.price)<1?6:2)+" USDT";
+  }
+  const books={};
+  function renderLiveMarket(data) {
+    if(!data || !data.symbol) return;
+    if(data.bids || data.asks) {
+      books[data.symbol]=books[data.symbol]||{};
+      books[data.symbol][data.exchange]=data;
+      if(data.symbol==="BTCUSDT") drawOrderBook();
+    }
+    if(data.symbol==="BTCUSDT" && data.candle1m?.close) {
+      $("epPrice").textContent=fmt(data.candle1m.close,2)+" USDT";
+    }
+  }
+  function drawOrderBook() {
+    const symbolBooks=books.BTCUSDT||{};
+    const rows=[];
+    for(const key of ["binanceSpot","binanceFutures","bybitLinear"]) {
+      const book=symbolBooks[key];
+      if(!book || !Array.isArray(book.bids) || !Array.isArray(book.asks)) continue;
+      const bids=book.bids.slice().sort((a,b)=>b[0]-a[0]).slice(0,5);
+      const asks=book.asks.slice().sort((a,b)=>a[0]-b[0]).slice(0,5);
+      const bidQty=bids.reduce((sum,x)=>sum+Number(x[1]||0),0);
+      const askQty=asks.reduce((sum,x)=>sum+Number(x[1]||0),0);
+      const total=bidQty+askQty;
+      const imbalance=total>0?((bidQty-askQty)/total*100):0;
+      rows.push("<tr><td colspan='3'><b>"+exchangeLabel(key)+"</b> · Defter dengesi: <span class='"+(imbalance>=0?"ep-buy":"ep-sell")+"'>"+fmt(imbalance,1)+"%</span></td></tr>");
+      rows.push("<tr><td class='ep-sell'>SATIŞ</td><td class='ep-right'>Fiyat</td><td class='ep-right'>Miktar</td></tr>");
+      asks.slice().reverse().forEach(x=>rows.push("<tr><td class='ep-sell'>ASK</td><td class='ep-right'>"+fmt(x[0],2)+"</td><td class='ep-right'>"+fmt(x[1],5)+"</td></tr>"));
+      rows.push("<tr><td class='ep-buy'>ALIŞ</td><td class='ep-right'>Fiyat</td><td class='ep-right'>Miktar</td></tr>");
+      bids.forEach(x=>rows.push("<tr><td class='ep-buy'>BID</td><td class='ep-right'>"+fmt(x[0],2)+"</td><td class='ep-right'>"+fmt(x[1],5)+"</td></tr>"));
+    }
+    $("epOrderBook").innerHTML=rows.join("")||'<tr><td class="ep-muted">Emir defteri verisi bekleniyor</td></tr>';
+    $("epBookUpdated").textContent="Son defter güncellemesi: "+new Date().toLocaleTimeString("tr-TR",{hour12:false});
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",mount); else mount();
 })();
