@@ -4,6 +4,7 @@ import { analyzeMarkets } from "./analysis.js";
 import { detectWhaleTrade } from "./whales.js";
 import { analyzeCandleMarket } from "./market-signals.js";
 import { createStorage } from "./storage.js";
+import { createTradeDeduplicator } from "./market-data.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -32,6 +33,7 @@ for (const symbol of SYMBOLS) {
 }
 
 const clients = new Set();
+const isDuplicateTrade = createTradeDeduplicator(20000);
 const upstreamStops = [];
 let storage = {
   enabled: false,
@@ -133,6 +135,7 @@ async function loadCandleHistory() {
 }
 
 function addTrade(trade) {
+  if (isDuplicateTrade(trade)) return;
   state.trades.unshift(trade);
   if (state.trades.length > 3000) state.trades.length = 3000;
   publish("trade", trade);
@@ -253,7 +256,7 @@ function publishBinanceBook(exchange, symbol, book) {
 function startBinanceBookSync(exchange, symbol, restBase) {
   const book = {
     bids: new Map(), asks: new Map(), lastUpdateId: 0,
-    initialized: false, syncing: false, buffer: [],
+    initialized: false, hasAppliedEvent: false, syncing: false, buffer: [],
     exchangeTime: null, receivedAt: null, resyncAgain: false
   };
   binanceBooks[exchange].set(symbol, book);
@@ -271,6 +274,7 @@ function startBinanceBookSync(exchange, symbol, restBase) {
     if (book.syncing) { book.resyncAgain = true; return; }
     book.syncing = true;
     book.initialized = false;
+    book.hasAppliedEvent = false;
     try {
       const path = exchange === "binanceSpot" ? "/api/v3/depth" : "/fapi/v1/depth";
       const response = await fetch(restBase + path + "?symbol=" + encodeURIComponent(symbol) + "&limit=1000", {
@@ -311,6 +315,7 @@ function startBinanceBookSync(exchange, symbol, restBase) {
           book.resyncAgain = true;
         } else {
           book.initialized = true;
+          book.hasAppliedEvent = usable.length > 0;
           publishBinanceBook(exchange, symbol, book);
         }
       }
@@ -333,9 +338,15 @@ function startBinanceBookSync(exchange, symbol, restBase) {
       return;
     }
     if (Number(event.u) <= book.lastUpdateId) return;
-    const gap = exchange === "binanceFutures"
-      ? Number(event.pu) !== book.lastUpdateId
-      : Number(event.U) > book.lastUpdateId + 1;
+    let gap = false;
+    if (exchange === "binanceFutures") {
+      // The first USD-M event bridges the REST snapshot; pu is checked only afterwards.
+      gap = book.hasAppliedEvent
+        ? Number(event.pu) !== book.lastUpdateId
+        : !(Number(event.U) <= book.lastUpdateId && Number(event.u) >= book.lastUpdateId);
+    } else {
+      gap = Number(event.U) > book.lastUpdateId + 1;
+    }
     if (gap) {
       book.buffer.push(event);
       void requestSnapshot();
@@ -344,6 +355,7 @@ function startBinanceBookSync(exchange, symbol, restBase) {
     applySide(book.bids, event.b);
     applySide(book.asks, event.a);
     book.lastUpdateId = Number(event.u);
+    book.hasAppliedEvent = true;
     book.exchangeTime = Number(event.E || event.T || 0) || null;
     book.receivedAt = Date.now();
     publishBinanceBook(exchange, symbol, book);
@@ -368,7 +380,7 @@ function startBinanceSpot() {
       const symbol = symbolFrom(d.s);
       if (d.e === "trade") {
         addTrade({
-          exchange: "Binance Spot", symbol, price: Number(d.p),
+          exchange: "Binance Spot", id: "spot:" + d.t, symbol, price: Number(d.p),
           quantity: Number(d.q), quoteValue: Number(d.p) * Number(d.q),
           side: d.m ? "SELL" : "BUY", timestamp: d.T
         });
@@ -382,40 +394,50 @@ function startBinanceSpot() {
   );
 }
 
+async function fetchBinanceJson(path, timeoutMs = 12000) {
+  const hosts = ["https://fapi.binance.com", "https://fapi1.binance.com", "https://fapi2.binance.com", "https://fapi3.binance.com"];
+  let lastError;
+  for (const host of hosts) {
+    try {
+      const response = await fetch(host + path, { signal: AbortSignal.timeout(timeoutMs), cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status + " from " + host);
+      return await response.json();
+    } catch (error) { lastError = error; }
+  }
+  throw lastError || new Error("All Binance Futures REST endpoints failed");
+}
+
 async function bootstrapBinanceFutures() {
-  const base = "https://fapi.binance.com";
   const results = await Promise.allSettled(SYMBOLS.map(async (symbol) => {
-    const [tickerResponse, premiumResponse, candlesResponse] = await Promise.all([
-      fetch(base + "/fapi/v1/ticker/price?symbol=" + encodeURIComponent(symbol), { signal: AbortSignal.timeout(10000), cache: "no-store" }),
-      fetch(base + "/fapi/v1/premiumIndex?symbol=" + encodeURIComponent(symbol), { signal: AbortSignal.timeout(10000), cache: "no-store" }),
-      fetch(base + "/fapi/v1/klines?symbol=" + encodeURIComponent(symbol) + "&interval=1m&limit=100", { signal: AbortSignal.timeout(12000), cache: "no-store" })
+    const query = "?symbol=" + encodeURIComponent(symbol);
+    const [ticker, premium, rows] = await Promise.all([
+      fetchBinanceJson("/fapi/v1/ticker/price" + query),
+      fetchBinanceJson("/fapi/v1/premiumIndex" + query),
+      fetchBinanceJson("/fapi/v1/klines" + query + "&interval=1m&limit=100")
     ]);
-    if (!tickerResponse.ok) throw new Error("Futures ticker HTTP " + tickerResponse.status);
-    if (!premiumResponse.ok) throw new Error("Futures premiumIndex HTTP " + premiumResponse.status);
-    if (!candlesResponse.ok) throw new Error("Futures klines HTTP " + candlesResponse.status);
-    const [ticker, premium, rows] = await Promise.all([tickerResponse.json(), premiumResponse.json(), candlesResponse.json()]);
     const currentRow = rows[rows.length - 1];
     const patch = {
-      lastPrice: toNumber(ticker.price),
-      markPrice: toNumber(premium.markPrice),
-      indexPrice: toNumber(premium.indexPrice),
-      fundingRate: toNumber(premium.lastFundingRate),
-      restSnapshotAt: now()
+      lastPrice: toNumber(ticker.price), markPrice: toNumber(premium.markPrice),
+      indexPrice: toNumber(premium.indexPrice), fundingRate: toNumber(premium.lastFundingRate),
+      restSnapshotAt: now(), restStatus: "READY", restError: null
     };
-    if (currentRow) {
-      patch.candle1m = {
-        openTime: Number(currentRow[0]), open: Number(currentRow[1]), high: Number(currentRow[2]),
-        low: Number(currentRow[3]), close: Number(currentRow[4]), volume: Number(currentRow[5]),
-        closeTime: Number(currentRow[6]), quoteVolume: Number(currentRow[7]),
-        closed: Number(currentRow[6]) < Date.now()
-      };
-    }
+    if (currentRow) patch.candle1m = {
+      openTime: Number(currentRow[0]), open: Number(currentRow[1]), high: Number(currentRow[2]),
+      low: Number(currentRow[3]), close: Number(currentRow[4]), volume: Number(currentRow[5]),
+      closeTime: Number(currentRow[6]), quoteVolume: Number(currentRow[7]),
+      closed: Number(currentRow[6]) < Date.now()
+    };
     updateMarket(symbol, "binanceFutures", patch);
     return { symbol, candles: rows.length, price: patch.lastPrice };
   }));
-  for (const result of results) {
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i], symbol = SYMBOLS[i];
     if (result.status === "fulfilled") log("info", "Binance Futures REST bootstrap loaded", result.value);
-    else log("warn", "Binance Futures REST bootstrap failed", { error: result.reason?.message });
+    else {
+      const error = result.reason?.message || "Unknown REST bootstrap error";
+      updateMarket(symbol, "binanceFutures", { restStatus: "ERROR", restError: error, restAttemptAt: now() });
+      log("warn", "Binance Futures REST bootstrap failed", { symbol, error });
+    }
   }
 }
 
@@ -434,7 +456,7 @@ function startBinanceFutures() {
       if (!d || typeof d !== "object") return;
       if (d.e === "aggTrade") {
         addTrade({
-          exchange: "Binance Futures", symbol: symbolFrom(d.s),
+          exchange: "Binance Futures", id: "futures:" + d.a, symbol: symbolFrom(d.s),
           price: Number(d.p), quantity: Number(d.q),
           quoteValue: Number(d.p) * Number(d.q),
           side: d.m ? "SELL" : "BUY", timestamp: d.T, aggregate: true
@@ -481,7 +503,7 @@ function startBybit() {
           updateMarket(symbol, "bybitLinear", patch);
         } else if (topic.startsWith("publicTrade.")) {
           addTrade({
-            exchange: "Bybit Linear", symbol, price: Number(d.p),
+            exchange: "Bybit Linear", id: d.i ? "bybit:" + d.i : undefined, symbol, price: Number(d.p),
             quantity: Number(d.v), quoteValue: Number(d.p) * Number(d.v),
             side: d.S === "Buy" ? "BUY" : "SELL", timestamp: Number(d.T)
           });
