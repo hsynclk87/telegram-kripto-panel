@@ -239,4 +239,8 @@
     $("epBookUpdated").textContent=selected+" · Binance defter eşitlemesi: "+(spot?.orderbookSynced&&futures?.orderbookSynced?"tamam":"bekleniyor")+" · Son veri: "+(received?new Date(received).toLocaleTimeString("tr-TR",{hour12:false}):"—");
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",mount); else mount();
+  const proScript=document.createElement("script");
+  proScript.src="./engine/binance-pro-dashboard.js";
+  proScript.defer=true;
+  document.head.appendChild(proScript);
 })();
