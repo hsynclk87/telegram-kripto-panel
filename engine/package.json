@@ -1,0 +1,19 @@
+{
+  "name": "telegram-kripto-analysis-engine",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test",
+    "check": "node --check src/server.js && node --check src/analysis.js && node --check src/whales.js && node --check src/market-signals.js && node --check src/storage.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.3",
+    "pg": "^8.16.3"
+  }
+}
