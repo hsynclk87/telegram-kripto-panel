@@ -37,7 +37,7 @@
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), coins=['BTC','ETH','SOL','BNB','XRP','DOGE','LINK','AVAX','HBAR'], frames=[['15m','15 DK'],['1h','1 SAAT'],['4h','4 SAAT'],['1d','GÜNLÜK'],['1w','HAFTALIK']];
-let coin='BTC',tf='1h',candles=[],chart=null,candleSeries=null,ema20Series=null,ema50Series=null,oscChart=null,rsiSeries=null,macdSeries=null,priceWs=null,klineWs=null,tickerWs=null,lastPrice=null,base24=null,signalState=null,lastSignal='BEKLE',futuresSockets=[],flowTrades=[],futuresRefreshTimer=null,bookRefreshTimer=null;
+let coin='BTC',tf='1h',candles=[],chart=null,candleSeries=null,ema20Series=null,ema50Series=null,oscChart=null,rsiSeries=null,macdSeries=null,priceWs=null,klineWs=null,tickerWs=null,lastPrice=null,base24=null,signalState=null,lastSignal='BEKLE',futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0},futuresSockets=[],flowTrades=[],futuresRefreshTimer=null,bookRefreshTimer=null;
 const fmt=n=>!Number.isFinite(n)?'—':n>=1000?n.toLocaleString('tr-TR',{maximumFractionDigits:2}):n>=1?n.toLocaleString('tr-TR',{maximumFractionDigits:4}):n.toPrecision(5);
 const compact=n=>{if(!Number.isFinite(n))return'—';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return fmt(n)};
 const setText=(id,v)=>$(id).textContent=v;
@@ -54,8 +54,7 @@ function setMetric(id,value,cls){const el=$(id);if(!el)return;el.textContent=val
 async function futuresJson(path){const r=await fetch('https://fapi.binance.com'+path,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
 async function refreshFutures(){
 const s=coin+'USDT';
-try{
-const [oi,oiHist,taker,globalLs,topPos,funding,mark]=await Promise.all([
+const jobs=await Promise.allSettled([
 futuresJson('/fapi/v1/openInterest?symbol='+s),
 futuresJson('/futures/data/openInterestHist?symbol='+s+'&period=5m&limit=6'),
 futuresJson('/futures/data/takerlongshortRatio?symbol='+s+'&period=5m&limit=6'),
@@ -64,34 +63,59 @@ futuresJson('/futures/data/topLongShortPositionRatio?symbol='+s+'&period=5m&limi
 futuresJson('/fapi/v1/fundingRate?symbol='+s+'&limit=1'),
 futuresJson('/fapi/v1/premiumIndex?symbol='+s)
 ]);
-const oiNow=+oi.openInterest,oiPrev=oiHist.length>1?+oiHist[oiHist.length-2].sumOpenInterest:oiNow,oiDelta=oiPrev?(oiNow/oiPrev-1)*100:0;
-setMetric('openInterest',fmt(oiNow)+' '+coin,oiDelta>=0?'positive':'negative');setText('oiState','5 dk değişim '+(oiDelta>=0?'+':'')+oiDelta.toFixed(2)+'% · '+fmtUsd(oiNow*+mark.markPrice));
-const t=taker[taker.length-1],ls=globalLs[globalLs.length-1],tp=topPos[topPos.length-1],fr=funding[0];
-if(t){const ratio=+t.buySellRatio;setMetric('takerRatio',ratio.toFixed(3)+'x',ratio>1.05?'positive':ratio<.95?'negative':'neutral');setText('takerState','Alış '+fmt(+t.buyVol)+' / Satış '+fmt(+t.sellVol)+' '+coin+' · 5 dk');}
-if(ls){const ratio=+ls.longShortRatio;setMetric('longShort',ratio.toFixed(3)+'x',ratio>1.5?'negative':ratio<.67?'positive':'neutral');setText('lsState','Long '+(+ls.longAccount*100).toFixed(1)+'% · Short '+(+ls.shortAccount*100).toFixed(1)+'%');}
-if(tp){const ratio=+tp.longShortRatio;setMetric('topPosition',ratio.toFixed(3)+'x',ratio>1.5?'negative':ratio<.67?'positive':'neutral');setText('topState','Long '+(+tp.longAccount*100).toFixed(1)+'% · Short '+(+tp.shortAccount*100).toFixed(1)+'%');}
-if(fr){const rate=+fr.fundingRate*100;setMetric('funding',(rate>=0?'+':'')+rate.toFixed(4)+'%',rate>0.03?'negative':rate<-.03?'positive':'neutral');setText('fundingState','Mark '+fmt(+mark.markPrice)+' · sonraki fonlama periyodu');}
-setText('futuresUpdated','Son güncelleme: '+new Date().toLocaleTimeString('tr-TR',{hour12:false})+' · Binance USDⓈ-M Futures');
-}catch(e){setText('futuresUpdated','Futures verisi alınamadı: '+e.message);}
+const [oiR,histR,takerR,globalR,topR,fundingR,markR]=jobs;let updated=0;
+if(oiR.status==='fulfilled'&&histR.status==='fulfilled'){
+const oi=oiR.value,h=histR.value,mark=markR.status==='fulfilled'?+markR.value.markPrice:NaN;
+const oiNow=+oi.openInterest,oiPrev=h.length>1?+h[h.length-2].sumOpenInterest:oiNow,delta=oiPrev?(oiNow/oiPrev-1)*100:0;
+futuresState.oiDelta=delta;futuresState.oiAt=Date.now();updated++;
+setMetric('openInterest',fmt(oiNow)+' '+coin,delta>=0?'positive':'negative');setText('oiState','5 dk değişim '+(delta>=0?'+':'')+delta.toFixed(2)+'% · '+fmtUsd(oiNow*mark));
+}else setText('oiState','OI verisi geçici olarak alınamadı');
+if(takerR.status==='fulfilled'&&takerR.value.length){
+const t=takerR.value[takerR.value.length-1],ratio=+t.buySellRatio;futuresState.takerRatio=ratio;futuresState.takerAt=Date.now();updated++;
+setMetric('takerRatio',ratio.toFixed(3)+'x',ratio>1.05?'positive':ratio<.95?'negative':'neutral');setText('takerState','Alış '+fmt(+t.buyVol)+' / Satış '+fmt(+t.sellVol)+' '+coin+' · 5 dk');
+}else setText('takerState','Taker verisi geçici olarak alınamadı');
+if(globalR.status==='fulfilled'&&globalR.value.length&&topR.status==='fulfilled'&&topR.value.length){
+const ls=globalR.value[globalR.value.length-1],tp=topR.value[topR.value.length-1];
+futuresState.globalLongShort=+ls.longShortRatio;futuresState.topLongShort=+tp.longShortRatio;futuresState.sentimentAt=Date.now();updated++;
+setMetric('longShort',futuresState.globalLongShort.toFixed(3)+'x',futuresState.globalLongShort>1.5?'negative':futuresState.globalLongShort<.67?'positive':'neutral');setText('lsState','Long '+(+ls.longAccount*100).toFixed(1)+'% · Short '+(+ls.shortAccount*100).toFixed(1)+'%');
+setMetric('topPosition',futuresState.topLongShort.toFixed(3)+'x',futuresState.topLongShort>1.5?'negative':futuresState.topLongShort<.67?'positive':'neutral');setText('topState','Long '+(+tp.longAccount*100).toFixed(1)+'% · Short '+(+tp.shortAccount*100).toFixed(1)+'%');
+}else{setText('lsState','Pozisyon oranı verisi alınamadı');setText('topState','Top trader verisi alınamadı');}
+if(fundingR.status==='fulfilled'&&fundingR.value.length){
+const rate=+fundingR.value[0].fundingRate*100;futuresState.fundingRate=rate;futuresState.fundingAt=Date.now();updated++;
+setMetric('funding',(rate>=0?'+':'')+rate.toFixed(4)+'%',rate>0.03?'negative':rate<-.03?'positive':'neutral');setText('fundingState','Mark '+(markR.status==='fulfilled'?fmt(+markR.value.markPrice):'—')+' · fonlama oranı');
+}else setText('fundingState','Funding verisi alınamadı');
+setText('futuresUpdated',updated?'Güncel: '+new Date().toLocaleTimeString('tr-TR',{hour12:false})+' · '+updated+'/4 veri grubu · sinyal filtresi aktif':'Futures verileri güncellenemedi; sinyal filtresi nötr.');
 }
 async function refreshBook(){
 try{const d=await futuresJson('/fapi/v1/depth?symbol='+coin+'USDT&limit=20');let bid=0,ask=0;
 for(const [p,q] of d.bids)bid+=+p*+q;for(const [p,q] of d.asks)ask+=+p*+q;
-const imbalance=(bid+ask)?(bid-ask)/(bid+ask)*100:0;
+const imbalance=(bid+ask)?(bid-ask)/(bid+ask)*100:0;futuresState.bookImbalance=imbalance;futuresState.bookAt=Date.now();
 setMetric('obImbalance',(imbalance>0?'+':'')+imbalance.toFixed(1)+'%',imbalance>8?'positive':imbalance< -8?'negative':'neutral');
 setText('obState','Alış '+fmtUsd(bid)+' · Satış '+fmtUsd(ask)+' · 20 kademe');
-}catch(e){setText('obState','Derinlik alınamadı: '+e.message);}
+}catch(e){futuresState.bookImbalance=null;futuresState.bookAt=0;setText('obState','Derinlik alınamadı: '+e.message);}
 }
 function connectFuturesStreams(){
 for(const ws of futuresSockets){try{ws.close();}catch(_){}}futuresSockets=[];flowTrades=[];
 const s=coin.toLowerCase()+'usdt';
 const agg=new WebSocket('wss://fstream.binance.com/ws/'+s+'@aggTrade');
-agg.onmessage=e=>{const d=JSON.parse(e.data),now=Date.now(),quote=+d.p*+d.q;flowTrades.push({time:now,quote,buy:!d.m});flowTrades=flowTrades.filter(x=>now-x.time<=60000);let buy=0,sell=0;for(const x of flowTrades){if(x.buy)buy+=x.quote;else sell+=x.quote;}const total=buy+sell,imb=total?(buy-sell)/total*100:0;setMetric('liveFlow',(imb>=0?'+':'')+imb.toFixed(1)+'%',imb>8?'positive':imb< -8?'negative':'neutral');setText('liveFlowState','Alıcı '+fmtUsd(buy)+' · Satıcı '+fmtUsd(sell)+' · 60 sn');};
+agg.onmessage=e=>{const d=JSON.parse(e.data),now=Date.now(),quote=+d.p*+d.q;flowTrades.push({time:now,quote,buy:!d.m});flowTrades=flowTrades.filter(x=>now-x.time<=60000);let buy=0,sell=0;for(const x of flowTrades){if(x.buy)buy+=x.quote;else sell+=x.quote;}const total=buy+sell,imb=total?(buy-sell)/total*100:0;futuresState.flowImbalance=imb;futuresState.flowAt=now;setMetric('liveFlow',(imb>=0?'+':'')+imb.toFixed(1)+'%',imb>8?'positive':imb< -8?'negative':'neutral');setText('liveFlowState','Alıcı '+fmtUsd(buy)+' · Satıcı '+fmtUsd(sell)+' · 60 sn');};
 const liq=new WebSocket('wss://fstream.binance.com/ws/'+s+'@forceOrder');
-liq.onmessage=e=>{const d=JSON.parse(e.data).o;if(!d)return;const side=d.S==='SELL'?'LONG tasfiye':'SHORT tasfiye',value=+d.ap*+d.q;setMetric('liquidation',side,d.S==='SELL'?'negative':'positive');setText('liquidationState',fmtUsd(value)+' · '+fmt(+d.ap)+' fiyat');};
+liq.onmessage=e=>{const d=JSON.parse(e.data).o;if(!d)return;const side=d.S==='SELL'?'LONG tasfiye':'SHORT tasfiye',value=+d.ap*+d.q;futuresState.liqSide=d.S;futuresState.liqValue=value;futuresState.liqAt=Date.now();setMetric('liquidation',side,d.S==='SELL'?'negative':'positive');setText('liquidationState',fmtUsd(value)+' · '+fmt(+d.ap)+' fiyat');};
 agg.onclose=()=>{};liq.onclose=()=>{};futuresSockets.push(agg,liq);
 }
 function startFutures(){if(futuresRefreshTimer)clearInterval(futuresRefreshTimer);if(bookRefreshTimer)clearInterval(bookRefreshTimer);connectFuturesStreams();refreshFutures();refreshBook();futuresRefreshTimer=setInterval(refreshFutures,15000);bookRefreshTimer=setInterval(refreshBook,5000);}
+function futuresAdjustment(c,prev){
+const now=Date.now(),parts=[];let score=0,votes=0;
+const fresh=(at,maxAge)=>at>0&&now-at<=maxAge;
+if(fresh(futuresState.takerAt,45000)&&Number.isFinite(futuresState.takerRatio)){if(futuresState.takerRatio>1.08){score+=.55;votes++;parts.push('taker alış baskısı');}else if(futuresState.takerRatio<.92){score-=.55;votes++;parts.push('taker satış baskısı');}}
+if(fresh(futuresState.flowAt,15000)&&Number.isFinite(futuresState.flowImbalance)){if(futuresState.flowImbalance>12){score+=.45;votes++;parts.push('agresif alıcı akışı');}else if(futuresState.flowImbalance< -12){score-=.45;votes++;parts.push('agresif satıcı akışı');}}
+if(fresh(futuresState.bookAt,15000)&&Number.isFinite(futuresState.bookImbalance)){if(futuresState.bookImbalance>12){score+=.35;votes++;parts.push('alış derinliği güçlü');}else if(futuresState.bookImbalance< -12){score-=.35;votes++;parts.push('satış derinliği güçlü');}}
+if(fresh(futuresState.oiAt,45000)&&Number.isFinite(futuresState.oiDelta)){const move=(c.close/prev.close-1)*100;if(futuresState.oiDelta>.15&&move>.10){score+=.35;votes++;parts.push('fiyat ve açık pozisyon birlikte yükseliyor');}else if(futuresState.oiDelta>.15&&move<-.10){score-=.35;votes++;parts.push('fiyat düşerken açık pozisyon artıyor');}}
+if(fresh(futuresState.fundingAt,120000)&&Number.isFinite(futuresState.fundingRate)){if(futuresState.fundingRate>.04){score-=.2;parts.push('long tarafı kalabalık (funding)');}else if(futuresState.fundingRate<-.04){score+=.2;parts.push('short tarafı kalabalık (funding)');}}
+if(fresh(futuresState.sentimentAt,90000)&&Number.isFinite(futuresState.globalLongShort)&&Number.isFinite(futuresState.topLongShort)){if(futuresState.globalLongShort>2&&futuresState.topLongShort>1.5){score-=.2;parts.push('long pozisyon yoğunluğu yüksek');}else if(futuresState.globalLongShort<.5&&futuresState.topLongShort<.67){score+=.2;parts.push('short pozisyon yoğunluğu yüksek');}}
+if(votes<2)return{score:0,text:'Futures teyidi yetersiz ('+votes+'/2 bağımsız akış); etkisiz'};
+score=Math.max(-1.5,Math.min(1.5,score));return{score,text:(score>=0?'+':'')+score.toFixed(2)+' · '+(parts.length?parts.join(', '):'nötr')};
+}
 function calc(){
 const data=candles.filter(x=>x.closed);if(data.length<210)return;
 const closes=data.map(x=>x.close),e20=ema(closes,20),e50=ema(closes,50),e200=ema(closes,200),rvArr=rsi(closes),fast=ema(closes,12),slow=ema(closes,26),m=fast.map((v,i)=>v===null||slow[i]===null?null:v-slow[i]),sig=ema(m.map(v=>v??NaN),9),hist=m.map((v,i)=>v===null||sig[i]===null?null:v-sig[i]);
@@ -110,13 +134,13 @@ if(rsiTurnUp){score+=1;why.push('RSI yukarı dönüşte');}else if(rsiTurnDown){
 if(momUp&&mac>0){score+=1;why.push('Pozitif momentum güçleniyor');}else if(momDown&&mac<0){score-=1;why.push('Negatif momentum güçleniyor');}
 if(volRatio>=1.25&&bull){score+=1;why.push('Yükseliş mumunda hacim artışı');}else if(volRatio>=1.25&&bear){score-=1;why.push('Düşüş mumunda hacim artışı');}
 if(lowerWick>Math.max(body*1.3,atrV*.12)&&bull){score+=1;why.push('Alt fitil alım tepkisi');}else if(upperWick>Math.max(body*1.3,atrV*.12)&&bear){score-=1;why.push('Üst fitil satış tepkisi');}
-score=Math.max(-8,Math.min(8,score));
+const futuresAdj=futuresAdjustment(c,prev);score+=futuresAdj.score;why.push('Futures: '+futuresAdj.text);
+score=Math.max(-9.5,Math.min(9.5,score));
 const rawSignal=score>=4?'AL':score<=-4?'SAT':'BEKLE';
-const signal=rawSignal==='AL'&&lastSignal!=='AL'?'AL':rawSignal==='SAT'&&lastSignal!=='SAT'?'SAT':'BEKLE';
-lastSignal=rawSignal;
-const strength=Math.round(Math.abs(score)/8*100),support=supportCtx?.price??findPivot(false,p,data),resistance=resistCtx?.price??findPivot(true,p,data);
+const signal=rawSignal;lastSignal=rawSignal;
+const strength=Math.round(Math.abs(score)/9.5*100),support=supportCtx?.price??findPivot(false,p,data),resistance=resistCtx?.price??findPivot(true,p,data);
 setText('rsi',rv.toFixed(1));setText('rsiState',rv<30?'Aşırı satım':rv>70?'Aşırı alım':rv<50?'Zayıf bölge':'Güçlü bölge');$('rsi').className=rv<35?'positive':rv>70?'negative':'';
-$('macd',(mac>0?'+':'')+fmt(mac));$('macd').className=mac>=0?'positive':'negative';setText('macdState',momUp?'Momentum yükseliyor':momDown?'Momentum düşüyor':'Momentum yatay');
+setText('macd',(mac>0?'+':'')+fmt(mac));$('macd').className=mac>=0?'positive':'negative';setText('macdState',momUp?'Momentum yükseliyor':momDown?'Momentum düşüyor':'Momentum yatay');
 setText('trend',trendUp?'GÜÇLÜ YUKARI':trendDown?'GÜÇLÜ AŞAĞI':e20[n]>e50[n]?'YUKARI':'ZAYIF/YATAY');$('trend').className=trendUp?'positive':trendDown?'negative':'neutral';
 setText('volratio',volRatio.toFixed(2)+'x');setText('volState',volRatio>=1.5?'Hacim belirgin yüksek':volRatio>=1.1?'Hacim artıyor':'Normal hacim');
 setText('momentum',momUp?'YÜKSELİYOR':momDown?'DÜŞÜYOR':'NÖTR');$('momentum').className=momUp?'positive':momDown?'negative':'neutral';setText('momState',priceTurnUp?'Fiyat dönüşü teyitli':priceTurnDown?'Fiyat aşağı kırdı':'Fiyat teyidi bekleniyor');
