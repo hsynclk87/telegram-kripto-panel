@@ -3,6 +3,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import { analyzeMarkets } from "./analysis.js";
 import { detectWhaleTrade } from "./whales.js";
 import { analyzeCandleMarket } from "./market-signals.js";
+import { createStorage } from "./storage.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -32,6 +33,13 @@ for (const symbol of SYMBOLS) {
 
 const clients = new Set();
 const upstreamStops = [];
+let storage = {
+  enabled: false,
+  async saveEvent() {},
+  async saveCandle() {},
+  async loadCandles() { return []; },
+  async close() {}
+};
 const now = () => new Date().toISOString();
 const toNumber = (value) => {
   const number = Number(value);
@@ -82,22 +90,30 @@ function updateCandle(symbol, exchange, k) {
   history.sort((a, b) => a.openTime - b.openTime);
   if (history.length > 200) history.splice(0, history.length - 200);
   publish("candle", { symbol: key, candle });
+  void storage.saveCandle(key, candle).catch((error) => log("warn", "Candle persistence failed", { error: error.message }));
 }
 
 async function loadCandleHistory() {
   const results = await Promise.allSettled(SYMBOLS.map(async (symbol) => {
     const endpoint = "https://fapi.binance.com/fapi/v1/klines?symbol="
       + encodeURIComponent(symbol) + "&interval=1m&limit=100";
-    const response = await fetch(endpoint, { signal: AbortSignal.timeout(12000) });
-    if (!response.ok) throw new Error("Binance kline history HTTP " + response.status);
-    const rows = await response.json();
-    const history = rows
+    let history = [];
+    try {
+      const response = await fetch(endpoint, { signal: AbortSignal.timeout(12000) });
+      if (!response.ok) throw new Error("Binance kline history HTTP " + response.status);
+      const rows = await response.json();
+      history = rows
       .filter((row) => Number(row[6]) < Date.now())
       .map((row) => ({
         openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]),
         low: Number(row[3]), close: Number(row[4]), volume: Number(row[5]),
         closeTime: Number(row[6]), quoteVolume: Number(row[7]), closed: true
       }));
+      for (const candle of history) await storage.saveCandle(symbol, candle);
+    } catch (error) {
+      log("warn", "Binance REST history unavailable; checking database", { symbol, error: error.message });
+      history = await storage.loadCandles(symbol, 100);
+    }
     state.markets[symbol].candles1m = history.slice(-200);
     return { symbol, candles: history.length };
   }));
@@ -111,11 +127,13 @@ function addTrade(trade) {
   state.trades.unshift(trade);
   if (state.trades.length > 3000) state.trades.length = 3000;
   publish("trade", trade);
+  void storage.saveEvent("trade", trade).catch((error) => log("warn", "Trade persistence failed", { error: error.message }));
   const whale = detectWhaleTrade(trade, WHALE_TRADE_USD);
   if (whale) {
     state.whales.unshift(whale);
     if (state.whales.length > 500) state.whales.length = 500;
     publish("whale", whale);
+    void storage.saveEvent("whale", whale).catch((error) => log("warn", "Whale persistence failed", { error: error.message }));
   }
 }
 
@@ -123,6 +141,7 @@ function addLiquidation(item) {
   state.liquidations.unshift(item);
   if (state.liquidations.length > 1000) state.liquidations.length = 1000;
   publish("liquidation", item);
+  void storage.saveEvent("liquidation", item).catch((error) => log("warn", "Liquidation persistence failed", { error: error.message }));
 }
 
 function getMarketSignals() {
@@ -346,7 +365,7 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({
       ok: true, service: "telegram-kripto-analysis-engine",
       uptimeSeconds: Math.floor(process.uptime()),
-      startedAt: state.startedAt, exchanges: state.exchanges
+      startedAt: state.startedAt, storage: storage.enabled ? "postgresql" : "memory", exchanges: state.exchanges
     }));
   }
 
@@ -419,7 +438,15 @@ const analysisTimer = setInterval(() => {
 
 server.listen(PORT, HOST, () => {
   log("info", "Analysis engine API listening", { host: HOST, port: PORT, symbols: SYMBOLS });
-  void loadCandleHistory();
+  void (async () => {
+    try {
+      storage = await createStorage();
+      log("info", "Storage initialized", { mode: storage.enabled ? "postgresql" : "memory" });
+    } catch (error) {
+      log("error", "PostgreSQL initialization failed; continuing in memory", { error: error.message });
+    }
+    await loadCandleHistory();
+  })();
   upstreamStops.push(startBinanceSpot(), startBinanceFutures(), startBybit());
 });
 
@@ -427,6 +454,7 @@ function shutdown(signal) {
   log("info", signal + " received; shutting down");
   clearInterval(analysisTimer);
   for (const stop of upstreamStops) stop();
+  void storage.close().catch((error) => log("warn", "Storage close failed", { error: error.message }));
   for (const client of wss.clients) client.close();
   wss.close();
   server.close(() => process.exit(0));
