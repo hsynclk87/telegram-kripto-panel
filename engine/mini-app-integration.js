@@ -45,7 +45,7 @@
       '<div class="ep-box"><span class="ep-muted">Veri kalitesi</span><b id="epQuality">—</b></div></div>' +
       '<div class="ep-section">Coin analizleri</div><table id="epAnalysis" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
       '<div class="ep-section">Hacim ve destek / direnç sinyalleri</div><table id="epMarketSignals" class="ep-table"><tbody><tr><td class="ep-muted">Veri bekleniyor</td></tr></tbody></table>' +
-      '<div class="ep-section">Canlı emir defteri · BTCUSDT</div><div class="ep-muted" id="epBookUpdated">WebSocket bekleniyor</div><table id="epOrderBook" class="ep-table"><tbody><tr><td class="ep-muted">Emir defteri bekleniyor</td></tr></tbody></table>' +
+      '<div class="ep-section">Canlı emir defteri</div><select id="epBookSymbol" aria-label="Emir defteri coin seçimi" style="margin-top:7px;background:#10151c;color:inherit;border:1px solid #263040;border-radius:7px;padding:7px;width:100%"><option>BTCUSDT</option><option>ETHUSDT</option><option>SOLUSDT</option><option>BNBUSDT</option><option>XRPUSDT</option><option>DOGEUSDT</option></select><div class="ep-muted" id="epBookUpdated">WebSocket bekleniyor</div><table id="epOrderBook" class="ep-table"><tbody><tr><td class="ep-muted">Emir defteri bekleniyor</td></tr></tbody></table>' +
       '<div class="ep-section">Canlı balina işlemleri</div><div class="ep-muted" id="epWhaleUpdated">WebSocket bekleniyor</div><table id="epWhales" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
       '<div class="ep-section">Son likidasyonlar</div><table id="epLiquidations" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
       '<div class="ep-muted" id="epUpdated" style="margin-top:9px">Henüz veri alınmadı.</div>';
@@ -53,6 +53,7 @@
     if (tabs) tabs.insertAdjacentElement("afterend", panel); else document.body.insertBefore(panel, document.body.firstChild);
     $("epUrl").value = localStorage.getItem(STORAGE_KEY) || new URLSearchParams(location.search).get("engine") || "";
     $("epSave").addEventListener("click", connectFromInput);
+    $("epBookSymbol").addEventListener("change", drawOrderBook);
     $("epUrl").addEventListener("keydown", e => { if (e.key === "Enter") connectFromInput(); });
     if ($("epUrl").value.trim()) connectFromInput();
   }
@@ -187,14 +188,16 @@
     if(data.bids || data.asks) {
       books[data.symbol]=books[data.symbol]||{};
       books[data.symbol][data.exchange]=data;
-      if(data.symbol==="BTCUSDT") drawOrderBook();
+      if(data.symbol===selectedBookSymbol()) drawOrderBook();
     }
     if(data.symbol==="BTCUSDT" && data.candle1m?.close) {
       $("epPrice").textContent=fmt(data.candle1m.close,2)+" USDT";
     }
   }
+  function selectedBookSymbol() { return $("epBookSymbol")?.value || "BTCUSDT"; }
   function drawOrderBook() {
-    const symbolBooks=books.BTCUSDT||{};
+    const selected=selectedBookSymbol();
+    const symbolBooks=books[selected]||{};
     const rows=[];
     for(const key of ["binanceSpot","binanceFutures","bybitLinear"]) {
       const book=symbolBooks[key];
@@ -212,7 +215,7 @@
       bids.forEach(x=>rows.push("<tr><td class='ep-buy'>BID</td><td class='ep-right'>"+fmt(x[0],2)+"</td><td class='ep-right'>"+fmt(x[1],5)+"</td></tr>"));
     }
     $("epOrderBook").innerHTML=rows.join("")||'<tr><td class="ep-muted">Emir defteri verisi bekleniyor</td></tr>';
-    $("epBookUpdated").textContent="Son defter güncellemesi: "+new Date().toLocaleTimeString("tr-TR",{hour12:false});
+    $("epBookUpdated").textContent=selected+" · Son defter güncellemesi: "+new Date().toLocaleTimeString("tr-TR",{hour12:false});
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",mount); else mount();
 })();
