@@ -320,9 +320,24 @@ function startBybit() {
             side: d.S === "Buy" ? "BUY" : "SELL", timestamp: Number(d.T)
           });
         } else if (topic.startsWith("orderbook.")) {
+          const book = state.markets[symbol]?.bybitLinear || {};
+          const bids = d.type === "snapshot" ? [] : (book.bids || []).map(([p, q]) => [p, q]);
+          const asks = d.type === "snapshot" ? [] : (book.asks || []).map(([p, q]) => [p, q]);
+          const mergeSide = (levels, updates, descending) => {
+            const map = new Map(levels.map(([price, qty]) => [String(price), Number(qty)]));
+            for (const [rawPrice, rawQty] of (updates || [])) {
+              const price = Number(rawPrice), qty = Number(rawQty);
+              if (!Number.isFinite(price) || !Number.isFinite(qty)) continue;
+              if (qty === 0) map.delete(String(price));
+              else map.set(String(price), qty);
+            }
+            return [...map.entries()].map(([price, qty]) => [Number(price), qty])
+              .sort((a, b) => descending ? b[0] - a[0] : a[0] - b[0]).slice(0, 50);
+          };
           updateMarket(symbol, "bybitLinear", {
-            bids: (d.b || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)]),
-            asks: (d.a || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)])
+            bids: mergeSide(bids, d.b, true),
+            asks: mergeSide(asks, d.a, false),
+            orderbookUpdatedAt: now()
           });
         } else if (topic.startsWith("allLiquidation.")) {
           addLiquidation({
