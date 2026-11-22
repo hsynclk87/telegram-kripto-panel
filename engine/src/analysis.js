@@ -20,24 +20,21 @@ function analyzeSymbol(symbol, market, trades, liquidations, nowMs) {
   const flowTotal = buyQuote + sellQuote;
   const flow = flowTotal > 0 ? (buyQuote - sellQuote) / flowTotal : null;
 
-  const spotBook = market?.binanceSpot;
-  const futuresBook = market?.binanceFutures;
-  const bybitBook = market?.bybitLinear;
   const imbalanceValues = [
-    bookImbalance(futuresBook),
-    bookImbalance(bybitBook),
-    bookImbalance(spotBook)
+    bookImbalance(market?.binanceFutures),
+    bookImbalance(market?.bybitLinear),
+    bookImbalance(market?.binanceSpot)
   ].filter((v) => v !== null);
   const imbalance = imbalanceValues.length
     ? imbalanceValues.reduce((a, b) => a + b, 0) / imbalanceValues.length
     : null;
 
-  const candle = futuresBook?.candle1m || spotBook?.candle1m;
+  const candle = market?.binanceFutures?.candle1m || market?.binanceSpot?.candle1m;
   const candleChangePct = candle && candle.open > 0
     ? ((candle.close - candle.open) / candle.open) * 100
     : null;
 
-  const bybit = bybitBook || {};
+  const bybit = market?.bybitLinear || {};
   const fundingRate = finite(bybit.fundingRate);
   const openInterest = finite(bybit.openInterest);
   const price24hPcnt = finite(bybit.price24hPcnt);
@@ -53,20 +50,24 @@ function analyzeSymbol(symbol, market, trades, liquidations, nowMs) {
     .reduce((s, item) => s + (finite(item.quoteValue) || 0), 0);
 
   const components = [];
-  if (flow !== null) components.push({ name: "tradeFlow", value: flow * 35, weight: 1 });
-  if (imbalance !== null) components.push({ name: "orderBook", value: imbalance * 30, weight: 1 });
+  if (flow !== null) components.push({ name: "tradeFlow", value: flow * 35 });
+  if (imbalance !== null) components.push({ name: "orderBook", value: imbalance * 30 });
   if (candleChangePct !== null) {
-    components.push({ name: "candleMomentum", value: Math.max(-1, Math.min(1, candleChangePct / 0.35)) * 20, weight: 1 });
+    components.push({
+      name: "candleMomentum",
+      value: Math.max(-1, Math.min(1, candleChangePct / 0.35)) * 20
+    });
   }
   if (fundingRate !== null) {
-    // Crowded positive funding is a mild contrarian risk, not a standalone short signal.
-    components.push({ name: "fundingRisk", value: Math.max(-1, Math.min(1, -fundingRate / 0.001)) * 5, weight: 1 });
+    components.push({
+      name: "fundingRisk",
+      value: Math.max(-1, Math.min(1, -fundingRate / 0.001)) * 5
+    });
   }
 
-  const weight = components.reduce((s, c) => s + c.weight, 0);
-  const score = weight
-    ? Math.round(components.reduce((s, c) => s + c.value, 0) / weight)
-    : 0;
+  // Additive bounded components preserve the intended -100..+100 score scale.
+  const rawScore = components.reduce((total, component) => total + component.value, 0);
+  const score = Math.round(Math.max(-100, Math.min(100, rawScore)));
   const signal = components.length < 2 ? "INSUFFICIENT_DATA"
     : score >= 35 ? "BUY"
     : score <= -35 ? "SELL"
@@ -76,10 +77,7 @@ function analyzeSymbol(symbol, market, trades, liquidations, nowMs) {
     : "LOW";
 
   return {
-    symbol,
-    signal,
-    score,
-    quality,
+    symbol, signal, score, quality,
     calculatedAt: new Date(nowMs).toISOString(),
     windowMinutes: 5,
     inputs: {
