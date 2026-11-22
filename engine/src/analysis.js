@@ -28,6 +28,8 @@ function analyzeSymbol(symbol, market, trades, liquidations, nowMs) {
   const imbalance = imbalanceValues.length
     ? imbalanceValues.reduce((a, b) => a + b, 0) / imbalanceValues.length
     : null;
+  const hasFuturesMarket = finite(market?.binanceFutures?.lastPrice) !== null
+    || bookImbalance(market?.binanceFutures) !== null;
 
   const candle = market?.binanceFutures?.candle1m || market?.binanceSpot?.candle1m;
   const candleChangePct = candle && candle.open > 0
@@ -68,11 +70,13 @@ function analyzeSymbol(symbol, market, trades, liquidations, nowMs) {
   // Additive bounded components preserve the intended -100..+100 score scale.
   const rawScore = components.reduce((total, component) => total + component.value, 0);
   const score = Math.round(Math.max(-100, Math.min(100, rawScore)));
-  const signal = components.length < 2 ? "INSUFFICIENT_DATA"
+  const hasDirectionalInputs = flow !== null && imbalance !== null;
+  const signal = !hasDirectionalInputs ? "INSUFFICIENT_DATA"
     : score >= 35 ? "BUY"
     : score <= -35 ? "SELL"
     : "WAIT";
-  const quality = components.length >= 4 ? "HIGH"
+  // HIGH requires a confirmed Binance Futures feed, not just a Spot/Bybit mix.
+  const quality = components.length >= 4 && hasFuturesMarket ? "HIGH"
     : components.length >= 2 ? "MEDIUM"
     : "LOW";
 
