@@ -78,9 +78,8 @@ function mount(){
  <div class="section">Piyasa tarayıcı · USDⓈ-M</div><div class="card full"><div class="top"><div><div class="label">En yüksek hacimli kontratlar</div><div class="small">24 saatlik vadeli piyasa verisi · USDT sözleşmeleri</div></div><span class="pill" id="bpScanCount">— kontrat</span></div><div class="scroll"><table id="bpScanner"></table></div></div>
  <div class="section">Veri kapsamı</div><div class="card full"><div class="pills"><span class="pill">Spot ticker</span><span class="pill">Futures ticker</span><span class="pill">Mark / Index</span><span class="pill">Funding</span><span class="pill">Open Interest</span><span class="pill">Global L/S</span><span class="pill">Top Trader L/S</span><span class="pill">Taker flow</span><span class="pill">Basis</span><span class="pill">24h volume</span><span class="pill">Market scanner</span><span class="pill">Order book / trades / whales / liquidations / klines</span></div><div class="note">Binance'in herkese açık piyasa verileri kullanılır. Hesap bakiyesi, cüzdan, açık emirler ve kişisel işlem geçmişi özel API anahtarı gerektirir. Long/Short metrikleri farklı ölçümlerdir; tek başına AL/SAT sinyali değildir.</div></div>
  `;
- const nav=document.querySelector("nav.tabs");if(nav)nav.appendChild(Object.assign(document.createElement("button"),{type:"button",textContent:""}));
  document.body.insertBefore(section,$("updated")||null);
- drawCoins();if(typeof drawControls==="function")drawControls();refreshAll();setInterval(refreshAll,30000);
+ if(typeof st!=="undefined"&&st.coin)state.selected=st.coin+"USDT";drawCoins();if(typeof drawControls==="function")drawControls();refreshAll();setInterval(refreshAll,30000);
 }
 function drawCoins(){
  const coins=typeof CFG!=="undefined"&&Array.isArray(CFG.coins)?CFG.coins:["BTC","ETH","SOL","BNB","XRP","DOGE"];
