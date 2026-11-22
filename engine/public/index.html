@@ -12,6 +12,16 @@
 <section class="card wide"><div class="section">MOMENTUM · RSI / MACD HISTOGRAM</div><div id="osc"></div></section>
 </div><div>
 <section class="card"><div class="section">BİRLEŞİK SİNYAL</div><div class="signal"><div><div class="muted">SİSTEM KARARI</div><div class="signalword neutral" id="signal">VERİ BEKLENİYOR</div></div><div class="pill" id="confidence">—</div></div><div class="muted" id="reason" style="margin-top:9px;line-height:1.5">Mum verisi yükleniyor.</div><div class="bar"><i id="scorebar" style="width:50%"></i></div></section>
+<section class="card"><div class="section">BINANCE FUTURES · PİYASA AKIŞI</div><div class="grid">
+<div class="metric"><span>DERİNLİK DENGESİ</span><b id="obImbalance">—</b><small id="obState">Order book · ilk 20 kademe</small></div>
+<div class="metric"><span>AÇIK POZİSYON (OI)</span><b id="openInterest">—</b><small id="oiState">Kontrat büyüklüğü</small></div>
+<div class="metric"><span>TAKER ALIŞ / SATIŞ</span><b id="takerRatio">—</b><small id="takerState">Son 5 dakika</small></div>
+<div class="metric"><span>GLOBAL LONG / SHORT</span><b id="longShort">—</b><small id="lsState">Hesap oranı</small></div>
+<div class="metric"><span>BÜYÜK HESAPLAR</span><b id="topPosition">—</b><small id="topState">Top trader pozisyon oranı</small></div>
+<div class="metric"><span>FUNDING RATE</span><b id="funding">—</b><small id="fundingState">Perpetual sözleşme</small></div>
+<div class="metric"><span>60 SN AGRESİF AKIŞ</span><b id="liveFlow">—</b><small id="liveFlowState">Futures aggTrade</small></div>
+<div class="metric"><span>SON LİKİDASYON</span><b id="liquidation">—</b><small id="liquidationState">Force order akışı</small></div>
+</div><div class="muted" id="futuresUpdated" style="margin-top:9px">Binance Futures verisi bekleniyor.</div></section>
 <section class="card"><div class="section">İNDİKATÖR DURUMU</div><div class="grid">
 <div class="metric"><span>RSI (14)</span><b id="rsi">—</b><small id="rsiState">—</small></div>
 <div class="metric"><span>MACD</span><b id="macd">—</b><small id="macdState">—</small></div>
@@ -27,7 +37,7 @@
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), coins=['BTC','ETH','SOL','BNB','XRP','DOGE','LINK','AVAX','HBAR'], frames=[['15m','15 DK'],['1h','1 SAAT'],['4h','4 SAAT'],['1d','GÜNLÜK'],['1w','HAFTALIK']];
-let coin='BTC',tf='1h',candles=[],chart=null,candleSeries=null,ema20Series=null,ema50Series=null,oscChart=null,rsiSeries=null,macdSeries=null,priceWs=null,klineWs=null,tickerWs=null,lastPrice=null,base24=null,signalState=null,lastSignal='BEKLE';
+let coin='BTC',tf='1h',candles=[],chart=null,candleSeries=null,ema20Series=null,ema50Series=null,oscChart=null,rsiSeries=null,macdSeries=null,priceWs=null,klineWs=null,tickerWs=null,lastPrice=null,base24=null,signalState=null,lastSignal='BEKLE',futuresSockets=[],flowTrades=[],futuresRefreshTimer=null,bookRefreshTimer=null;
 const fmt=n=>!Number.isFinite(n)?'—':n>=1000?n.toLocaleString('tr-TR',{maximumFractionDigits:2}):n>=1?n.toLocaleString('tr-TR',{maximumFractionDigits:4}):n.toPrecision(5);
 const compact=n=>{if(!Number.isFinite(n))return'—';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return fmt(n)};
 const setText=(id,v)=>$(id).textContent=v;
@@ -39,6 +49,49 @@ window.addEventListener('resize',chartInit);
 function ema(values,period){const out=Array(values.length).fill(null),k=2/(period+1);let prev=null;for(let i=0;i<values.length;i++){const v=values[i];if(!Number.isFinite(v))continue;prev=prev===null?v:v*k+prev*(1-k);out[i]=prev;}return out;}
 function rsi(values,period=14){const out=Array(values.length).fill(null);let gain=0,loss=0;for(let i=1;i<=period&&i<values.length;i++){const d=values[i]-values[i-1];gain+=Math.max(d,0);loss+=Math.max(-d,0);}if(values.length<=period)return out;gain/=period;loss/=period;out[period]=loss===0?100:100-100/(1+gain/loss);for(let i=period+1;i<values.length;i++){const d=values[i]-values[i-1];gain=(gain*(period-1)+Math.max(d,0))/period;loss=(loss*(period-1)+Math.max(-d,0))/period;out[i]=loss===0?100:100-100/(1+gain/loss);}return out;}
 function atr(data,p=14){const tr=data.map((x,i)=>i?Math.max(x.high-x.low,Math.abs(x.high-data[i-1].close),Math.abs(x.low-data[i-1].close)):x.high-x.low);let a=tr.slice(0,p).reduce((s,x)=>s+x,0)/p;for(let i=p;i<tr.length;i++)a=(a*(p-1)+tr[i])/p;return a;}
+function fmtUsd(n){return !Number.isFinite(n)?'—':n>=1e9?(n/1e9).toFixed(2)+'B USDT':n>=1e6?(n/1e6).toFixed(2)+'M USDT':n.toFixed(2)+' USDT';}
+function setMetric(id,value,cls){const el=$(id);if(!el)return;el.textContent=value;el.className=cls||'';}
+async function futuresJson(path){const r=await fetch('https://fapi.binance.com'+path,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
+async function refreshFutures(){
+const s=coin+'USDT';
+try{
+const [oi,oiHist,taker,globalLs,topPos,funding,mark]=await Promise.all([
+futuresJson('/fapi/v1/openInterest?symbol='+s),
+futuresJson('/futures/data/openInterestHist?symbol='+s+'&period=5m&limit=6'),
+futuresJson('/futures/data/takerlongshortRatio?symbol='+s+'&period=5m&limit=6'),
+futuresJson('/futures/data/globalLongShortAccountRatio?symbol='+s+'&period=5m&limit=6'),
+futuresJson('/futures/data/topLongShortPositionRatio?symbol='+s+'&period=5m&limit=6'),
+futuresJson('/fapi/v1/fundingRate?symbol='+s+'&limit=1'),
+futuresJson('/fapi/v1/premiumIndex?symbol='+s)
+]);
+const oiNow=+oi.openInterest,oiPrev=oiHist.length>1?+oiHist[oiHist.length-2].sumOpenInterest:oiNow,oiDelta=oiPrev?(oiNow/oiPrev-1)*100:0;
+setMetric('openInterest',fmt(oiNow)+' '+coin,oiDelta>=0?'positive':'negative');setText('oiState','5 dk değişim '+(oiDelta>=0?'+':'')+oiDelta.toFixed(2)+'% · '+fmtUsd(oiNow*+mark.markPrice));
+const t=taker[taker.length-1],ls=globalLs[globalLs.length-1],tp=topPos[topPos.length-1],fr=funding[0];
+if(t){const ratio=+t.buySellRatio;setMetric('takerRatio',ratio.toFixed(3)+'x',ratio>1.05?'positive':ratio<.95?'negative':'neutral');setText('takerState','Alış '+fmt(+t.buyVol)+' / Satış '+fmt(+t.sellVol)+' '+coin+' · 5 dk');}
+if(ls){const ratio=+ls.longShortRatio;setMetric('longShort',ratio.toFixed(3)+'x',ratio>1.5?'negative':ratio<.67?'positive':'neutral');setText('lsState','Long '+(+ls.longAccount*100).toFixed(1)+'% · Short '+(+ls.shortAccount*100).toFixed(1)+'%');}
+if(tp){const ratio=+tp.longShortRatio;setMetric('topPosition',ratio.toFixed(3)+'x',ratio>1.5?'negative':ratio<.67?'positive':'neutral');setText('topState','Long '+(+tp.longAccount*100).toFixed(1)+'% · Short '+(+tp.shortAccount*100).toFixed(1)+'%');}
+if(fr){const rate=+fr.fundingRate*100;setMetric('funding',(rate>=0?'+':'')+rate.toFixed(4)+'%',rate>0.03?'negative':rate<-.03?'positive':'neutral');setText('fundingState','Mark '+fmt(+mark.markPrice)+' · sonraki fonlama periyodu');}
+setText('futuresUpdated','Son güncelleme: '+new Date().toLocaleTimeString('tr-TR',{hour12:false})+' · Binance USDⓈ-M Futures');
+}catch(e){setText('futuresUpdated','Futures verisi alınamadı: '+e.message);}
+}
+async function refreshBook(){
+try{const d=await futuresJson('/fapi/v1/depth?symbol='+coin+'USDT&limit=20');let bid=0,ask=0;
+for(const [p,q] of d.bids)bid+=+p*+q;for(const [p,q] of d.asks)ask+=+p*+q;
+const imbalance=(bid+ask)?(bid-ask)/(bid+ask)*100:0;
+setMetric('obImbalance',(imbalance>0?'+':'')+imbalance.toFixed(1)+'%',imbalance>8?'positive':imbalance< -8?'negative':'neutral');
+setText('obState','Alış '+fmtUsd(bid)+' · Satış '+fmtUsd(ask)+' · 20 kademe');
+}catch(e){setText('obState','Derinlik alınamadı: '+e.message);}
+}
+function connectFuturesStreams(){
+for(const ws of futuresSockets){try{ws.close();}catch(_){}}futuresSockets=[];flowTrades=[];
+const s=coin.toLowerCase()+'usdt';
+const agg=new WebSocket('wss://fstream.binance.com/ws/'+s+'@aggTrade');
+agg.onmessage=e=>{const d=JSON.parse(e.data),now=Date.now(),quote=+d.p*+d.q;flowTrades.push({time:now,quote,buy:!d.m});flowTrades=flowTrades.filter(x=>now-x.time<=60000);let buy=0,sell=0;for(const x of flowTrades){if(x.buy)buy+=x.quote;else sell+=x.quote;}const total=buy+sell,imb=total?(buy-sell)/total*100:0;setMetric('liveFlow',(imb>=0?'+':'')+imb.toFixed(1)+'%',imb>8?'positive':imb< -8?'negative':'neutral');setText('liveFlowState','Alıcı '+fmtUsd(buy)+' · Satıcı '+fmtUsd(sell)+' · 60 sn');};
+const liq=new WebSocket('wss://fstream.binance.com/ws/'+s+'@forceOrder');
+liq.onmessage=e=>{const d=JSON.parse(e.data).o;if(!d)return;const side=d.S==='SELL'?'LONG tasfiye':'SHORT tasfiye',value=+d.ap*+d.q;setMetric('liquidation',side,d.S==='SELL'?'negative':'positive');setText('liquidationState',fmtUsd(value)+' · '+fmt(+d.ap)+' fiyat');};
+agg.onclose=()=>{};liq.onclose=()=>{};futuresSockets.push(agg,liq);
+}
+function startFutures(){if(futuresRefreshTimer)clearInterval(futuresRefreshTimer);if(bookRefreshTimer)clearInterval(bookRefreshTimer);connectFuturesStreams();refreshFutures();refreshBook();futuresRefreshTimer=setInterval(refreshFutures,15000);bookRefreshTimer=setInterval(refreshBook,5000);}
 function calc(){
 const data=candles.filter(x=>x.closed);if(data.length<210)return;
 const closes=data.map(x=>x.close),e20=ema(closes,20),e50=ema(closes,50),e200=ema(closes,200),rvArr=rsi(closes),fast=ema(closes,12),slow=ema(closes,26),m=fast.map((v,i)=>v===null||slow[i]===null?null:v-slow[i]),sig=ema(m.map(v=>v??NaN),9),hist=m.map((v,i)=>v===null||sig[i]===null?null:v-sig[i]);
@@ -90,7 +143,7 @@ function updatePrice(p){lastPrice=p;setText('price',fmt(p));setText('tick',new D
 function connectPrice(){if(priceWs)priceWs.close();const s=coin.toLowerCase()+'usdt';priceWs=new WebSocket('wss://stream.binance.com:9443/ws/'+s+'@trade');priceWs.onopen=()=>{setText('connection','Binance Spot WebSocket bağlı');$('dot').style.background='var(--green)';};priceWs.onmessage=e=>{const d=JSON.parse(e.data);updatePrice(+d.p);};priceWs.onclose=()=>{$('dot').style.background='var(--red)';setText('connection','Fiyat bağlantısı yenileniyor');setTimeout(()=>{if(!priceWs||priceWs.readyState===WebSocket.CLOSED)connectPrice();},1200);};priceWs.onerror=()=>{try{priceWs.close();}catch(_){}};}
 function connectKline(){if(klineWs)klineWs.close();const s=coin.toLowerCase()+'usdt';klineWs=new WebSocket('wss://stream.binance.com:9443/ws/'+s+'@kline_'+tf);klineWs.onmessage=e=>{const k=JSON.parse(e.data).k,c={time:Math.floor(k.t/1000),open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.q,closed:k.x};const ix=candles.findIndex(x=>x.time===c.time);if(ix>=0)candles[ix]=c;else candles.push(c);candles=candles.slice(-500);candleSeries.update({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close});if(c.closed)calc();};}
 async function load(){const sym=coin+'USDT';setText('symbol',sym+' · '+tf.toUpperCase());try{const [rows,ticker,stats]=await Promise.all([fetch('https://api.binance.com/api/v3/klines?symbol='+sym+'&interval='+tf+'&limit=500',{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/price?symbol='+sym,{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/24hr?symbol='+sym,{cache:'no-store'}).then(r=>r.json())]);candles=rows.map(x=>({time:Math.floor(x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[7],closed:Number(x[6])<Date.now()}));candleSeries.setData(candles.map(x=>({time:x.time,open:x.open,high:x.high,low:x.low,close:x.close})));base24=+stats.prevClosePrice;updatePrice(+ticker.price);setText('volume',compact(+stats.quoteVolume));setText('high',fmt(+stats.highPrice));setText('low',fmt(+stats.lowPrice));chart.timeScale().fitContent();oscChart.timeScale().fitContent();calc();}catch(e){setText('reason','Binance mum verisi alınamadı: '+e.message);}}
-function switchMarket(){controls();candles=[];lastSignal='BEKLE';lastPrice=null;base24=null;setText('price','Yükleniyor…');chartInit();load().then(connectKline);connectPrice();}
+function switchMarket(){controls();candles=[];lastSignal='BEKLE';lastPrice=null;base24=null;setText('price','Yükleniyor…');chartInit();load().then(connectKline);connectPrice();startFutures();}
 if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}controls();chartInit();switchMarket();
 })();
 </script></body></html>
