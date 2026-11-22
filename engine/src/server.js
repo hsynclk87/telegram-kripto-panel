@@ -95,7 +95,7 @@ function updateCandle(symbol, exchange, k) {
 
 async function loadCandleHistory() {
   const results = await Promise.allSettled(SYMBOLS.map(async (symbol) => {
-    const endpoint = "https://fapi.binance.com/fapi/v1/klines?symbol="
+    const endpoint = "https://data-api.binance.vision/api/v3/klines?symbol="
       + encodeURIComponent(symbol) + "&interval=1m&limit=100";
     let history = [];
     try {
@@ -228,7 +228,7 @@ function startBinanceSpot() {
   }).join("/");
   return connectSocket(
     "binanceSpot",
-    "wss://stream.binance.com:9443/stream?streams=" + streams,
+    "wss://data-stream.binance.vision/stream?streams=" + streams,
     (packet) => {
       const d = packet.data;
       if (!d) return;
