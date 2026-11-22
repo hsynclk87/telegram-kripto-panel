@@ -10,7 +10,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "node --test",
-    "check": "node --check src/server.js && node --check src/analysis.js && node --check src/whales.js && node --check src/market-signals.js && node --check src/storage.js"
+    "check": "node --check src/server.js && node --check src/analysis.js && node --check src/whales.js && node --check src/market-signals.js && node --check src/storage.js && node --check src/market-data.js"
   },
   "dependencies": {
     "ws": "^8.18.3",
