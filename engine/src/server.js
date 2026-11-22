@@ -1,10 +1,12 @@
 import http from "node:http";
 import { WebSocket, WebSocketServer } from "ws";
 import { analyzeMarkets } from "./analysis.js";
+import { detectWhaleTrade } from "./whales.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
+const WHALE_TRADE_USD = Math.max(1, Number(process.env.WHALE_TRADE_USD || 100000));
 const SYMBOLS = (process.env.SYMBOLS || "BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT,DOGEUSDT")
   .split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
 
@@ -17,7 +19,8 @@ const state = {
   },
   markets: {},
   trades: [],
-  liquidations: []
+  liquidations: [],
+  whales: []
 };
 
 for (const symbol of SYMBOLS) {
@@ -63,6 +66,12 @@ function addTrade(trade) {
   state.trades.unshift(trade);
   if (state.trades.length > 3000) state.trades.length = 3000;
   publish("trade", trade);
+  const whale = detectWhaleTrade(trade, WHALE_TRADE_USD);
+  if (whale) {
+    state.whales.unshift(whale);
+    if (state.whales.length > 500) state.whales.length = 500;
+    publish("whale", whale);
+  }
 }
 
 function addLiquidation(item) {
@@ -149,7 +158,7 @@ function startBinanceSpot() {
           quantity: Number(d.q), quoteValue: Number(d.p) * Number(d.q),
           side: d.m ? "SELL" : "BUY", timestamp: d.T
         });
-      } else if (d.e === "depthUpdate") {
+      } else if (d.e === "depthUpdate" || (Array.isArray(d.b) && Array.isArray(d.a))) {
         updateMarket(symbol, "binanceSpot", {
           bids: (d.b || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)]),
           asks: (d.a || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)])
@@ -327,6 +336,12 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify(state.trades.slice(0, limit)));
   }
 
+  if (url.pathname === "/api/v1/whales") {
+    const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 50), 1), 200);
+    res.writeHead(200);
+    return res.end(JSON.stringify(state.whales.slice(0, limit)));
+  }
+
   if (url.pathname === "/api/v1/liquidations") {
     const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 50), 1), 200);
     res.writeHead(200);
@@ -342,7 +357,7 @@ wss.on("connection", (socket) => {
   clients.add(socket);
   socket.send(JSON.stringify({
     type: "snapshot", time: now(),
-    data: { markets: state.markets, exchanges: state.exchanges, analysis: getAnalysis() }
+    data: { markets: state.markets, exchanges: state.exchanges, analysis: getAnalysis(), latestWhales: state.whales.slice(0, 50) }
   }));
   socket.on("close", () => clients.delete(socket));
   socket.on("error", () => clients.delete(socket));
