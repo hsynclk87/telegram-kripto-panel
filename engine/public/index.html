@@ -160,8 +160,8 @@ if(pressure<-.10){dist+=2;distWhy.push('negatif hacim ağırlıklı mum baskıs�
 if(obv>.06){acc+=2;accWhy.push('OBV birikim eğimi');}if(obv>.14)acc++;
 if(obv<-.06){dist+=2;distWhy.push('OBV dağıtım eğimi');}if(obv<-.14)dist++;
 if(upShare>.56)acc++;if(downShare>.56)dist++;
-if(ret>-.025&&ret<2.0&&lowDist<2.2){acc++;accWhy.push('dip bölgesinde fiyat tutunması');}
-if(ret<.025&&ret>-2.0&&highDist<2.2){dist++;distWhy.push('tepe bölgesinde fiyat zorlanması');}
+if(ret>-2.5&&ret<2.0&&lowDist<2.2){acc++;accWhy.push('dip bölgesinde fiyat tutunması');}
+if(ret<2.5&&ret>-2.0&&highDist<2.2){dist++;distWhy.push('tepe bölgesinde fiyat zorlanması');}
 if(volRatio>1.15&&pressure>.04){acc++;accWhy.push('son 5 mumda hacim canlanması');}
 if(volRatio>1.15&&pressure<-.04){dist++;distWhy.push('son 5 mumda satış hacmi canlanması');}
 if(lowerWickVol/total>.28&&pressure>0){acc++;accWhy.push('alt fitilli mumlarda hacim');}
@@ -210,7 +210,7 @@ setText('signal',signal);$('signal').className='signalword '+(signal==='AL'?'pos
 setText('reason',why.length?why.join(' · '):'Fiyat dönüşü, pivot ve momentum koşulları henüz aynı yönde birleşmedi.');
 const earlyLabel=early.direction==='ACC'?'ERKEN BİRİKİM':early.direction==='DIST'?'ERKEN DAĞITIM':early.direction==='ACC_WATCH'?'BİRİKİM İZİ':early.direction==='DIST_WATCH'?'DAĞITIM İZİ':'NÖTR';
 setText('earlySignal',earlyLabel);$('earlySignal').className='signalword '+(early.direction.startsWith('ACC')?'positive':early.direction.startsWith('DIST')?'negative':'neutral');
-setText('earlyScore',early.score+'/9');setText('earlyReason',early.text);
+setText('earlyScore',early.score+'/10');setText('earlyReason',early.text);
 setText('earlyContext','Mum baskısı '+(early.pressure>=0?'+':'')+(early.pressure*100).toFixed(1)+'% · OBV '+(early.obv>=0?'+':'')+(early.obv*100).toFixed(1)+'% · 5 mum hacim '+(early.volRatio||1).toFixed(2)+'x');
 setText('support',support?fmt(support):'—');setText('resistance',resistance?fmt(resistance):'—');
 setText('srNote','Destek: '+(supportCtx?supportCtx.strength+' temaslı pivot kümesi':'pivot yok')+' · Direnç: '+(resistCtx?resistCtx.strength+' temaslı pivot kümesi':'pivot yok'));
