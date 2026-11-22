@@ -15,9 +15,9 @@ const SYMBOLS = (process.env.SYMBOLS || "BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT
 const state = {
   startedAt: new Date().toISOString(),
   exchanges: {
-    binanceSpot: { connected: false, lastMessageAt: null, reconnects: 0 },
-    binanceFutures: { connected: false, lastMessageAt: null, reconnects: 0 },
-    bybitLinear: { connected: false, lastMessageAt: null, reconnects: 0 }
+    binanceSpot: { connected: false, lastMessageAt: null, lastDataAt: null, lastMessageType: null, messageCounts: {}, lastError: null, reconnects: 0 },
+    binanceFutures: { connected: false, lastMessageAt: null, lastDataAt: null, lastMessageType: null, messageCounts: {}, lastError: null, reconnects: 0 },
+    bybitLinear: { connected: false, lastMessageAt: null, lastDataAt: null, lastMessageType: null, messageCounts: {}, lastError: null, reconnects: 0 }
   },
   markets: {},
   trades: [],
@@ -183,21 +183,32 @@ function connectSocket(name, url, onMessage, onOpen) {
     socket.on("open", () => {
       retry = 1000;
       state.exchanges[name].connected = true;
+      state.exchanges[name].lastError = null;
       log("info", name + " connected");
       if (onOpen) onOpen(socket);
       publish("connection", { exchange: name, connected: true });
     });
 
     socket.on("message", (buffer) => {
-      state.exchanges[name].lastMessageAt = now();
+      const exchangeState = state.exchanges[name];
+      exchangeState.lastMessageAt = now();
       try {
-        onMessage(JSON.parse(buffer.toString()));
+        const packet = JSON.parse(buffer.toString());
+        const event = packet?.data?.e || packet?.e || packet?.topic || packet?.op || "unknown";
+        exchangeState.lastMessageType = String(event);
+        exchangeState.messageCounts[event] = (exchangeState.messageCounts[event] || 0) + 1;
+        if (packet?.data?.e || packet?.e || packet?.topic?.startsWith("tickers.") || packet?.topic?.startsWith("publicTrade.") || packet?.topic?.startsWith("orderbook.") || packet?.topic?.startsWith("allLiquidation.")) {
+          exchangeState.lastDataAt = now();
+        }
+        onMessage(packet);
       } catch (error) {
+        exchangeState.lastError = error.message;
         log("warn", name + " message parse failed", { error: error.message });
       }
     });
 
     socket.on("error", (error) => {
+      state.exchanges[name].lastError = error.message;
       log("warn", name + " websocket error", { error: error.message });
     });
 
@@ -371,18 +382,56 @@ function startBinanceSpot() {
   );
 }
 
+async function bootstrapBinanceFutures() {
+  const base = "https://fapi.binance.com";
+  const results = await Promise.allSettled(SYMBOLS.map(async (symbol) => {
+    const [tickerResponse, premiumResponse, candlesResponse] = await Promise.all([
+      fetch(base + "/fapi/v1/ticker/price?symbol=" + encodeURIComponent(symbol), { signal: AbortSignal.timeout(10000), cache: "no-store" }),
+      fetch(base + "/fapi/v1/premiumIndex?symbol=" + encodeURIComponent(symbol), { signal: AbortSignal.timeout(10000), cache: "no-store" }),
+      fetch(base + "/fapi/v1/klines?symbol=" + encodeURIComponent(symbol) + "&interval=1m&limit=100", { signal: AbortSignal.timeout(12000), cache: "no-store" })
+    ]);
+    if (!tickerResponse.ok) throw new Error("Futures ticker HTTP " + tickerResponse.status);
+    if (!premiumResponse.ok) throw new Error("Futures premiumIndex HTTP " + premiumResponse.status);
+    if (!candlesResponse.ok) throw new Error("Futures klines HTTP " + candlesResponse.status);
+    const [ticker, premium, rows] = await Promise.all([tickerResponse.json(), premiumResponse.json(), candlesResponse.json()]);
+    const currentRow = rows[rows.length - 1];
+    const patch = {
+      lastPrice: toNumber(ticker.price),
+      markPrice: toNumber(premium.markPrice),
+      indexPrice: toNumber(premium.indexPrice),
+      fundingRate: toNumber(premium.lastFundingRate),
+      restSnapshotAt: now()
+    };
+    if (currentRow) {
+      patch.candle1m = {
+        openTime: Number(currentRow[0]), open: Number(currentRow[1]), high: Number(currentRow[2]),
+        low: Number(currentRow[3]), close: Number(currentRow[4]), volume: Number(currentRow[5]),
+        closeTime: Number(currentRow[6]), quoteVolume: Number(currentRow[7]),
+        closed: Number(currentRow[6]) < Date.now()
+      };
+    }
+    updateMarket(symbol, "binanceFutures", patch);
+    return { symbol, candles: rows.length, price: patch.lastPrice };
+  }));
+  for (const result of results) {
+    if (result.status === "fulfilled") log("info", "Binance Futures REST bootstrap loaded", result.value);
+    else log("warn", "Binance Futures REST bootstrap failed", { error: result.reason?.message });
+  }
+}
+
 function startBinanceFutures() {
   const streams = SYMBOLS.flatMap((s) => {
     const x = s.toLowerCase();
     return [x + "@aggTrade", x + "@depth@100ms", x + "@kline_1m", x + "@forceOrder"];
   }).join("/");
   for (const symbol of SYMBOLS) depthHandlers.binanceFutures.set(symbol, startBinanceBookSync("binanceFutures", symbol, "https://fapi.binance.com"));
+  void bootstrapBinanceFutures();
   return connectSocket(
     "binanceFutures",
     "wss://fstream.binance.com/stream?streams=" + streams,
     (packet) => {
-      const d = packet.data;
-      if (!d) return;
+      const d = packet?.data ?? packet;
+      if (!d || typeof d !== "object") return;
       if (d.e === "aggTrade") {
         addTrade({
           exchange: "Binance Futures", symbol: symbolFrom(d.s),
@@ -506,7 +555,13 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({
       ok: true, service: "telegram-kripto-analysis-engine",
       uptimeSeconds: Math.floor(process.uptime()),
-      startedAt: state.startedAt, storage: storage.enabled ? "postgresql" : "memory", exchanges: state.exchanges
+      startedAt: state.startedAt, storage: storage.enabled ? "postgresql" : "memory",
+      exchanges: state.exchanges,
+      dataStatus: Object.fromEntries(Object.entries(state.exchanges).map(([name, item]) => [name, {
+        connected: item.connected, lastMessageAt: item.lastMessageAt, lastDataAt: item.lastDataAt,
+        lastMessageType: item.lastMessageType, messageCounts: item.messageCounts,
+        lastError: item.lastError, reconnects: item.reconnects
+      }]))
     }));
   }
 
