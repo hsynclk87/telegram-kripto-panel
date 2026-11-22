@@ -321,8 +321,8 @@ function startBybit() {
           });
         } else if (topic.startsWith("orderbook.")) {
           const book = state.markets[symbol]?.bybitLinear || {};
-          const bids = d.type === "snapshot" ? [] : (book.bids || []).map(([p, q]) => [p, q]);
-          const asks = d.type === "snapshot" ? [] : (book.asks || []).map(([p, q]) => [p, q]);
+          const bids = packet.type === "snapshot" ? [] : (book.bids || []).map(([p, q]) => [p, q]);
+          const asks = packet.type === "snapshot" ? [] : (book.asks || []).map(([p, q]) => [p, q]);
           const mergeSide = (levels, updates, descending) => {
             const map = new Map(levels.map(([price, qty]) => [String(price), Number(qty)]));
             for (const [rawPrice, rawQty] of (updates || [])) {
