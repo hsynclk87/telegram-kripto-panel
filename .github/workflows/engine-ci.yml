@@ -1,0 +1,38 @@
+name: Analysis Engine CI
+
+on:
+  push:
+    branches: [main, "feature/analysis-engine-v1"]
+    paths:
+      - "engine/**"
+      - ".github/workflows/engine-ci.yml"
+  pull_request:
+    paths:
+      - "engine/**"
+      - ".github/workflows/engine-ci.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: engine/package-lock.json
+      - name: Install dependencies
+        run: npm install
+      - name: Syntax checks
+        run: |
+          node --check src/server.js
+          node --check src/analysis.js
+      - name: Unit tests
+        run: npm test
+      - name: Build Docker image
+        run: docker build -t telegram-kripto-analysis-engine .
