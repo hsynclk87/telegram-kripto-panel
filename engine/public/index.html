@@ -455,9 +455,9 @@ const n=data.length-1,c=data[n],prev=data[n-1],p=c.close,rv=rvArr[n],rPrev=rvArr
 const supportCtx=pivotContext(false,p,data,atrV),resistCtx=pivotContext(true,p,data,atrV),nearSupport=supportCtx&&Math.abs(p-supportCtx.price)<=atrV*1.25,nearResist=resistCtx&&Math.abs(p-resistCtx.price)<=atrV*1.25;
 const early=earlyFlowAnalysis(data,atrV);
 const advanced=advancedIndicators(data);updateAdvancedPanel(advanced,p);
-const replay=historicalReplay(data),regimeText=describeRegime(advanced,trendUp,trendDown,p),breakoutText=breakoutAssessment(data,volRatio,advanced);
 const body=Math.abs(c.close-c.open),lowerWick=Math.min(c.open,c.close)-c.low,upperWick=c.high-Math.max(c.open,c.close),bull=c.close>c.open,bear=c.close<c.open;
 const trendUp=e20[n]>e50[n]&&e50[n]>e200[n],trendDown=e20[n]<e50[n]&&e50[n]<e200[n];
+const replay=historicalReplay(data),regimeText=describeRegime(advanced,trendUp,trendDown,p),breakoutText=breakoutAssessment(data,volRatio,advanced);
 const priceTurnUp=bull&&c.close>prev.high&&lowerWick>body*.5,priceTurnDown=bear&&c.close<prev.low&&upperWick>body*.5;
 const rsiTurnUp=rv<48&&rv>rPrev,rsiTurnDown=rv>52&&rv<rPrev,momUp=mac>macPrev,momDown=mac<macPrev;
 let score=0,why=[];
