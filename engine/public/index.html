@@ -81,6 +81,9 @@ body{
 <div class="metric"><span>ADX / DI (14)</span><b id="adx">—</b><small id="adxState">Trend gücü ve yönü</small></div>
 <div class="metric"><span>BOLLINGER GENİŞLİĞİ</span><b id="bbWidth">—</b><small id="bbState">20 mum · 2 standart sapma</small></div>
 <div class="metric"><span>ATR GENİŞLEMESİ</span><b id="atrExpansion">—</b><small id="atrExpansionState">ATR14 / önceki ATR14</small></div>
+<div class="metric"><span>STOCH RSI</span><b id="stochRsi">—</b><small id="stochRsiState">RSI momentum zamanlaması</small></div>
+<div class="metric"><span>MARK / SPOT FARKI</span><b id="markSpot">—</b><small id="markSpotState">Vadeli referans fiyatı ile spot</small></div>
+<div class="metric"><span>AGGTRADE İŞLEM SAYISI</span><b id="tradeCount">—</b><small id="tradeCountState">Son 5 dakika · spot / futures</small></div>
 </div></section><section class="card"><div class="section">ERKEN BİRİKİM / DAĞITIM TESPİTİ</div><div class="signal"><div><div class="muted">HACİM BASKISI ANALİZİ</div><div class="signalword neutral" id="earlySignal">VERİ BEKLENİYOR</div></div><div class="pill" id="earlyScore">—</div></div><div class="muted" id="earlyReason" style="margin-top:9px;line-height:1.5">Birikim ve dağıtım koşulları hesaplanıyor.</div><div class="muted" id="earlyContext" style="margin-top:6px">Hacim ağırlıklı mum baskısı · OBV eğimi · fiyat konumu</div></section>
 <section class="card"><div class="section">BINANCE FUTURES · PİYASA AKIŞI</div><div class="grid">
 <div class="metric"><span>DERİNLİK DENGESİ</span><b id="obImbalance">—</b><small id="obState">Order book · ilk 20 kademe</small></div>
@@ -158,7 +161,7 @@ futuresState.globalLongShort=+ls.longShortRatio;futuresState.topLongShort=+tp.lo
 setMetric('longShort',futuresState.globalLongShort.toFixed(3)+'x',futuresState.globalLongShort>1.5?'negative':futuresState.globalLongShort<.67?'positive':'neutral');setText('lsState','Long '+(+ls.longAccount*100).toFixed(1)+'% · Short '+(+ls.shortAccount*100).toFixed(1)+'%');
 setMetric('topPosition',futuresState.topLongShort.toFixed(3)+'x',futuresState.topLongShort>1.5?'negative':futuresState.topLongShort<.67?'positive':'neutral');setText('topState','Top Trader · Long '+(+tp.longAccount*100).toFixed(1)+'% / Short '+(+tp.shortAccount*100).toFixed(1)+'%');setMetric('topChange',Number.isFinite(futuresState.topChange)?(futuresState.topChange>=0?'+':'')+futuresState.topChange.toFixed(3)+'x':'İlk ölçüm',futuresState.topChange>0?'positive':futuresState.topChange<0?'negative':'neutral');setText('topChangeState','Top Trader oranı değişimi · globalden bağımsız');
 }else{setText('lsState','Pozisyon oranı verisi alınamadı');setText('topState','Top trader verisi alınamadı');}
-if(markR.status==='fulfilled'){const mk=+markR.value.markPrice,ix=+markR.value.indexPrice;if(ix>0){advancedState.basis=(mk/ix-1)*100;setMetric('basis',(advancedState.basis>=0?'+':'')+advancedState.basis.toFixed(4)+'%',advancedState.basis>.08?'negative':advancedState.basis<-.08?'positive':'neutral');setText('basisState','Mark '+fmt(mk)+' · Index '+fmt(ix)+' · '+(advancedState.basis>0?'prim':advancedState.basis<0?'iskonto':'denge'));}}else{advancedState.basis=null;setText('basisState','Premium Index verisi alınamadı');}
+if(markR.status==='fulfilled'){const mk=+markR.value.markPrice,ix=+markR.value.indexPrice;if(ix>0){const markSpot=lastPrice?(mk/lastPrice-1)*100:null;setMetric('markSpot',markSpot===null?'—':(markSpot>=0?'+':'')+markSpot.toFixed(4)+'%',markSpot>.12?'negative':markSpot<-.12?'positive':'neutral');setText('markSpotState','Mark '+fmt(mk)+' · Spot '+fmt(lastPrice||NaN));advancedState.basis=(mk/ix-1)*100;setMetric('basis',(advancedState.basis>=0?'+':'')+advancedState.basis.toFixed(4)+'%',advancedState.basis>.08?'negative':advancedState.basis<-.08?'positive':'neutral');setText('basisState','Mark '+fmt(mk)+' · Index '+fmt(ix)+' · '+(advancedState.basis>0?'prim':advancedState.basis<0?'iskonto':'denge'));}}else{advancedState.basis=null;setText('basisState','Premium Index verisi alınamadı');}
 if(fundingR.status==='fulfilled'&&fundingR.value.length){
 const rate=+fundingR.value[0].fundingRate*100;futuresState.fundingRate=rate;futuresState.fundingAt=Date.now();updated++;
 setMetric('funding',(rate>=0?'+':'')+rate.toFixed(4)+'%',rate>0.03?'negative':rate<-.03?'positive':'neutral');setText('fundingState','Mark '+(markR.status==='fulfilled'?fmt(+markR.value.markPrice):'—')+' · fonlama oranı');
@@ -258,12 +261,13 @@ const tr=[],plus=[],minus=[];for(let i=1;i<n;i++){const p=data[i-1],c=data[i];tr
 const smooth=(arr,p)=>{let v=arr.slice(0,p).reduce((a,b)=>a+b,0);for(let i=p;i<arr.length;i++)v=v-v/p+arr[i];return v;};
 const p=14,trs=smooth(tr,p),pdm=smooth(plus,p),mdm=smooth(minus,p),pdi=trs?100*pdm/trs:0,mdi=trs?100*mdm/trs:0,dx= pdi+mdi?100*Math.abs(pdi-mdi)/(pdi+mdi):0;
 const dxs=[];for(let i=14;i<tr.length;i++){const t=smooth(tr.slice(0,i+1),p),pu=smooth(plus.slice(0,i+1),p),mi=smooth(minus.slice(0,i+1),p),a=t?100*pu/t:0,b=t?100*mi/t:0;dxs.push(a+b?100*Math.abs(a-b)/(a+b):0);}const adx=dxs.length?dxs.slice(-14).reduce((a,b)=>a+b,0)/Math.min(14,dxs.length):dx;
+const rsi14=rsi(data.map(x=>x.close),14),rsiNow=rsi14[n],rsiWindow=rsi14.slice(-14).filter(Number.isFinite),rsiMin=rsiWindow.length?Math.min(...rsiWindow):0,rsiMax=rsiWindow.length?Math.max(...rsiWindow):100,stochRsi=rsiMax===rsiMin?50:(rsiNow-rsiMin)/(rsiMax-rsiMin)*100;
 const closes=data.slice(-20).map(x=>x.close),mean=closes.reduce((a,b)=>a+b,0)/20,sd=Math.sqrt(closes.reduce((a,b)=>a+(b-mean)**2,0)/20),bbWidth=mean?sd*4/mean*100:0;
 const atrNow=tr.slice(-14).reduce((a,b)=>a+b,0)/Math.min(14,tr.length),atrPrev=tr.slice(-28,-14),atrOld=atrPrev.length?atrPrev.reduce((a,b)=>a+b,0)/atrPrev.length:atrNow,atrExpansion=atrOld?atrNow/atrOld:1;
 const lo=Math.min(...slice.map(x=>x.low)),hi=Math.max(...slice.map(x=>x.high)),bins=24,step=(hi-lo)/bins||Math.max(mean*.0001,.0000001),profile=Array(bins).fill(0);
 for(const x of slice){const tp=(x.high+x.low+x.close)/3,idx=Math.max(0,Math.min(bins-1,Math.floor((tp-lo)/step)));profile[idx]+=x.volume;}
 const order=profile.map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v),pocIdx=order[0].i,poc=lo+(pocIdx+.5)*step;let accumulated=0,selected=[];for(const q of order){selected.push(q.i);accumulated+=q.v;if(accumulated>=sumVol*.70)break;}const vaLow=lo+Math.min(...selected)*step,vaHigh=lo+(Math.max(...selected)+1)*step;
-return{vwap,mfi,cmf,adx,pdi,mdi,bbWidth,atrExpansion,poc,vaLow,vaHigh};
+return{vwap,mfi,cmf,adx,pdi,mdi,bbWidth,atrExpansion,stochRsi,poc,vaLow,vaHigh};
 }
 function updateAdvancedPanel(a,price){
 if(!a)return;
@@ -275,6 +279,8 @@ setMetric('cmf',(a.cmf>=0?'+':'')+a.cmf.toFixed(3),a.cmf>.08?'positive':a.cmf<-.
 setMetric('adx',a.adx.toFixed(1)+' · '+(a.pdi>a.mdi?'DI+':'DI-'),a.adx>=25?(a.pdi>a.mdi?'positive':'negative'):'neutral');setText('adxState',a.adx>=25?'Trend güçlü':a.adx>=18?'Trend gelişiyor':'Trend zayıf / yatay');
 setMetric('bbWidth',a.bbWidth.toFixed(2)+'%',a.bbWidth<2?'neutral':'');setText('bbState',a.bbWidth<2?'Daralma / sıkışma':a.bbWidth>6?'Geniş volatilite':'Normal bant genişliği');
 setMetric('atrExpansion',a.atrExpansion.toFixed(2)+'x',a.atrExpansion>1.25?'negative':a.atrExpansion<.8?'neutral':'');setText('atrExpansionState',a.atrExpansion>1.25?'Volatilite genişliyor':a.atrExpansion<.8?'Volatilite daralıyor':'ATR dengeli');
+setMetric('stochRsi',a.stochRsi.toFixed(1),a.stochRsi<20?'positive':a.stochRsi>80?'negative':'neutral');setText('stochRsiState',a.stochRsi<20?'Momentum aşırı satım':a.stochRsi>80?'Momentum aşırı alım':'Momentum orta bölgede');
+setMetric('tradeCount',String(spotFlowTrades.length)+' / '+String(flowTrades.length),'');setText('tradeCountState','Spot aggTrade / Futures aggTrade · 5 dk');
 }
 function combinedMarketExplanation(a,price,early,baseScore){
 const signals=[],reasons=[];let bull=0,bear=0,valid=0;
