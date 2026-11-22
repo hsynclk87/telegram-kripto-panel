@@ -97,20 +97,17 @@ function updateCandle(symbol, exchange, k) {
 
 async function loadCandleHistory() {
   const results = await Promise.allSettled(SYMBOLS.map(async (symbol) => {
-    const endpoint = "https://data-api.binance.vision/api/v3/klines?symbol="
-      + encodeURIComponent(symbol) + "&interval=1m&limit=100";
     let history = [];
     try {
-      const response = await fetch(endpoint, { signal: AbortSignal.timeout(12000) });
-      if (!response.ok) throw new Error("Binance kline history HTTP " + response.status);
-      const rows = await response.json();
+      const rows = await fetchBinanceJson("/fapi/v1/klines?symbol="
+        + encodeURIComponent(symbol) + "&interval=1m&limit=100");
       history = rows
-      .filter((row) => Number(row[6]) < Date.now())
-      .map((row) => ({
-        openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]),
-        low: Number(row[3]), close: Number(row[4]), volume: Number(row[5]),
-        closeTime: Number(row[6]), quoteVolume: Number(row[7]), closed: true
-      }));
+        .filter((row) => Number(row[6]) < Date.now())
+        .map((row) => ({
+          openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]),
+          low: Number(row[3]), close: Number(row[4]), volume: Number(row[5]),
+          closeTime: Number(row[6]), quoteVolume: Number(row[7]), closed: true
+        }));
     } catch (error) {
       log("warn", "Binance REST history unavailable; checking database", { symbol, error: error.message });
       try {
@@ -277,11 +274,17 @@ function startBinanceBookSync(exchange, symbol, restBase) {
     book.hasAppliedEvent = false;
     try {
       const path = exchange === "binanceSpot" ? "/api/v3/depth" : "/fapi/v1/depth";
-      const response = await fetch(restBase + path + "?symbol=" + encodeURIComponent(symbol) + "&limit=1000", {
-        signal: AbortSignal.timeout(10000), cache: "no-store"
-      });
-      if (!response.ok) throw new Error("Depth snapshot HTTP " + response.status);
-      const snapshot = await response.json();
+      const query = "?symbol=" + encodeURIComponent(symbol) + "&limit=1000";
+      let snapshot;
+      if (exchange === "binanceFutures") {
+        snapshot = await fetchBinanceJson(path + query, 10000);
+      } else {
+        const response = await fetch(restBase + path + query, {
+          signal: AbortSignal.timeout(10000), cache: "no-store"
+        });
+        if (!response.ok) throw new Error("Depth snapshot HTTP " + response.status);
+        snapshot = await response.json();
+      }
       book.bids = new Map((snapshot.bids || []).map(([p, q]) => [String(p), Number(q)]));
       book.asks = new Map((snapshot.asks || []).map(([p, q]) => [String(p), Number(q)]));
       book.lastUpdateId = Number(snapshot.lastUpdateId);
