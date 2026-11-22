@@ -221,11 +221,124 @@ function connectSocket(name, url, onMessage, onOpen) {
   };
 }
 
+
+const binanceBooks = { binanceSpot: new Map(), binanceFutures: new Map() };
+const depthHandlers = { binanceSpot: new Map(), binanceFutures: new Map() };
+
+function publishBinanceBook(exchange, symbol, book) {
+  const bids = [...book.bids.entries()].map(([price, qty]) => [Number(price), qty])
+    .sort((a, b) => b[0] - a[0]).slice(0, 50);
+  const asks = [...book.asks.entries()].map(([price, qty]) => [Number(price), qty])
+    .sort((a, b) => a[0] - b[0]).slice(0, 50);
+  updateMarket(symbol, exchange, {
+    bids, asks, orderbookUpdateId: book.lastUpdateId,
+    orderbookExchangeTime: book.exchangeTime || null,
+    orderbookReceivedAt: book.receivedAt || Date.now(),
+    orderbookSynced: true
+  });
+}
+
+function startBinanceBookSync(exchange, symbol, restBase) {
+  const book = {
+    bids: new Map(), asks: new Map(), lastUpdateId: 0,
+    initialized: false, syncing: false, buffer: [], exchangeTime: null, receivedAt: null
+  };
+  binanceBooks[exchange].set(symbol, book);
+
+  const applySide = (side, updates) => {
+    for (const [rawPrice, rawQty] of updates || []) {
+      const price = String(rawPrice), qty = Number(rawQty);
+      if (!Number.isFinite(Number(price)) || !Number.isFinite(qty)) continue;
+      if (qty === 0) side.delete(price);
+      else side.set(price, qty);
+    }
+  };
+
+  const resync = async () => {
+    if (book.syncing) return;
+    book.syncing = true;
+    book.initialized = false;
+    try {
+      const path = exchange === "binanceSpot" ? "/api/v3/depth" : "/fapi/v1/depth";
+      const response = await fetch(restBase + path + "?symbol=" + encodeURIComponent(symbol) + "&limit=1000", {
+        signal: AbortSignal.timeout(10000), cache: "no-store"
+      });
+      if (!response.ok) throw new Error("Depth snapshot HTTP " + response.status);
+      const snapshot = await response.json();
+      book.bids = new Map((snapshot.bids || []).map(([p, q]) => [String(p), Number(q)]));
+      book.asks = new Map((snapshot.asks || []).map(([p, q]) => [String(p), Number(q)]));
+      book.lastUpdateId = Number(snapshot.lastUpdateId);
+      const pending = book.buffer.splice(0).sort((a, b) => Number(a.U) - Number(b.U));
+      const firstIndex = pending.findIndex((event) =>
+        Number(event.U) <= book.lastUpdateId + 1 && Number(event.u) >= book.lastUpdateId + 1
+      );
+      if (firstIndex < 0 && pending.length) {
+        book.buffer.push(...pending);
+        book.syncing = false;
+        return void resync();
+      }
+      const usable = firstIndex >= 0 ? pending.slice(firstIndex) : [];
+      for (const event of usable) {
+        if (Number(event.u) <= book.lastUpdateId) continue;
+        if (exchange === "binanceFutures" && event.pu != null && Number(event.pu) !== book.lastUpdateId) {
+          book.buffer.push(...usable.slice(usable.indexOf(event)));
+          book.syncing = false;
+          return void resync();
+        }
+        if (exchange === "binanceSpot" && Number(event.U) > book.lastUpdateId + 1) {
+          book.buffer.push(...usable.slice(usable.indexOf(event)));
+          book.syncing = false;
+          return void resync();
+        }
+        applySide(book.bids, event.b);
+        applySide(book.asks, event.a);
+        book.lastUpdateId = Number(event.u);
+        book.exchangeTime = Number(event.E || event.T || 0) || null;
+        book.receivedAt = Date.now();
+      }
+      book.initialized = true;
+      publishBinanceBook(exchange, symbol, book);
+    } catch (error) {
+      log("warn", "Binance order book snapshot failed", { exchange, symbol, error: error.message });
+      setTimeout(resync, 1500).unref?.();
+    } finally {
+      book.syncing = false;
+    }
+  };
+
+  const onDepth = (event) => {
+    if (!book.initialized) {
+      book.buffer.push(event);
+      if (book.buffer.length > 5000) book.buffer.splice(0, book.buffer.length - 5000);
+      return;
+    }
+    if (Number(event.u) <= book.lastUpdateId) return;
+    const gap = exchange === "binanceFutures"
+      ? event.pu != null && Number(event.pu) !== book.lastUpdateId
+      : Number(event.U) > book.lastUpdateId + 1;
+    if (gap) {
+      book.buffer.push(event);
+      void resync();
+      return;
+    }
+    applySide(book.bids, event.b);
+    applySide(book.asks, event.a);
+    book.lastUpdateId = Number(event.u);
+    book.exchangeTime = Number(event.E || event.T || 0) || null;
+    book.receivedAt = Date.now();
+    publishBinanceBook(exchange, symbol, book);
+  };
+
+  void resync();
+  return onDepth;
+}
+
 function startBinanceSpot() {
   const streams = SYMBOLS.flatMap((s) => {
     const x = s.toLowerCase();
-    return [x + "@trade", x + "@depth20@100ms", x + "@kline_1m"];
+    return [x + "@trade", x + "@depth@100ms", x + "@kline_1m"];
   }).join("/");
+  for (const symbol of SYMBOLS) depthHandlers.binanceSpot.set(symbol, startBinanceBookSync("binanceSpot", symbol, "https://data-api.binance.vision"));
   return connectSocket(
     "binanceSpot",
     "wss://data-stream.binance.vision/stream?streams=" + streams,
@@ -239,11 +352,8 @@ function startBinanceSpot() {
           quantity: Number(d.q), quoteValue: Number(d.p) * Number(d.q),
           side: d.m ? "SELL" : "BUY", timestamp: d.T
         });
-      } else if (d.e === "depthUpdate" || (Array.isArray(d.b) && Array.isArray(d.a)) || (Array.isArray(d.b) && Array.isArray(d.a))) {
-        updateMarket(symbol, "binanceSpot", {
-          bids: (d.b || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)]),
-          asks: (d.a || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)])
-        });
+      } else if (d.e === "depthUpdate") {
+        depthHandlers.binanceSpot.get(symbol)?.(d);
       } else if (d.e === "kline") {
         const k = d.k;
         updateCandle(symbol, "binanceSpot", k);
@@ -255,8 +365,9 @@ function startBinanceSpot() {
 function startBinanceFutures() {
   const streams = SYMBOLS.flatMap((s) => {
     const x = s.toLowerCase();
-    return [x + "@aggTrade", x + "@depth20@100ms", x + "@kline_1m", x + "@forceOrder"];
+    return [x + "@aggTrade", x + "@depth@100ms", x + "@kline_1m", x + "@forceOrder"];
   }).join("/");
+  for (const symbol of SYMBOLS) depthHandlers.binanceFutures.set(symbol, startBinanceBookSync("binanceFutures", symbol, "https://fapi.binance.com"));
   return connectSocket(
     "binanceFutures",
     "wss://fstream.binance.com/stream?streams=" + streams,
@@ -270,11 +381,8 @@ function startBinanceFutures() {
           quoteValue: Number(d.p) * Number(d.q),
           side: d.m ? "SELL" : "BUY", timestamp: d.T, aggregate: true
         });
-      } else if (d.e === "depthUpdate" || (Array.isArray(d.b) && Array.isArray(d.a))) {
-        updateMarket(d.s, "binanceFutures", {
-          bids: (d.b || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)]),
-          asks: (d.a || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)])
-        });
+      } else if (d.e === "depthUpdate") {
+        depthHandlers.binanceFutures.get(symbolFrom(d.s))?.(d);
       } else if (d.e === "kline") {
         const k = d.k;
         updateCandle(d.s, "binanceFutures", k);
