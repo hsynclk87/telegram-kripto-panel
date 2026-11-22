@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Syntax checks
-        run: npm run check
+        run: npm run check && node --check mini-app-integration.js
       - name: Unit tests
         run: npm test
       - name: Build Docker image
