@@ -105,15 +105,15 @@ agg.onclose=()=>{};liq.onclose=()=>{};futuresSockets.push(agg,liq);
 }
 function startFutures(){if(futuresRefreshTimer)clearInterval(futuresRefreshTimer);if(bookRefreshTimer)clearInterval(bookRefreshTimer);connectFuturesStreams();refreshFutures();refreshBook();futuresRefreshTimer=setInterval(refreshFutures,15000);bookRefreshTimer=setInterval(refreshBook,5000);}
 function futuresAdjustment(c,prev){
-const now=Date.now(),parts=[];let score=0,votes=0;
+const now=Date.now(),parts=[],classes=new Set();let score=0;
 const fresh=(at,maxAge)=>at>0&&now-at<=maxAge;
-if(fresh(futuresState.takerAt,45000)&&Number.isFinite(futuresState.takerRatio)){if(futuresState.takerRatio>1.08){score+=.55;votes++;parts.push('taker alış baskısı');}else if(futuresState.takerRatio<.92){score-=.55;votes++;parts.push('taker satış baskısı');}}
-if(fresh(futuresState.flowAt,15000)&&Number.isFinite(futuresState.flowImbalance)){if(futuresState.flowImbalance>12){score+=.45;votes++;parts.push('agresif alıcı akışı');}else if(futuresState.flowImbalance< -12){score-=.45;votes++;parts.push('agresif satıcı akışı');}}
-if(fresh(futuresState.bookAt,15000)&&Number.isFinite(futuresState.bookImbalance)){if(futuresState.bookImbalance>12){score+=.35;votes++;parts.push('alış derinliği güçlü');}else if(futuresState.bookImbalance< -12){score-=.35;votes++;parts.push('satış derinliği güçlü');}}
-if(fresh(futuresState.oiAt,45000)&&Number.isFinite(futuresState.oiDelta)){const move=(c.close/prev.close-1)*100;if(tf!=='1w'&&futuresState.oiDelta>.15&&move>.10){score+=.35;votes++;parts.push('fiyat ve açık pozisyon birlikte yükseliyor');}else if(futuresState.oiDelta>.15&&move<-.10){score-=.35;votes++;parts.push('fiyat düşerken açık pozisyon artıyor');}}
+if(fresh(futuresState.takerAt,45000)&&Number.isFinite(futuresState.takerRatio)){if(futuresState.takerRatio>1.08){score+=.55;classes.add('flow');parts.push('taker alış baskısı');}else if(futuresState.takerRatio<.92){score-=.55;classes.add('flow');parts.push('taker satış baskısı');}}
+if(fresh(futuresState.flowAt,15000)&&Number.isFinite(futuresState.flowImbalance)){if(futuresState.flowImbalance>12){score+=.45;classes.add('flow');parts.push('agresif alıcı akışı');}else if(futuresState.flowImbalance< -12){score-=.45;classes.add('flow');parts.push('agresif satıcı akışı');}}
+if(fresh(futuresState.bookAt,15000)&&Number.isFinite(futuresState.bookImbalance)){if(futuresState.bookImbalance>12){score+=.35;classes.add('book');parts.push('alış derinliği güçlü');}else if(futuresState.bookImbalance< -12){score-=.35;classes.add('book');parts.push('satış derinliği güçlü');}}
+if(fresh(futuresState.oiAt,45000)&&Number.isFinite(futuresState.oiDelta)){const move=(c.close/prev.close-1)*100;if(tf!=='1w'&&futuresState.oiDelta>.15&&move>.10){score+=.35;classes.add('oi');parts.push('fiyat ve açık pozisyon birlikte yükseliyor');}else if(futuresState.oiDelta>.15&&move<-.10){score-=.35;classes.add('oi');parts.push('fiyat düşerken açık pozisyon artıyor');}}
 if(fresh(futuresState.fundingAt,120000)&&Number.isFinite(futuresState.fundingRate)){if(futuresState.fundingRate>.04){score-=.2;parts.push('long tarafı kalabalık (funding)');}else if(futuresState.fundingRate<-.04){score+=.2;parts.push('short tarafı kalabalık (funding)');}}
 if(fresh(futuresState.sentimentAt,90000)&&Number.isFinite(futuresState.globalLongShort)&&Number.isFinite(futuresState.topLongShort)){if(futuresState.globalLongShort>2&&futuresState.topLongShort>1.5){score-=.2;parts.push('long pozisyon yoğunluğu yüksek');}else if(futuresState.globalLongShort<.5&&futuresState.topLongShort<.67){score+=.2;parts.push('short pozisyon yoğunluğu yüksek');}}
-if(votes<2)return{score:0,text:'Futures teyidi yetersiz ('+votes+'/2 bağımsız akış); etkisiz'};
+if(classes.size<2)return{score:0,text:'Futures teyidi yetersiz ('+classes.size+'/2 bağımsız veri grubu); etkisiz'};
 score=Math.max(-1.5,Math.min(1.5,score));return{score,text:(score>=0?'+':'')+score.toFixed(2)+' · '+(parts.length?parts.join(', '):'nötr')};
 }
 function calc(){
