@@ -46,12 +46,14 @@ function publish(type, payload) {
 }
 
 function symbolFrom(raw) {
-  return String(raw || "").replace(/USDT$/i, "").toUpperCase() + "USDT";
+  if (!raw) return null;
+  const value = String(raw).toUpperCase();
+  return value.endsWith("USDT") ? value : value + "USDT";
 }
 
 function updateMarket(symbol, exchange, patch) {
   const key = symbolFrom(symbol);
-  if (!state.markets[key]) return;
+  if (!key || !state.markets[key]) return;
   state.markets[key][exchange] = { ...state.markets[key][exchange], ...patch };
   state.markets[key].updatedAt = now();
   publish("market", { symbol: key, exchange, ...state.markets[key][exchange] });
@@ -208,7 +210,7 @@ function startBybit() {
       if (!packet.topic || !Array.isArray(packet.data)) return;
       const topic = packet.topic;
       for (const d of packet.data) {
-        const symbol = symbolFrom(d.s);
+        const symbol = symbolFrom(d.s || d.symbol || topic.split(".").at(-1));
         if (topic.startsWith("tickers.")) {
           updateMarket(symbol, "bybitLinear", {
             lastPrice: Number(d.lastPrice),
@@ -231,7 +233,7 @@ function startBybit() {
             bids: (d.b || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)]),
             asks: (d.a || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)])
           });
-        } else if (topic.startsWith("allLiquidation.") || topic.startsWith("liquidation.")) {
+        } else if (topic.startsWith("allLiquidation.")) {
           addLiquidation({
             exchange: "Bybit Linear", symbol, side: d.S,
             price: Number(d.p), quantity: Number(d.v),
@@ -247,7 +249,7 @@ function startBybit() {
           "tickers." + s,
           "publicTrade." + s,
           "orderbook.50." + s,
-          "liquidation." + s
+          "allLiquidation." + s
         ])
       }));
       const heartbeat = setInterval(() => {
