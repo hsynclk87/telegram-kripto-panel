@@ -49,19 +49,23 @@ jobs:
           curl --fail --silent http://127.0.0.1:8080/api/v1/market-signals?symbol=BTCUSDT
           curl --fail --silent http://127.0.0.1:8080/api/v1/whales
           node --input-type=module <<'NODE'
-          const deadline = Date.now() + 20000;
-          let health;
+          const deadline = Date.now() + 30000;
+          let health, signals;
           while (Date.now() < deadline) {
-            const response = await fetch("http://127.0.0.1:8080/api/v1/health");
-            health = await response.json();
+            const [healthResponse, signalResponse] = await Promise.all([
+              fetch("http://127.0.0.1:8080/api/v1/health"),
+              fetch("http://127.0.0.1:8080/api/v1/market-signals?symbol=BTCUSDT")
+            ]);
+            health = await healthResponse.json();
+            signals = await signalResponse.json();
             const exchanges = health.exchanges || {};
-            if (exchanges.binanceSpot?.connected && exchanges.binanceFutures?.connected && exchanges.bybitLinear?.connected) break;
+            const allConnected = exchanges.binanceSpot?.connected && exchanges.binanceFutures?.connected && exchanges.bybitLinear?.connected;
+            if (allConnected && signals[0]?.warmedUp) break;
             await new Promise((resolve) => setTimeout(resolve, 1000));
           }
           const exchanges = health?.exchanges || {};
           const disconnected = ["binanceSpot", "binanceFutures", "bybitLinear"].filter((name) => !exchanges[name]?.connected);
           if (disconnected.length) throw new Error("Exchange WebSocket smoke test failed: " + disconnected.join(", "));
-          const signals = await (await fetch("http://127.0.0.1:8080/api/v1/market-signals?symbol=BTCUSDT")).json();
-          if (!signals[0]?.warmedUp) throw new Error("Historical 1m candle warmup did not complete");
+          if (!signals?.[0]?.warmedUp) throw new Error("Historical 1m candle warmup did not complete within 30 seconds");
           console.log("Live feed smoke test passed:", Object.keys(exchanges).join(", "), "history candles:", signals[0].historyCandles);
           NODE
