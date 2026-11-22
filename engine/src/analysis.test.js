@@ -44,3 +44,32 @@ test("ignores trades outside the five-minute analysis window", () => {
   assert.equal(result.inputs.buyQuote5m, 0);
   assert.equal(result.signal, "INSUFFICIENT_DATA");
 });
+
+test("does not label a Spot and Bybit-only mix as HIGH without Futures confirmation", () => {
+  const now = 1_800_000_000_000;
+  const markets = {
+    BTCUSDT: {
+      bybitLinear: { bids: [[100, 100]], asks: [[101, 1]], fundingRate: 0.00001 },
+      binanceSpot: { candle1m: { open: 100, close: 100.2 } }
+    }
+  };
+  const trades = Array.from({ length: 5 }, (_, i) => ({
+    symbol: "BTCUSDT", side: "BUY", quoteValue: 1000, timestamp: now - i * 1000
+  }));
+  const result = analyzeMarkets({
+    symbols: ["BTCUSDT"], markets, trades, liquidations: [], nowMs: now
+  })[0];
+  assert.equal(result.quality, "MEDIUM");
+  assert.notEqual(result.signal, "INSUFFICIENT_DATA");
+});
+
+test("requires both trade flow and order book for directional signals", () => {
+  const now = 1_800_000_000_000;
+  const result = analyzeMarkets({
+    symbols: ["BTCUSDT"],
+    markets: { BTCUSDT: { binanceSpot: { candle1m: { open: 100, close: 101 } } } },
+    trades: [], liquidations: [], nowMs: now
+  })[0];
+  assert.equal(result.signal, "INSUFFICIENT_DATA");
+  assert.equal(result.quality, "LOW");
+});
