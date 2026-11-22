@@ -11,19 +11,15 @@ on:
 
 jobs:
   deploy:
-    if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render deployment
+      - name: Trigger Render deployment when configured
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "::notice::Render service is not connected yet. Add the deploy hook URL as the RENDER_DEPLOY_HOOK GitHub Actions secret."
+            exit 0
+          fi
           curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK"
           echo "Render deployment triggered."
-  setup-required:
-    if: ${{ secrets.RENDER_DEPLOY_HOOK == '' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Explain required setup
-        run: |
-          echo "::notice::Add the Render deploy hook URL as the GitHub Actions secret RENDER_DEPLOY_HOOK after creating the Render service."
