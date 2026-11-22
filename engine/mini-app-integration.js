@@ -235,7 +235,8 @@
       bids.forEach(x=>rows.push("<tr><td class='ep-buy'>BID</td><td class='ep-right'>"+fmt(x[0],2)+"</td><td class='ep-right'>"+fmt(x[1],5)+"</td></tr>"));
     }
     $("epOrderBook").innerHTML=rows.join("")||'<tr><td class="ep-muted">Emir defteri verisi bekleniyor</td></tr>';
-    const received=Math.max(Number(spot?.orderbookReceivedAt||0),Number(futures?.orderbookReceivedAt||0));\n    $("epBookUpdated").textContent=selected+" · Binance defter eşitlemesi: "+(spot?.orderbookSynced&&futures?.orderbookSynced?"tamam":"bekleniyor")+" · Son veri: "+(received?new Date(received).toLocaleTimeString("tr-TR",{hour12:false}):"—");
+    const received=Math.max(Number(spot?.orderbookReceivedAt||0),Number(futures?.orderbookReceivedAt||0));
+    $("epBookUpdated").textContent=selected+" · Binance defter eşitlemesi: "+(spot?.orderbookSynced&&futures?.orderbookSynced?"tamam":"bekleniyor")+" · Son veri: "+(received?new Date(received).toLocaleTimeString("tr-TR",{hour12:false}):"—");
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",mount); else mount();
 })();
