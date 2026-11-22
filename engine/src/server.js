@@ -27,6 +27,7 @@ for (const symbol of SYMBOLS) {
 }
 
 const clients = new Set();
+const upstreamStops = [];
 const now = () => new Date().toISOString();
 const toNumber = (value) => {
   const number = Number(value);
@@ -83,6 +84,7 @@ function connectSocket(name, url, onMessage, onOpen) {
   let socket;
   let retry = 1000;
   let stopped = false;
+  let reconnectTimer;
 
   const connect = () => {
     if (stopped) return;
@@ -110,19 +112,21 @@ function connectSocket(name, url, onMessage, onOpen) {
     });
 
     socket.on("close", () => {
+      if (stopped) return;
       state.exchanges[name].connected = false;
       state.exchanges[name].reconnects += 1;
       publish("connection", { exchange: name, connected: false });
       const delay = retry;
       retry = Math.min(retry * 2, 30000);
       log("warn", name + " disconnected; reconnect scheduled", { delayMs: delay });
-      setTimeout(connect, delay);
+      reconnectTimer = setTimeout(connect, delay);
     });
   };
 
   connect();
   return () => {
     stopped = true;
+    clearTimeout(reconnectTimer);
     if (socket && socket.readyState < WebSocket.CLOSING) socket.close();
   };
 }
@@ -348,14 +352,13 @@ const analysisTimer = setInterval(() => publish("analysis", getAnalysis()), 5000
 
 server.listen(PORT, HOST, () => {
   log("info", "Analysis engine API listening", { host: HOST, port: PORT, symbols: SYMBOLS });
-  startBinanceSpot();
-  startBinanceFutures();
-  startBybit();
+  upstreamStops.push(startBinanceSpot(), startBinanceFutures(), startBybit());
 });
 
 function shutdown(signal) {
   log("info", signal + " received; shutting down");
   clearInterval(analysisTimer);
+  for (const stop of upstreamStops) stop();
   for (const client of wss.clients) client.close();
   wss.close();
   server.close(() => process.exit(0));
