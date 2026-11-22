@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kripto Panel</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, system-ui, Segoe UI, Roboto, sans-serif; background: #111418; color: #e8eaed; padding: 12px; }
+  h1 { font-size: 18px; margin: 4px 0 10px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  button, select { background: #1e242c; color: #e8eaed; border: 1px solid #2c343e; border-radius: 8px; padding: 8px 10px; font-size: 14px; }
+  button.on { background: #2b6cb0; border-color: #2b6cb0; }
+  .card { background: #1a1f26; border: 1px solid #2c343e; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+  .big { font-size: 26px; font-weight: 600; }
+  .muted { color: #9aa4af; font-size: 12px; }
+  .green { color: #4ade80; }
+  .red { color: #f87171; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td { padding: 5px 0; border-bottom: 1px solid #242b34; }
+  td.r { text-align: right; }
+  .note { font-size: 12px; color: #9aa4af; margin-top: 8px; }
+</style>
+</head>
+<body>
+<h1>Kripto Panel</h1>
+
+<div class="row" id="coins"></div>
+<div class="row" id="tfs"></div>
+
+<div class="card">
+  <div class="muted" id="sym">-</div>
+  <div class="big" id="price">-</div>
+  <div id="change" class="muted">-</div>
+  <div class="muted" id="range">-</div>
+</div>
+
+<div class="card">
+  <div class="muted">Seviyeler</div>
+  <table id="levels"><tr><td class="muted">yükleniyor...</td></tr></table>
+</div>
+
+<div class="card">
+  <div class="muted">Delta (son 10 mum)</div>
+  <table id="delta"><tr><td class="muted">yükleniyor...</td></tr></table>
+</div>
+
+<div class="card">
+  <div class="muted">Vadeli fonlama</div>
+  <table id="funding"><tr><td class="muted">yükleniyor...</td></tr></table>
+</div>
+
+<div class="note" id="updated"></div>
+<div class="note">Bilgi amaçlıdır, al-sat tavsiyesi değildir. Veriler Binance'ten anlık çekilir.</div>
+
+<script>
+const COINS = ['BTC', 'XRP', 'ETH', 'SOL'];
+const TFS = { '15m': 1000, '1h': 1000, '4h': 1000, '1d': 730, '1w': 300 };
+const TFLABEL = { '15m': '15 dk', '1h': '1 saat', '4h': '4 saat', '1d': 'Günlük', '1w': 'Haftalık' };
+const TOL = 0.003, K = 3;
+
+let coin = 'BTC', tf = '4h';
+
+if (window.Telegram && Telegram.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
+
+const fmt = (n) => (n >= 1 ? n.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) : Number(n).toPrecision(4));
+const mln = (x) => (x >= 0 ? '+' : '-') + (Math.abs(x) / 1e6).toFixed(2) + 'M';
+
+function drawButtons() {
+  document.getElementById('coins').innerHTML = COINS.map(c =>
+    '<button class="' + (c === coin ? 'on' : '') + '" onclick="setCoin(\'' + c + '\')">' + c + '</button>').join('');
+  document.getElementById('tfs').innerHTML = Object.keys(TFS).map(t =>
+    '<button class="' + (t === tf ? 'on' : '') + '" onclick="setTf(\'' + t + '\')">' + TFLABEL[t] + '</button>').join('');
+}
+function setCoin(c) { coin = c; drawButtons(); load(); }
+function setTf(t) { tf = t; drawButtons(); load(); }
+
+function levelsFrom(k) {
+  const price = k[k.length - 1].c;
+  const piv = [];
+  for (let i = K; i < k.length - K; i++) {
+    let isH = true, isL = true;
+    for (let j = i - K; j <= i + K; j++) {
+      if (j === i) continue;
+      if (k[j].h >= k[i].h) isH = false;
+      if (k[j].l <= k[i].l) isL = false;
+    }
+    if (isH) piv.push(k[i].h);
+    if (isL) piv.push(k[i].l);
+  }
+  piv.sort((a, b) => a - b);
+  const groups = [];
+  for (const p of piv) {
+    const g = groups[groups.length - 1];
+    if (g && p <= g.start * (1 + TOL)) g.vals.push(p);
+    else groups.push({ start: p, vals: [p] });
+  }
+  return groups.map(g => {
+    const lvl = g.vals.reduce((a, b) => a + b, 0) / g.vals.length;
+    let touches = 0;
+    for (const x of k) if (x.l <= lvl * (1 + TOL) && x.h >= lvl * (1 - TOL)) touches++;
+    return { lvl, touches, price };
+  });
+}
+
+function pick(lv, price, above) {
+  const side = lv.filter(x => (above ? x.lvl > price * 1.001 : x.lvl < price * 0.999));
+  const sorted = (minT) => side.filter(x => x.touches >= minT)
+    .sort((a, b) => (above ? a.lvl - b.lvl : b.lvl - a.lvl));
+  let c = sorted(3);
+  if (c.length < 3) c = sorted(2);
+  if (c.length < 3) c = sorted(1);
+  return c.slice(0, 3);
+}
+
+async function loadTicker(sym) {
+  const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=' + sym);
+  return r.json();
+}
+
+async function loadKlines(sym, interval, limit) {
+  const r = await fetch('https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=' + interval + '&limit=' + limit);
+  return r.json();
+}
+
+async function loadFunding(sym) {
+  const [pi, hist, oi] = await Promise.all([
+    fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=' + sym).then(r => r.ok ? r.json() : null),
+    fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=' + sym + '&limit=30').then(r => r.ok ? r.json() : null),
+    fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=' + sym).then(r => r.ok ? r.json() : null)
+  ]);
+  return { pi, hist, oi };
+}
+
+function fundingComment(p) {
+  if (p > 0.05) return 'Aşırı pozitif: long tarafı kalabalık';
+  if (p > 0.01) return 'Hafif pozitif';
+  if (p >= -0.01) return 'Nötr';
+  if (p >= -0.05) return 'Hafif negatif';
+  return 'Aşırı negatif: short tarafı kalabalık';
+}
+
+async function load() {
+  const sym = coin + 'USDT';
+  document.getElementById('sym').textContent = sym + ' | ' + TFLABEL[tf];
+  try {
+    const [t, kl, f] = await Promise.all([
+      loadTicker(sym),
+      loadKlines(sym, tf, TFS[tf] + 1),
+      loadFunding(sym)
+    ]);
+
+    // Fiyat
+    const last = Number(t.lastPrice);
+    const chg = Number(t.priceChangePercent);
+    document.getElementById('price').textContent = fmt(last);
+    const ch = document.getElementById('change');
+    ch.textContent = '24s: %' + chg.toFixed(2);
+    ch.className = chg >= 0 ? 'green' : 'red';
+    document.getElementById('range').textContent = '24s aralık: ' + fmt(Number(t.lowPrice)) + ' - ' + fmt(Number(t.highPrice));
+
+    // Seviyeler
+    const k = kl.map(c => ({ h: +c[2], l: +c[3], c: +c[4] }));
+    const price = k[k.length - 1].c;
+    const lv = levelsFrom(k);
+    const res = pick(lv, price, true);
+    const sup = pick(lv, price, false);
+    let lh = '';
+    res.slice().reverse().forEach((x, i) => { lh += '<tr><td class="red">R' + (res.length - i) + '</td><td class="r">' + fmt(x.lvl) + '</td><td class="r muted">' + x.touches + ' dokunuş</td></tr>'; });
+    lh += '<tr><td colspan="3" class="muted">— Anlık: ' + fmt(price) + ' —</td></tr>';
+    sup.forEach((x, i) => { lh += '<tr><td class="green">S' + (i + 1) + '</td><td class="r">' + fmt(x.lvl) + '</td><td class="r muted">' + x.touches + ' dokunuş</td></tr>'; });
+    document.getElementById('levels').innerHTML = lh || '<tr><td class="muted">seviye bulunamadı</td></tr>';
+
+    // Delta (son 10 mum)
+    const rows = kl.slice(-10).map(c => { const total = +c[7], buy = +c[10]; return { buy, sell: total - buy }; });
+    let dh = '<tr><td class="muted">Zaman</td><td class="r muted">Alıcı</td><td class="r muted">Satıcı</td><td class="r muted">Delta</td></tr>';
+    let cum = 0;
+    kl.slice(-10).forEach((c, i) => {
+      const d = rows[i].buy - rows[i].sell;
+      cum += d;
+      const t0 = new Date(+c[0]).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      dh += '<tr><td>' + t0 + '</td><td class="r">' + (rows[i].buy / 1e6).toFixed(2) + 'M</td><td class="r">' + (rows[i].sell / 1e6).toFixed(2) + 'M</td><td class="r ' + (d >= 0 ? 'green' : 'red') + '">' + mln(d) + '</td></tr>';
+    });
+    dh += '<tr><td colspan="3">Toplam</td><td class="r ' + (cum >= 0 ? 'green' : 'red') + '">' + mln(cum) + '</td></tr>';
+    document.getElementById('delta').innerHTML = dh;
+
+    // Fonlama
+    if (f.pi && f.hist) {
+      const rate = Number(f.pi.lastFundingRate) * 100;
+      const avg = f.hist.reduce((a, h) => a + Number(h.fundingRate), 0) / f.hist.length * 100;
+      const oiB = f.oi ? (Number(f.oi.openInterest) * Number(f.pi.markPrice) / 1e9).toFixed(2) + 'B USD' : '-';
+      document.getElementById('funding').innerHTML =
+        '<tr><td>Anlık oran</td><td class="r">%' + rate.toFixed(4) + '</td></tr>' +
+        '<tr><td>30 dönem ortalaması</td><td class="r">%' + avg.toFixed(4) + '</td></tr>' +
+        '<tr><td>Açık pozisyon</td><td class="r">' + oiB + '</td></tr>' +
+        '<tr><td colspan="2" class="muted">' + fundingComment(rate) + '</td></tr>';
+    } else {
+      document.getElementById('funding').innerHTML = '<tr><td class="muted">vadeli veri yok</td></tr>';
+    }
+
+    document.getElementById('updated').textContent = 'Son güncelleme: ' + new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul' });
+  } catch (e) {
+    document.getElementById('updated').textContent = 'Veri alınamadı, tekrar denenecek.';
+  }
+}
+
+drawButtons();
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>
