@@ -32,3 +32,19 @@ jobs:
         run: npm test
       - name: Build Docker image
         run: docker build -t telegram-kripto-analysis-engine .
+      - name: Container startup and API smoke test
+        run: |
+          docker run -d --name engine-smoke -p 8080:8080 -e SYMBOLS=BTCUSDT telegram-kripto-analysis-engine
+          cleanup() { docker logs engine-smoke || true; docker rm -f engine-smoke || true; }
+          trap cleanup EXIT
+          for attempt in $(seq 1 25); do
+            if curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:8080/health
+          curl --fail --silent http://127.0.0.1:8080/api/v1/snapshot?symbol=BTCUSDT
+          curl --fail --silent http://127.0.0.1:8080/api/v1/analysis?symbol=BTCUSDT
+          curl --fail --silent http://127.0.0.1:8080/api/v1/market-signals?symbol=BTCUSDT
+          curl --fail --silent http://127.0.0.1:8080/api/v1/whales
