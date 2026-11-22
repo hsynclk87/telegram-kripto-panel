@@ -222,6 +222,7 @@ function connectSocket(name, url, onMessage, onOpen) {
 }
 
 
+
 const binanceBooks = { binanceSpot: new Map(), binanceFutures: new Map() };
 const depthHandlers = { binanceSpot: new Map(), binanceFutures: new Map() };
 
@@ -241,7 +242,8 @@ function publishBinanceBook(exchange, symbol, book) {
 function startBinanceBookSync(exchange, symbol, restBase) {
   const book = {
     bids: new Map(), asks: new Map(), lastUpdateId: 0,
-    initialized: false, syncing: false, buffer: [], exchangeTime: null, receivedAt: null
+    initialized: false, syncing: false, buffer: [],
+    exchangeTime: null, receivedAt: null, resyncAgain: false
   };
   binanceBooks[exchange].set(symbol, book);
 
@@ -254,8 +256,8 @@ function startBinanceBookSync(exchange, symbol, restBase) {
     }
   };
 
-  const resync = async () => {
-    if (book.syncing) return;
+  const requestSnapshot = async () => {
+    if (book.syncing) { book.resyncAgain = true; return; }
     book.syncing = true;
     book.initialized = false;
     try {
@@ -269,40 +271,47 @@ function startBinanceBookSync(exchange, symbol, restBase) {
       book.asks = new Map((snapshot.asks || []).map(([p, q]) => [String(p), Number(q)]));
       book.lastUpdateId = Number(snapshot.lastUpdateId);
       const pending = book.buffer.splice(0).sort((a, b) => Number(a.U) - Number(b.U));
-      const firstIndex = pending.findIndex((event) =>
-        Number(event.U) <= book.lastUpdateId + 1 && Number(event.u) >= book.lastUpdateId + 1
-      );
-      if (firstIndex < 0 && pending.length) {
+      const firstIndex = pending.findIndex((event) => exchange === "binanceSpot"
+        ? Number(event.U) <= book.lastUpdateId + 1 && Number(event.u) >= book.lastUpdateId + 1
+        : Number(event.U) <= book.lastUpdateId && Number(event.u) >= book.lastUpdateId);
+      if (pending.length && firstIndex < 0) {
         book.buffer.push(...pending);
-        book.syncing = false;
-        return void resync();
-      }
-      const usable = firstIndex >= 0 ? pending.slice(firstIndex) : [];
-      for (const event of usable) {
-        if (Number(event.u) <= book.lastUpdateId) continue;
-        if (exchange === "binanceFutures" && event.pu != null && Number(event.pu) !== book.lastUpdateId) {
-          book.buffer.push(...usable.slice(usable.indexOf(event)));
-          book.syncing = false;
-          return void resync();
+        book.resyncAgain = true;
+      } else {
+        const usable = firstIndex >= 0 ? pending.slice(firstIndex) : [];
+        let valid = true;
+        for (let i = 0; i < usable.length; i++) {
+          const event = usable[i];
+          if (Number(event.u) <= book.lastUpdateId) continue;
+          if (exchange === "binanceFutures") {
+            if (i > 0 && Number(event.pu) !== book.lastUpdateId) { valid = false; break; }
+            if (i === 0 && Number(event.pu) > book.lastUpdateId) { valid = false; break; }
+          } else if (Number(event.U) > book.lastUpdateId + 1) {
+            valid = false; break;
+          }
+          applySide(book.bids, event.b);
+          applySide(book.asks, event.a);
+          book.lastUpdateId = Number(event.u);
+          book.exchangeTime = Number(event.E || event.T || 0) || null;
+          book.receivedAt = Date.now();
         }
-        if (exchange === "binanceSpot" && Number(event.U) > book.lastUpdateId + 1) {
-          book.buffer.push(...usable.slice(usable.indexOf(event)));
-          book.syncing = false;
-          return void resync();
+        if (!valid) {
+          book.buffer.push(...usable);
+          book.resyncAgain = true;
+        } else {
+          book.initialized = true;
+          publishBinanceBook(exchange, symbol, book);
         }
-        applySide(book.bids, event.b);
-        applySide(book.asks, event.a);
-        book.lastUpdateId = Number(event.u);
-        book.exchangeTime = Number(event.E || event.T || 0) || null;
-        book.receivedAt = Date.now();
       }
-      book.initialized = true;
-      publishBinanceBook(exchange, symbol, book);
     } catch (error) {
       log("warn", "Binance order book snapshot failed", { exchange, symbol, error: error.message });
-      setTimeout(resync, 1500).unref?.();
+      book.resyncAgain = true;
     } finally {
       book.syncing = false;
+      if (book.resyncAgain) {
+        book.resyncAgain = false;
+        setTimeout(requestSnapshot, 1000).unref?.();
+      }
     }
   };
 
@@ -314,11 +323,11 @@ function startBinanceBookSync(exchange, symbol, restBase) {
     }
     if (Number(event.u) <= book.lastUpdateId) return;
     const gap = exchange === "binanceFutures"
-      ? event.pu != null && Number(event.pu) !== book.lastUpdateId
+      ? Number(event.pu) !== book.lastUpdateId
       : Number(event.U) > book.lastUpdateId + 1;
     if (gap) {
       book.buffer.push(event);
-      void resync();
+      void requestSnapshot();
       return;
     }
     applySide(book.bids, event.b);
@@ -329,7 +338,7 @@ function startBinanceBookSync(exchange, symbol, restBase) {
     publishBinanceBook(exchange, symbol, book);
   };
 
-  void resync();
+  void requestSnapshot();
   return onDepth;
 }
 
