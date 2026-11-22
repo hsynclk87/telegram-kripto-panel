@@ -127,6 +127,59 @@ window.addEventListener('resize',chartInit);
 function ema(values,period){const out=Array(values.length).fill(null),k=2/(period+1);let prev=null;for(let i=0;i<values.length;i++){const v=values[i];if(!Number.isFinite(v))continue;prev=prev===null?v:v*k+prev*(1-k);out[i]=prev;}return out;}
 function rsi(values,period=14){const out=Array(values.length).fill(null);let gain=0,loss=0;for(let i=1;i<=period&&i<values.length;i++){const d=values[i]-values[i-1];gain+=Math.max(d,0);loss+=Math.max(-d,0);}if(values.length<=period)return out;gain/=period;loss/=period;out[period]=loss===0?100:100-100/(1+gain/loss);for(let i=period+1;i<values.length;i++){const d=values[i]-values[i-1];gain=(gain*(period-1)+Math.max(d,0))/period;loss=(loss*(period-1)+Math.max(-d,0))/period;out[i]=loss===0?100:100-100/(1+gain/loss);}return out;}
 function atr(data,p=14){const tr=data.map((x,i)=>i?Math.max(x.high-x.low,Math.abs(x.high-data[i-1].close),Math.abs(x.low-data[i-1].close)):x.high-x.low);let a=tr.slice(0,p).reduce((s,x)=>s+x,0)/p;for(let i=p;i<tr.length;i++)a=(a*(p-1)+tr[i])/p;return a;}
+function historicalReplay(data){
+if(data.length<260)return{ready:false,text:'Geçmiş sinyal testi için yeterli mum geçmişi yok.'};
+const closes=data.map(x=>x.close),e20=ema(closes,20),e50=ema(closes,50),e200=ema(closes,200),rs=rsi(closes),f=ema(closes,12),sl=ema(closes,26),m=f.map((v,i)=>v-sl[i]),sg=ema(m,9),h=m.map((v,i)=>v-sg[i]);
+let wins=0,losses=0,expired=0,signals=0,netR=0,longN=0,shortN=0;
+for(let i=210;i<data.length-14;i+=12){
+const x=data[i],pr=data[i-1],volBase=data.slice(i-20,i).reduce((z,q)=>z+q.volume,0)/20,vr=volBase?x.volume/volBase:0;
+let sc=0;
+if(e20[i]>e50[i]&&e50[i]>e200[i])sc+=1.2;else if(e20[i]<e50[i]&&e50[i]<e200[i])sc-=1.2;
+if(x.close>e20[i])sc+=.6;else sc-=.6;
+if(rs[i]>rs[i-1])sc+=.45;else sc-=.45;
+if(h[i]>h[i-1]&&h[i]>0)sc+=.8;else if(h[i]<h[i-1]&&h[i]<0)sc-=.8;
+if(vr>1.25)sc+=x.close>x.open?.6:-.6;
+const prior=data.slice(i-20,i),hi=Math.max(...prior.map(q=>q.high)),lo=Math.min(...prior.map(q=>q.low));
+if(x.close>hi&&vr>1.05)sc+=1.2;else if(x.close<lo&&vr>1.05)sc-=1.2;
+const side=sc>=3?'LONG':sc<=-3?'SHORT':null;if(!side)continue;
+const av=atr(data.slice(Math.max(0,i-20),i+1)),entry=x.close,target=av*1.5,stop=av, future=data.slice(i+1,i+13);if(!Number.isFinite(av)||av<=0||future.length<12)continue;
+signals++;if(side==='LONG')longN++;else shortN++;
+let outcome='EXPIRED';
+for(const q of future){
+const hitStop=side==='LONG'?q.low<=entry-stop:q.high>=entry+stop;
+const hitTarget=side==='LONG'?q.high>=entry+target:q.low<=entry-target;
+if(hitStop&&hitTarget){outcome='LOSS';break;}
+if(hitStop){outcome='LOSS';break;}
+if(hitTarget){outcome='WIN';break;}
+}
+if(outcome==='WIN'){wins++;netR+=1.5;}else if(outcome==='LOSS'){losses++;netR-=1;}else expired++;
+}
+if(signals<6)return{ready:false,signals,text:'Geçmişte yeterli sayıda benzer teknik kurulum oluşmadı. İstatistiksel sonuç üretmek yerine test örneği biriktiriliyor.'};
+const resolved=wins+losses,wr=resolved?wins/resolved:0,avg=signals?netR/signals:0;
+let text='Geçmiş mumlarda aynı teknik kurulum, sonraki mumlarda ATR tabanlı hedef/zarar kes yaklaşımıyla geriye dönük incelendi. ';
+text+=resolved===0?'Henüz sonuçlanmış yeterli örnek yok. ':wr>=.58?'Hedefe önce ulaşan örnekler daha fazla; geçmiş koşullarda teknik kurulum olumlu davranmış. ':wr<=.42?'Zarar kes seviyesine önce ulaşan örnekler daha fazla; geçmiş koşullarda teknik kurulum zayıf davranmış. ':'Hedef ve zarar kes sonuçları birbirine yakın; belirgin bir üstünlük görünmüyor. ';
+text+=avg>0.15?'Ortalama sonuç pozitif yönde. ':avg<-.15?'Ortalama sonuç negatif yönde. ':'Ortalama sonuç belirgin bir üstünlük göstermiyor. ';
+text+='Bu test yalnızca geçmiş mumlardan türetilen teknik bileşenleri kapsar; geçmiş Spot/Futures CVD, emir defteri ve likidasyon akışı bulunmadığı için canlı birleşik sistemin birebir backtesti değildir. Komisyon, kayma ve emir gerçekleşme farkları dahil değildir.';
+return{ready:true,signals,wins,losses,expired,winRate:wr,avgR:avg,text};
+}
+function describeRegime(a,trendUp,trendDown,price){
+if(!a)return'Piyasa rejimi için yeterli gösterge verisi yok.';
+if(a.adx>=25&&trendUp&&a.pdi>a.mdi&&price>a.vwap)return'Güçlü yükseliş trendi: EMA dizilimi, ADX/DI ve VWAP aynı yönü destekliyor. Karşı yönlü kısa sinyaller daha yüksek teyit gerektirir.';
+if(a.adx>=25&&trendDown&&a.mdi>a.pdi&&price<a.vwap)return'Güçlü düşüş trendi: EMA dizilimi, ADX/DI ve VWAP aşağı yönü destekliyor. Tepki alımları ana trend dönüşü sayılmamalı.';
+if(a.adx<18&&a.bbWidth<3)return'Düşük trend gücü ve dar volatilite: yatay/sıkışık piyasa olasılığı yüksek. Osilatör kesişimleri ve bant dışı kısa taşmalar daha sık tuzağa dönüşebilir.';
+if(a.bbWidth>6&&a.atrExpansion>1.25)return'Yüksek volatilite rejimi: fiyat aralıkları genişliyor. Giriş kovalamak yerine kapanış ve geri test beklenmeli; pozisyon riski volatiliteye göre azaltılmalı.';
+return'Geçiş rejimi: trend, ADX ve volatilite aynı yönde güçlü bir sınıflandırma vermiyor. Destek/direnç ve kapanış teyidi öne alınmalı.';
+}
+function breakoutAssessment(data,volRatio,advanced){
+if(data.length<25)return'Kırılım değerlendirmesi için yeterli mum yok.';
+const c=data[data.length-1],prior=data.slice(-21,-1),hi=Math.max(...prior.map(x=>x.high)),lo=Math.min(...prior.map(x=>x.low));
+if(c.high>hi&&c.close<=hi)return'Yukarı yönde önceki tepe bölgesi aşıldı ancak mum bu seviyenin altında kapandı. Üst fitilli reddedilme/olası sahte kırılım var; yeni kapanış ve hacim teyidi olmadan kırılım kabul edilmemeli.';
+if(c.low<lo&&c.close>=lo)return'Aşağı yönde önceki dip bölgesi delindi ancak mum tekrar bu seviyenin üzerinde kapandı. Aşağı fitilli reddedilme/olası sahte aşağı kırılım var; destek geri kazanımı izlenmeli.';
+if(c.close>hi)return'Fiyat önceki tepe aralığının üzerinde kapandı. Hacim '+(volRatio>=1.25?'artışıyla':'belirgin artış olmadan')+' kırılım gerçekleşti; CVD ve VWAP da aynı yönü doğrulamıyorsa geri test beklenmeli.';
+if(c.close<lo)return'Fiyat önceki dip aralığının altında kapandı. Hacim '+(volRatio>=1.25?'artışıyla':'belirgin artış olmadan')+' aşağı kırılım gerçekleşti; negatif CVD ve VWAP altı kalıcılık teyidi aranmalı.';
+if(advanced&&advanced.adx<18)return'Fiyat yakın aralık içinde; trend gücü zayıf. Yatay piyasa içinde destek/direnç arasında işlem görme olasılığı daha yüksek.';
+return'Önceki kısa vadeli tepe/dip aralığında teyitli kapanış kırılımı yok. Piyasa yön seçmeden önce aralık dışı kapanış beklenmeli.';
+}
 function fmtUsd(n){return !Number.isFinite(n)?'—':n>=1e9?(n/1e9).toFixed(2)+'B USDT':n>=1e6?(n/1e6).toFixed(2)+'M USDT':n.toFixed(2)+' USDT';}
 function setMetric(id,value,cls){const el=$(id);if(!el)return;el.textContent=value;el.className=cls||'';}
 async function futuresJson(path){const r=await fetch('https://fapi.binance.com'+path,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
@@ -375,6 +428,18 @@ const bearishGroups=[ctx.trendDown||(a&&a.adx>=25&&a.mdi>a.pdi),a&&a.cmf<-.08&&p
 const quality=Math.max(bullishGroups,bearishGroups);
 sections.push('KANIT KALİTESİ: '+(quality>=4?'GÜÇLÜ ÇAPRAZ TEYİT':quality>=2?'ORTA DÜZEY ÇAPRAZ TEYİT':'ZAYIF / DAĞINIK TEYİT')+' ('+quality+'/6 bağımsız kanıt grubu). Bu derece istatistiksel başarı olasılığı değildir; yalnızca aynı yöndeki farklı veri ailelerinin uyum sayısıdır. Eksik veya bayat veri puanlamaya katılmaz.');
 
+// PİYASA REJİMİ, KIRILIM KALİTESİ VE GEÇMİŞ PERFORMANS
+sections.push('PİYASA REJİMİ: '+(ctx.regimeText||'Rejim sınıflandırması bekleniyor'));
+sections.push('KIRILIM / SAHTE KIRILIM KONTROLÜ: '+(ctx.breakoutText||'Kırılım verisi bekleniyor'));
+if(ctx.replay)sections.push('GEÇMİŞ SİNYAL DAVRANIŞI: '+ctx.replay.text);
+const qualityNotes=[];
+if(!age(futuresState.oiAt,60000))qualityNotes.push('Açık pozisyon verisi güncel değil veya henüz alınmadı');
+if(!age(futuresState.takerAt,60000))qualityNotes.push('Taker akışı güncel değil');
+if(!age(futuresState.sentimentAt,120000))qualityNotes.push('Long/Short ve Top Trader verileri güncel değil');
+if(!age(futuresState.bookAt,20000))qualityNotes.push('Emir defteri anlık görüntüsü eski veya eksik');
+if(!Number.isFinite(spotFlow)||!Number.isFinite(futFlow))qualityNotes.push('Spot/Futures CVD penceresi henüz oluşmadı');
+sections.push('VERİ KALİTESİ VE GÜVEN: '+(qualityNotes.length?'Şu an '+qualityNotes.join('; ')+'. Bu eksikler ilgili yorumların kanıt gücünü düşürür; eksik veri olumlu veya olumsuz varsayılmadı.':'Kritik akışlar güncel görünüyor. Yine de CVD ve likidasyon geçmişi yalnızca uygulama açıkken birikir; emir defteri anlık görüntüdür ve iptal edilebilir.'));
+sections.push('RİSK VE ANALİZİN BOZULMA KOŞULU: '+(ctx.nearSupport?'Destek bölgesi altında kapanış alım senaryosunu zayıflatır. ': '')+(ctx.nearResist?'Direnç üzerinde kalıcılık satış senaryosunu zayıflatır. ':'')+(a&&a.adx<18?'Trend gücü zayıf olduğu için yönlü sinyaller yatay piyasada bozulabilir. ':'')+(a&&a.atrExpansion>1.5?'Volatilite belirgin yükselmiş; normal stop mesafeleri yetersiz kalabilir. ':'')+'Her senaryo, dayandığı fiyat seviyesi geri kazanılır veya kaybedilirse yeniden değerlendirilmelidir. İşlem maliyeti ve kayma gerçek sonuçları düşürür.');
 const all=[...bull,...bear],bullN=bull.length,bearN=bear.length,dominant=bullN>bearN?'ALICI LEHİNE':bearN>bullN?'SATICI LEHİNE':'DENGESİZ';
 const summary='BİRLEŞİK SONUÇ: '+dominant+'. Destekleyen bulgu '+bullN+', aşağı yönlü bulgu '+bearN+'. Teknik motor '+(baseScore>=4?'AL':baseScore<=-4?'SAT':'BEKLE')+' ('+baseScore.toFixed(1)+' puan). '+(bullN&&bearN?'Alım ve satım kanıtları aynı anda mevcut; çelişen sinyaller nedeniyle acele yön kararı verilmemeli.':bullN?'Mevcut veriler alıcı tarafında kümeleniyor; fiyat kapanışıyla teyit aranmalı.':bearN?'Mevcut veriler satıcı tarafında kümeleniyor; destek tepkisi izlenmeli.':'Yönlü kanıt henüz yetersiz.');
 setMetric('marketVerdict',dominant,'signalword '+(bullN>bearN?'positive':bearN>bullN?'negative':'neutral'));
@@ -390,6 +455,7 @@ const n=data.length-1,c=data[n],prev=data[n-1],p=c.close,rv=rvArr[n],rPrev=rvArr
 const supportCtx=pivotContext(false,p,data,atrV),resistCtx=pivotContext(true,p,data,atrV),nearSupport=supportCtx&&Math.abs(p-supportCtx.price)<=atrV*1.25,nearResist=resistCtx&&Math.abs(p-resistCtx.price)<=atrV*1.25;
 const early=earlyFlowAnalysis(data,atrV);
 const advanced=advancedIndicators(data);updateAdvancedPanel(advanced,p);
+const replay=historicalReplay(data),regimeText=describeRegime(advanced,trendUp,trendDown,p),breakoutText=breakoutAssessment(data,volRatio,advanced);
 const body=Math.abs(c.close-c.open),lowerWick=Math.min(c.open,c.close)-c.low,upperWick=c.high-Math.max(c.open,c.close),bull=c.close>c.open,bear=c.close<c.open;
 const trendUp=e20[n]>e50[n]&&e50[n]>e200[n],trendDown=e20[n]<e50[n]&&e50[n]<e200[n];
 const priceTurnUp=bull&&c.close>prev.high&&lowerWick>body*.5,priceTurnDown=bear&&c.close<prev.low&&upperWick>body*.5;
@@ -420,7 +486,7 @@ setText('momentum',momUp?'YÜKSELİYOR':momDown?'DÜŞÜYOR':'NÖTR');$('momentu
 setText('atr',fmt(atrV)+' · '+(atrV/p*100).toFixed(2)+'%');
 setText('signal',signal);$('signal').className='signalword '+(signal==='AL'?'positive':signal==='SAT'?'negative':'neutral');setText('confidence','GÜÇ '+strength+'%');$('scorebar').style.width=strength+'%';$('scorebar').style.background=rawSignal==='AL'?'var(--green)':rawSignal==='SAT'?'var(--red)':'var(--gold)';
 setText('reason',why.length?why.join(' · '):'Fiyat dönüşü, pivot ve momentum koşulları henüz aynı yönde birleşmedi.');
-combinedMarketExplanation(advanced,p,early,score,{c,prev,rv,rPrev,mac,macPrev,trendUp,trendDown,e20:e20[n],volRatio,nearSupport,nearResist,support:supportCtx,resistance:resistCtx,rsiBull:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.low<x[m].low?i:m,0),yi=y.reduce((m,z,i)=>z.low<y[m].low?i:m,0);return y[yi].low<x[xi].low&&rvArr[data.length-9+yi]>rvArr[data.length-18+xi]+1;})(),rsiBear:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.high>x[m].high?i:m,0),yi=y.reduce((m,z,i)=>z.high>y[m].high?i:m,0);return y[yi].high>x[xi].high&&rvArr[data.length-9+yi]<rvArr[data.length-18+xi]-1;})()});
+combinedMarketExplanation(advanced,p,early,score,{c,prev,rv,rPrev,mac,macPrev,trendUp,trendDown,e20:e20[n],volRatio,nearSupport,nearResist,support:supportCtx,resistance:resistCtx,replay,regimeText,breakoutText,rsiBull:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.low<x[m].low?i:m,0),yi=y.reduce((m,z,i)=>z.low<y[m].low?i:m,0);return y[yi].low<x[xi].low&&rvArr[data.length-9+yi]>rvArr[data.length-18+xi]+1;})(),rsiBear:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.high>x[m].high?i:m,0),yi=y.reduce((m,z,i)=>z.high>y[m].high?i:m,0);return y[yi].high>x[xi].high&&rvArr[data.length-9+yi]<rvArr[data.length-18+xi]-1;})()});
 const earlyLabel=early.direction==='ACC'?'ERKEN BİRİKİM':early.direction==='DIST'?'ERKEN DAĞITIM':early.direction==='ACC_WATCH'?'BİRİKİM İZİ':early.direction==='DIST_WATCH'?'DAĞITIM İZİ':'NÖTR';
 setText('earlySignal',earlyLabel);$('earlySignal').className='signalword '+(early.direction.startsWith('ACC')?'positive':early.direction.startsWith('DIST')?'negative':'neutral');
 setText('earlyScore',early.score+'/10');setText('earlyReason',early.text);
