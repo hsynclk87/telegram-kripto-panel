@@ -4,7 +4,7 @@ import { analyzeMarkets } from "./analysis.js";
 import { detectWhaleTrade } from "./whales.js";
 import { analyzeCandleMarket } from "./market-signals.js";
 import { createStorage } from "./storage.js";
-import { createTradeDeduplicator } from "./market-data.js";
+import { createTradeDeduplicator, isFirstFuturesDepthEventValid } from "./market-data.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -288,7 +288,7 @@ function startBinanceBookSync(exchange, symbol, restBase) {
       const pending = book.buffer.splice(0).sort((a, b) => Number(a.U) - Number(b.U));
       const firstIndex = pending.findIndex((event) => exchange === "binanceSpot"
         ? Number(event.U) <= book.lastUpdateId + 1 && Number(event.u) >= book.lastUpdateId + 1
-        : Number(event.U) <= book.lastUpdateId && Number(event.u) >= book.lastUpdateId);
+        : isFirstFuturesDepthEventValid(event, book.lastUpdateId));
       if (pending.length && firstIndex < 0) {
         book.buffer.push(...pending);
         book.resyncAgain = true;
@@ -300,7 +300,7 @@ function startBinanceBookSync(exchange, symbol, restBase) {
           if (Number(event.u) <= book.lastUpdateId) continue;
           if (exchange === "binanceFutures") {
             if (i > 0 && Number(event.pu) !== book.lastUpdateId) { valid = false; break; }
-            if (i === 0 && Number(event.pu) > book.lastUpdateId) { valid = false; break; }
+            if (i === 0 && !isFirstFuturesDepthEventValid(event, book.lastUpdateId)) { valid = false; break; }
           } else if (Number(event.U) > book.lastUpdateId + 1) {
             valid = false; break;
           }
@@ -343,7 +343,7 @@ function startBinanceBookSync(exchange, symbol, restBase) {
       // The first USD-M event bridges the REST snapshot; pu is checked only afterwards.
       gap = book.hasAppliedEvent
         ? Number(event.pu) !== book.lastUpdateId
-        : !(Number(event.U) <= book.lastUpdateId && Number(event.u) >= book.lastUpdateId);
+        : !isFirstFuturesDepthEventValid(event, book.lastUpdateId);
     } else {
       gap = Number(event.U) > book.lastUpdateId + 1;
     }
