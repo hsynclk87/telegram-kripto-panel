@@ -2,7 +2,7 @@ services:
   - type: web
     name: telegram-kripto-analysis-engine
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health
