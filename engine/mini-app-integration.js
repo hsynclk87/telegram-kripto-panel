@@ -44,7 +44,7 @@
       '<div class="ep-box"><span class="ep-muted">Sinyal skoru</span><b id="epScore">—</b></div>' +
       '<div class="ep-box"><span class="ep-muted">Veri kalitesi</span><b id="epQuality">—</b></div></div>' +
       '<div class="ep-section">Coin analizleri</div><table id="epAnalysis" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
-      '<div class="ep-section">Son balina işlemleri</div><table id="epWhales" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
+      '<div class="ep-section">Hacim ve destek / direnç sinyalleri</div><table id="epMarketSignals" class="ep-table"><tbody><tr><td class="ep-muted">Veri bekleniyor</td></tr></tbody></table><div class="ep-section">Son balina işlemleri</div><table id="epWhales" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
       '<div class="ep-section">Son likidasyonlar</div><table id="epLiquidations" class="ep-table"><tbody><tr><td class="ep-muted">Bağlantı bekleniyor</td></tr></tbody></table>' +
       '<div class="ep-muted" id="epUpdated" style="margin-top:9px">Henüz veri alınmadı.</div>';
     const tabs = document.querySelector("nav.tabs");
@@ -116,7 +116,7 @@
   function renderSnapshot(s) {
     if(!s) return;renderExchangeStatus(s.exchanges);
     const m=s.markets||{},btc=m.BTCUSDT||{};
-    const p=btc.binanceFutures?.lastPrice||btc.binanceSpot?.lastPrice||btc.bybitLinear?.lastPrice;
+    const p=btc.binanceFutures?.lastPrice||btc.binanceSpot?.lastPrice||btc.bybitLinear?.lastPrice||btc.binanceFutures?.candle1m?.close||btc.binanceSpot?.candle1m?.close;
     if(p!=null) $("epPrice").textContent=fmt(p,Number(p)<1?6:2)+" USDT";
     renderAnalysis(s.analysis||[]);renderMarketSignals(s.marketSignals||[]);
     if(s.latestWhales) renderWhales(s.latestWhales);
@@ -129,9 +129,15 @@
     $("epAnalysis").innerHTML=items.map(x=>"<tr><td>"+esc(x.symbol)+"</td><td class='"+signalClass(x.signal)+"'>"+esc(signalLabel(x.signal))+"</td><td class='ep-right'>"+fmt(x.score,0)+"</td><td class='ep-right'>"+esc(x.quality||"—")+"</td></tr>").join("")||'<tr><td class="ep-muted">Analiz verisi yok</td></tr>';
   }
   function renderMarketSignals(items) {
-    if(!Array.isArray(items)||!items.length) return;
-    const rows=items.map(x=>"<tr><td>"+esc(x.symbol)+"</td><td colspan='3'>"+esc(x.signal||x.status||x.label||"Piyasa sinyali hazır")+"</td></tr>").join("");
-    $("epAnalysis").insertAdjacentHTML("beforeend",rows);
+    if(!Array.isArray(items)) return;
+    $("epMarketSignals").innerHTML=items.map(x=>{
+      const flags=[];
+      if(x.breakout) flags.push("Hacimli yukarı kırılım");
+      if(x.breakdown) flags.push("Hacimli aşağı kırılım");
+      if(x.abnormalVolume) flags.push("Anormal hacim");
+      if(!flags.length) flags.push(x.status==="READY"?"Belirgin kırılım yok":"Isınıyor");
+      return "<tr><td>"+esc(x.symbol)+"</td><td>"+esc(flags.join(" · "))+"</td><td class='ep-right'>D: "+fmt(x.support,2)+"</td><td class='ep-right'>R: "+fmt(x.resistance,2)+"</td></tr>";
+    }).join("")||'<tr><td class="ep-muted">Piyasa sinyali yok</td></tr>';
   }
   function renderWhales(items) {
     if(!Array.isArray(items)) return;
