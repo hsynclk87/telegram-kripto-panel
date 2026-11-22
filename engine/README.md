@@ -77,3 +77,12 @@ Dağıtım sonrası servis URL'si `https://...` olur; WebSocket adresi `wss://..
 - Kalıcı PostgreSQL/Redis saklama, geçmiş mumların REST ile yüklenmesi, gelişmiş likidite/whale/false-breakout modülleri, alarm kuralları, kullanıcı bazlı erişim ve Mini App UI entegrasyonu sonraki fazlardır.
 - İlk dağıtımda Binance/Bybit gerçek payload'ları ve reconnect davranışı canlı ortamda ayrıca doğrulanmalıdır.
 - Mevcut kök `index.html` korunur; bu branch onu değiştirmez.
+
+## Telegram Mini App bağlantısı
+
+- Kök `index.html`, `engine/mini-app-integration.js` dosyasını yükler; mevcut piyasa ekranı korunur.
+- Mini App içindeki **Canlı Analiz Motoru** bölümüne dağıtılmış engine servisinin HTTPS adresini girip **Bağlan** seçin. Adres tarayıcının localStorage alanında saklanır.
+- Panel `/api/v1/health`, `/api/v1/snapshot`, `/api/v1/whales`, `/api/v1/liquidations` uçlarını 15 saniyede bir okur ve `/stream` WebSocket kanalından anlık analiz, balina, likidasyon ve bağlantı olaylarını alır.
+- HTTPS Mini App için engine adresi de HTTPS olmalıdır. Engine dağıtımı tamamlanmadan gerçek servis adresi bulunmaz; ilk bağlantı dağıtım sonrası girilir.
+- `CORS_ORIGIN` ayarını Mini App'in yayınlandığı origin ile sınırlandırın. Yerel geliştirmede `*` kullanılabilir; üretimde tam origin kullanın.
+- Telegram WebApp SDK `ready()` ve `expand()` çağrıları mevcut sayfada korunur. Bu entegrasyon salt-okunur piyasa verisi içindir; Telegram `initData` doğrulaması ve kullanıcı bazlı yetkilendirme, kullanıcıya özel alarm/ayarlar açılmadan önce ayrıca eklenmelidir.
