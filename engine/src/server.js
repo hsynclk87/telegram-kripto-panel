@@ -211,7 +211,7 @@ function startBinanceSpot() {
           quantity: Number(d.q), quoteValue: Number(d.p) * Number(d.q),
           side: d.m ? "SELL" : "BUY", timestamp: d.T
         });
-      } else if (d.e === "depthUpdate" || (Array.isArray(d.b) && Array.isArray(d.a))) {
+      } else if (d.e === "depthUpdate" || (Array.isArray(d.b) && Array.isArray(d.a)) || (Array.isArray(d.b) && Array.isArray(d.a))) {
         updateMarket(symbol, "binanceSpot", {
           bids: (d.b || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)]),
           asks: (d.a || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)])
@@ -242,7 +242,7 @@ function startBinanceFutures() {
           quoteValue: Number(d.p) * Number(d.q),
           side: d.m ? "SELL" : "BUY", timestamp: d.T, aggregate: true
         });
-      } else if (d.e === "depthUpdate") {
+      } else if (d.e === "depthUpdate" || (Array.isArray(d.b) && Array.isArray(d.a))) {
         updateMarket(d.s, "binanceFutures", {
           bids: (d.b || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)]),
           asks: (d.a || []).slice(0, 20).map(([p, q]) => [Number(p), Number(q)])
