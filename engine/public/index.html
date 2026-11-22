@@ -51,6 +51,12 @@ body{
 .foot{opacity:.88}
 @media(hover:hover){.card{transition:border-color .2s,box-shadow .2s}.card:hover{border-color:rgba(174,190,218,.27);box-shadow:0 10px 30px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.035)}}
 
+
+/* ADVANCED MARKET FLOW */
+.advanced-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.explain{font-size:12px;line-height:1.65;color:#c2c9da;white-space:normal}
+.explain strong{color:#f0edf8}
+@media(min-width:700px){.advanced-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style></head><body>
 <header class="head"><div><div class="brand">KRİPTO · İNDİKATÖR TERMİNALİ</div><div class="conn"><span class="dot" id="dot"></span><span id="connection">Binance canlı fiyat bağlantısı bekleniyor</span></div></div><div class="pill">REALTIME</div></header>
 <div class="row" id="coins"></div><div class="row" id="frames"></div>
@@ -60,7 +66,22 @@ body{
 <section class="card wide"><div class="section">MOMENTUM · RSI / MACD HISTOGRAM</div><div id="osc"></div></section>
 </div><div>
 <section class="card"><div class="section">BİRLEŞİK SİNYAL</div><div class="signal"><div><div class="muted">SİSTEM KARARI</div><div class="signalword neutral" id="signal">VERİ BEKLENİYOR</div></div><div class="pill" id="confidence">—</div></div><div class="muted" id="reason" style="margin-top:9px;line-height:1.5">Mum verisi yükleniyor.</div><div class="bar"><i id="scorebar" style="width:50%"></i></div></section>
-<section class="card"><div class="section">ERKEN BİRİKİM / DAĞITIM TESPİTİ</div><div class="signal"><div><div class="muted">HACİM BASKISI ANALİZİ</div><div class="signalword neutral" id="earlySignal">VERİ BEKLENİYOR</div></div><div class="pill" id="earlyScore">—</div></div><div class="muted" id="earlyReason" style="margin-top:9px;line-height:1.5">Birikim ve dağıtım koşulları hesaplanıyor.</div><div class="muted" id="earlyContext" style="margin-top:6px">Hacim ağırlıklı mum baskısı · OBV eğimi · fiyat konumu</div></section>
+<section class="card"><div class="section">BİRLEŞİK PİYASA OKUMASI · TÜM VERİLERİN ORTAK YORUMU</div><div class="signal"><div><div class="muted">SPOT + FUTURES + HACİM + TREND</div><div class="signalword neutral" id="marketVerdict">VERİ BEKLENİYOR</div></div><div class="pill" id="marketAgreement">—</div></div><div class="explain" id="marketExplanation" style="margin-top:10px">Spot ve vadeli akış, hacim, VWAP, hacim profili, emir defteri ve trend verileri birlikte değerlendiriliyor.</div><div class="muted" id="marketCaveat" style="margin-top:8px">Yeterli ve güncel veri oluşmadan bu bölüm yön tahmini üretmez.</div></section>
+<section class="card"><div class="section">GELİŞMİŞ PİYASA GÖSTERGELERİ</div><div class="advanced-grid">
+<div class="metric"><span>SPOT CVD · 5 DK</span><b id="spotCvd">—</b><small id="spotCvdState">Spot agresif alım-satım farkı</small></div>
+<div class="metric"><span>FUTURES CVD · 5 DK</span><b id="futuresCvd">—</b><small id="futuresCvdState">Vadeli agresif alım-satım farkı</small></div>
+<div class="metric"><span>SPOT / FUTURES AKIŞI</span><b id="flowDivergence">—</b><small id="flowDivergenceState">Piyasa yön uyumu</small></div>
+<div class="metric"><span>VWAP · HACİM AĞIRLIKLI FİYAT</span><b id="vwap">—</b><small id="vwapState">Son 48 kapanmış mum</small></div>
+<div class="metric"><span>VOLUME PROFILE · POC</span><b id="volumePoc">—</b><small id="volumePocState">En yüksek hacimli fiyat bölgesi</small></div>
+<div class="metric"><span>VALUE AREA</span><b id="valueArea">—</b><small>Yaklaşık %70 hacim alanı</small></div>
+<div class="metric"><span>BASIS · MARK / INDEX</span><b id="basis">—</b><small id="basisState">Vadeli prim / iskonto</small></div>
+<div class="metric"><span>EMİR DEFTERİ DEĞİŞİMİ</span><b id="depthChange">—</b><small id="depthChangeState">Snapshot bazlı net derinlik farkı</small></div>
+<div class="metric"><span>MFI (14)</span><b id="mfi">—</b><small id="mfiState">Hacim ağırlıklı para akışı</small></div>
+<div class="metric"><span>CMF (20)</span><b id="cmf">—</b><small id="cmfState">Birikim / dağıtım akışı</small></div>
+<div class="metric"><span>ADX / DI (14)</span><b id="adx">—</b><small id="adxState">Trend gücü ve yönü</small></div>
+<div class="metric"><span>BOLLINGER GENİŞLİĞİ</span><b id="bbWidth">—</b><small id="bbState">20 mum · 2 standart sapma</small></div>
+<div class="metric"><span>ATR GENİŞLEMESİ</span><b id="atrExpansion">—</b><small id="atrExpansionState">ATR14 / önceki ATR14</small></div>
+</div></section><section class="card"><div class="section">ERKEN BİRİKİM / DAĞITIM TESPİTİ</div><div class="signal"><div><div class="muted">HACİM BASKISI ANALİZİ</div><div class="signalword neutral" id="earlySignal">VERİ BEKLENİYOR</div></div><div class="pill" id="earlyScore">—</div></div><div class="muted" id="earlyReason" style="margin-top:9px;line-height:1.5">Birikim ve dağıtım koşulları hesaplanıyor.</div><div class="muted" id="earlyContext" style="margin-top:6px">Hacim ağırlıklı mum baskısı · OBV eğimi · fiyat konumu</div></section>
 <section class="card"><div class="section">BINANCE FUTURES · PİYASA AKIŞI</div><div class="grid">
 <div class="metric"><span>DERİNLİK DENGESİ</span><b id="obImbalance">—</b><small id="obState">Order book · ilk 20 kademe</small></div>
 <div class="metric"><span>ALIŞ DUVARI</span><b id="bidWall">—</b><small id="bidWallState">Kalıcı büyük alış emirleri</small></div>
@@ -91,7 +112,7 @@ body{
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), coins=['BTC','ETH','SOL','BNB','XRP','DOGE','LINK','AVAX','HBAR'], frames=[['15m','15 DK'],['1h','1 SAAT'],['4h','4 SAAT'],['1d','GÜNLÜK'],['1w','HAFTALIK']];
-let coin='BTC',tf='1h',candles=[],chart=null,candleSeries=null,ema20Series=null,ema50Series=null,oscChart=null,rsiSeries=null,macdSeries=null,priceWs=null,klineWs=null,tickerWs=null,lastPrice=null,base24=null,signalState=null,lastSignal='BEKLE',futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0,liqClusters:[],bookHistory:[],topPrevious:null,topChange:null,topChangeAt:0,oiPriceMove:null,oiInterpretation:'—'},futuresSockets=[],flowTrades=[],futuresRefreshTimer=null,bookRefreshTimer=null;
+let coin='BTC',tf='1h',candles=[],chart=null,candleSeries=null,ema20Series=null,ema50Series=null,oscChart=null,rsiSeries=null,macdSeries=null,priceWs=null,klineWs=null,tickerWs=null,lastPrice=null,base24=null,signalState=null,lastSignal='BEKLE',futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0,liqClusters:[],bookHistory:[],topPrevious:null,topChange:null,topChangeAt:0,oiPriceMove:null,oiInterpretation:'—'},futuresSockets=[],flowTrades=[],spotAggWs=null,spotFlowTrades=[],futuresRefreshTimer=null,bookRefreshTimer=null,advancedState={spotCvd:0,futuresCvd:0,spotImbalance:null,futuresCvdImbalance:null,basis:null,depthChange:null,depthHistory:[],lastBookTotal:null};
 const fmt=n=>!Number.isFinite(n)?'—':n>=1000?n.toLocaleString('tr-TR',{maximumFractionDigits:2}):n>=1?n.toLocaleString('tr-TR',{maximumFractionDigits:4}):n.toPrecision(5);
 const compact=n=>{if(!Number.isFinite(n))return'—';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return fmt(n)};
 const setText=(id,v)=>$(id).textContent=v;
@@ -137,6 +158,7 @@ futuresState.globalLongShort=+ls.longShortRatio;futuresState.topLongShort=+tp.lo
 setMetric('longShort',futuresState.globalLongShort.toFixed(3)+'x',futuresState.globalLongShort>1.5?'negative':futuresState.globalLongShort<.67?'positive':'neutral');setText('lsState','Long '+(+ls.longAccount*100).toFixed(1)+'% · Short '+(+ls.shortAccount*100).toFixed(1)+'%');
 setMetric('topPosition',futuresState.topLongShort.toFixed(3)+'x',futuresState.topLongShort>1.5?'negative':futuresState.topLongShort<.67?'positive':'neutral');setText('topState','Top Trader · Long '+(+tp.longAccount*100).toFixed(1)+'% / Short '+(+tp.shortAccount*100).toFixed(1)+'%');setMetric('topChange',Number.isFinite(futuresState.topChange)?(futuresState.topChange>=0?'+':'')+futuresState.topChange.toFixed(3)+'x':'İlk ölçüm',futuresState.topChange>0?'positive':futuresState.topChange<0?'negative':'neutral');setText('topChangeState','Top Trader oranı değişimi · globalden bağımsız');
 }else{setText('lsState','Pozisyon oranı verisi alınamadı');setText('topState','Top trader verisi alınamadı');}
+if(markR.status==='fulfilled'){const mk=+markR.value.markPrice,ix=+markR.value.indexPrice;if(ix>0){advancedState.basis=(mk/ix-1)*100;setMetric('basis',(advancedState.basis>=0?'+':'')+advancedState.basis.toFixed(4)+'%',advancedState.basis>.08?'negative':advancedState.basis<-.08?'positive':'neutral');setText('basisState','Mark '+fmt(mk)+' · Index '+fmt(ix)+' · '+(advancedState.basis>0?'prim':advancedState.basis<0?'iskonto':'denge'));}}else{advancedState.basis=null;setText('basisState','Premium Index verisi alınamadı');}
 if(fundingR.status==='fulfilled'&&fundingR.value.length){
 const rate=+fundingR.value[0].fundingRate*100;futuresState.fundingRate=rate;futuresState.fundingAt=Date.now();updated++;
 setMetric('funding',(rate>=0?'+':'')+rate.toFixed(4)+'%',rate>0.03?'negative':rate<-.03?'positive':'neutral');setText('fundingState','Mark '+(markR.status==='fulfilled'?fmt(+markR.value.markPrice):'—')+' · fonlama oranı');
@@ -146,7 +168,8 @@ setText('futuresUpdated',updated?'Güncel: '+new Date().toLocaleTimeString('tr-T
 async function refreshBook(){
 try{const d=await futuresJson('/fapi/v1/depth?symbol='+coin+'USDT&limit=20');let bid=0,ask=0;const bids=d.bids.map(([p,q])=>({price:+p,qty:+q,notional:+p*+q})),asks=d.asks.map(([p,q])=>({price:+p,qty:+q,notional:+p*+q}));
 for(const x of bids)bid+=x.notional;for(const x of asks)ask+=x.notional;
-const imbalance=(bid+ask)?(bid-ask)/(bid+ask)*100:0;futuresState.bookImbalance=imbalance;futuresState.bookAt=Date.now();
+const totalDepth=bid+ask,imbalance=totalDepth?(bid-ask)/totalDepth*100:0;futuresState.bookImbalance=imbalance;futuresState.bookAt=Date.now();
+const nowDepth=Date.now();if(Number.isFinite(advancedState.lastBookTotal)&&advancedState.lastBookTotal>0){advancedState.depthChange=(totalDepth/advancedState.lastBookTotal-1)*100;advancedState.depthHistory.push({time:nowDepth,change:advancedState.depthChange});advancedState.depthHistory=advancedState.depthHistory.filter(x=>nowDepth-x.time<60000);setMetric('depthChange',(advancedState.depthChange>=0?'+':'')+advancedState.depthChange.toFixed(2)+'%',advancedState.depthChange>2?'positive':advancedState.depthChange< -2?'negative':'neutral');setText('depthChangeState','Top 20 kademe toplam notionalı · 5 sn snapshot farkı');}advancedState.lastBookTotal=totalDepth;
 const all=[...bids,...asks].map(x=>x.notional).sort((a,b)=>a-b),median=all[Math.floor(all.length/2)]||0,threshold=Math.max(median*4,(bid+ask)*.035);
 const price=lastPrice||+((bids[0]?.price||asks[0]?.price)),wall=(arr)=>arr.filter(x=>x.notional>=threshold).sort((a,b)=>b.notional-a.notional)[0]||null;
 const bw=wall(bids),aw=wall(asks),now=Date.now();futuresState.bookHistory.push({time:now,bid:bw?.price||null,ask:aw?.price||null});futuresState.bookHistory=futuresState.bookHistory.filter(x=>now-x.time<60000);
@@ -158,10 +181,12 @@ setText('obState','Alış '+fmtUsd(bid)+' · Satış '+fmtUsd(ask)+' · 20 kadem
 }catch(e){futuresState.bookImbalance=null;futuresState.bookAt=0;setText('obState','Derinlik alınamadı: '+e.message);}
 }
 function connectFuturesStreams(){
-for(const ws of futuresSockets){try{ws.close();}catch(_){}}futuresSockets=[];flowTrades=[];
+for(const ws of futuresSockets){try{ws.close();}catch(_){}}futuresSockets=[];flowTrades=[];spotFlowTrades=[];if(spotAggWs){try{spotAggWs.close();}catch(_){}}spotAggWs=null;
 const s=coin.toLowerCase()+'usdt';
 const agg=new WebSocket('wss://fstream.binance.com/ws/'+s+'@aggTrade');
-agg.onmessage=e=>{const d=JSON.parse(e.data),now=Date.now(),quote=+d.p*+d.q;flowTrades.push({time:now,quote,buy:!d.m});flowTrades=flowTrades.filter(x=>now-x.time<=60000);let buy=0,sell=0;for(const x of flowTrades){if(x.buy)buy+=x.quote;else sell+=x.quote;}const total=buy+sell,imb=total?(buy-sell)/total*100:0;futuresState.flowImbalance=imb;futuresState.flowAt=now;setMetric('liveFlow',(imb>=0?'+':'')+imb.toFixed(1)+'%',imb>8?'positive':imb< -8?'negative':'neutral');setText('liveFlowState','Alıcı '+fmtUsd(buy)+' · Satıcı '+fmtUsd(sell)+' · 60 sn');};
+agg.onmessage=e=>{const d=JSON.parse(e.data),now=Date.now(),quote=+d.p*+d.q;flowTrades.push({time:now,quote,buy:!d.m});flowTrades=flowTrades.filter(x=>now-x.time<=300000);let buy60=0,sell60=0,buy5=0,sell5=0;for(const x of flowTrades){if(x.buy)buy5+=x.quote;else sell5+=x.quote;if(now-x.time<=60000){if(x.buy)buy60+=x.quote;else sell60+=x.quote;}}const total60=buy60+sell60,imb=total60?(buy60-sell60)/total60*100:0;futuresState.flowImbalance=imb;futuresState.flowAt=now;advancedState.futuresCvd=buy5-sell5;advancedState.futuresCvdImbalance=(buy5+sell5)?(buy5-sell5)/(buy5+sell5)*100:0;setMetric('liveFlow',(imb>=0?'+':'')+imb.toFixed(1)+'%',imb>8?'positive':imb< -8?'negative':'neutral');setText('liveFlowState','Alıcı '+fmtUsd(buy60)+' · Satıcı '+fmtUsd(sell60)+' · 60 sn');setMetric('futuresCvd',(advancedState.futuresCvd>=0?'+':'')+fmtUsd(Math.abs(advancedState.futuresCvd)),advancedState.futuresCvd>0?'positive':advancedState.futuresCvd<0?'negative':'neutral');setText('futuresCvdState','5 dk net agresif hacim · '+advancedState.futuresCvdImbalance.toFixed(1)+'%');};
+if(spotAggWs){try{spotAggWs.close();}catch(_){}}spotFlowTrades=[];spotAggWs=new WebSocket('wss://stream.binance.com:9443/ws/'+s+'@aggTrade');
+spotAggWs.onmessage=e=>{const d=JSON.parse(e.data),now=Date.now(),quote=+d.p*+d.q;spotFlowTrades.push({time:now,quote,buy:!d.m});spotFlowTrades=spotFlowTrades.filter(x=>now-x.time<=300000);let buy=0,sell=0;for(const x of spotFlowTrades){if(x.buy)buy+=x.quote;else sell+=x.quote;}advancedState.spotCvd=buy-sell;advancedState.spotImbalance=(buy+sell)?(buy-sell)/(buy+sell)*100:0;setMetric('spotCvd',(advancedState.spotCvd>=0?'+':'')+fmtUsd(Math.abs(advancedState.spotCvd)),advancedState.spotCvd>0?'positive':advancedState.spotCvd<0?'negative':'neutral');setText('spotCvdState','5 dk net agresif hacim · '+advancedState.spotImbalance.toFixed(1)+'%');if(Number.isFinite(advancedState.futuresCvdImbalance)){const aligned=advancedState.spotImbalance*advancedState.futuresCvdImbalance>0;setMetric('flowDivergence',aligned?'AYNI YÖN':'AYRIŞMA',aligned?'positive':'negative');setText('flowDivergenceState','Spot '+(advancedState.spotImbalance>=0?'alıcı':'satıcı')+' · Futures '+(advancedState.futuresCvdImbalance>=0?'alıcı':'satıcı'));}};
 const liq=new WebSocket('wss://fstream.binance.com/ws/'+s+'@forceOrder');
 liq.onmessage=e=>{const d=JSON.parse(e.data).o;if(!d)return;const side=d.S==='SELL'?'LONG':'SHORT',value=+d.ap*+d.q,price=+d.ap,now=Date.now();futuresState.liqSide=d.S;futuresState.liqValue=value;futuresState.liqAt=now;
 const step=Math.max((lastPrice||price)*.0025,0.01),key=Math.round(price/step)*step;let cluster=futuresState.liqClusters.find(x=>Math.abs(x.price-key)/key<.0025&&x.side===side);if(!cluster){cluster={price:key,side,quote:0,count:0,lastAt:now};futuresState.liqClusters.push(cluster);}cluster.quote+=value;cluster.count++;cluster.lastAt=now;futuresState.liqClusters=futuresState.liqClusters.filter(x=>now-x.lastAt<1800000);
@@ -222,12 +247,60 @@ else if(acc>=3&&diff>0){direction='ACC_WATCH';text='Zayıf birikim izleri; henü
 else if(dist>=3&&diff<0){direction='DIST_WATCH';text='Zayıf dağıtım izleri; henüz güçlü eşik aşılmadı ('+dist+'/9).';}
 return{direction,score:direction.startsWith('ACC')?acc:direction.startsWith('DIST')?dist:Math.max(acc,dist),text,pressure,obv,volRatio,ret,lowDist,highDist};
 }
+function advancedIndicators(data){
+const n=data.length;if(n<30)return null;
+const slice=data.slice(-48),sumVol=slice.reduce((a,x)=>a+x.volume,0)||1;
+const vwap=slice.reduce((a,x)=>a+((x.high+x.low+x.close)/3)*x.volume,0)/sumVol;
+const mfiVals=[];for(let i=Math.max(1,n-14);i<n;i++){const a=data[i-1],b=data[i],tp=(b.high+b.low+b.close)/3,pt=(a.high+a.low+a.close)/3,flow=tp*b.volume;if(tp>pt)mfiVals.push({pos:flow,neg:0});else mfiVals.push({pos:0,neg:flow});}
+const pos=mfiVals.reduce((a,x)=>a+x.pos,0),neg=mfiVals.reduce((a,x)=>a+x.neg,0),mfi=neg===0?100:100-100/(1+pos/neg);
+const cmfData=data.slice(-20);let mfv=0,mfvVol=0;for(const x of cmfData){const range=x.high-x.low,clv=range?((x.close-x.low)-(x.high-x.close))/range:0;mfv+=clv*x.volume;mfvVol+=x.volume;}const cmf=mfvVol?mfv/mfvVol:0;
+const tr=[],plus=[],minus=[];for(let i=1;i<n;i++){const p=data[i-1],c=data[i];tr.push(Math.max(c.high-c.low,Math.abs(c.high-p.close),Math.abs(c.low-p.close)));const up=c.high-p.high,down=p.low-c.low;plus.push(up>down&&up>0?up:0);minus.push(down>up&&down>0?down:0);}
+const smooth=(arr,p)=>{let v=arr.slice(0,p).reduce((a,b)=>a+b,0);for(let i=p;i<arr.length;i++)v=v-v/p+arr[i];return v;};
+const p=14,trs=smooth(tr,p),pdm=smooth(plus,p),mdm=smooth(minus,p),pdi=trs?100*pdm/trs:0,mdi=trs?100*mdm/trs:0,dx= pdi+mdi?100*Math.abs(pdi-mdi)/(pdi+mdi):0;
+const dxs=[];for(let i=14;i<tr.length;i++){const t=smooth(tr.slice(0,i+1),p),pu=smooth(plus.slice(0,i+1),p),mi=smooth(minus.slice(0,i+1),p),a=t?100*pu/t:0,b=t?100*mi/t:0;dxs.push(a+b?100*Math.abs(a-b)/(a+b):0);}const adx=dxs.length?dxs.slice(-14).reduce((a,b)=>a+b,0)/Math.min(14,dxs.length):dx;
+const closes=data.slice(-20).map(x=>x.close),mean=closes.reduce((a,b)=>a+b,0)/20,sd=Math.sqrt(closes.reduce((a,b)=>a+(b-mean)**2,0)/20),bbWidth=mean?sd*4/mean*100:0;
+const atrNow=tr.slice(-14).reduce((a,b)=>a+b,0)/Math.min(14,tr.length),atrPrev=tr.slice(-28,-14),atrOld=atrPrev.length?atrPrev.reduce((a,b)=>a+b,0)/atrPrev.length:atrNow,atrExpansion=atrOld?atrNow/atrOld:1;
+const lo=Math.min(...slice.map(x=>x.low)),hi=Math.max(...slice.map(x=>x.high)),bins=24,step=(hi-lo)/bins||Math.max(mean*.0001,.0000001),profile=Array(bins).fill(0);
+for(const x of slice){const tp=(x.high+x.low+x.close)/3,idx=Math.max(0,Math.min(bins-1,Math.floor((tp-lo)/step)));profile[idx]+=x.volume;}
+const order=profile.map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v),pocIdx=order[0].i,poc=lo+(pocIdx+.5)*step;let accumulated=0,selected=[];for(const q of order){selected.push(q.i);accumulated+=q.v;if(accumulated>=sumVol*.70)break;}const vaLow=lo+Math.min(...selected)*step,vaHigh=lo+(Math.max(...selected)+1)*step;
+return{vwap,mfi,cmf,adx,pdi,mdi,bbWidth,atrExpansion,poc,vaLow,vaHigh};
+}
+function updateAdvancedPanel(a,price){
+if(!a)return;
+setMetric('vwap',fmt(a.vwap),price>=a.vwap?'positive':'negative');setText('vwapState',price>=a.vwap?'Fiyat VWAP üzerinde':'Fiyat VWAP altında');
+setMetric('volumePoc',fmt(a.poc),price>=a.poc?'positive':'negative');setText('volumePocState','48 mum hacim profili · POC');
+setText('valueArea',fmt(a.vaLow)+' – '+fmt(a.vaHigh));
+setMetric('mfi',a.mfi.toFixed(1),a.mfi<20?'positive':a.mfi>80?'negative':'neutral');setText('mfiState',a.mfi<20?'Aşırı satım bölgesi':a.mfi>80?'Aşırı alım bölgesi':'Para akışı dengeli');
+setMetric('cmf',(a.cmf>=0?'+':'')+a.cmf.toFixed(3),a.cmf>.08?'positive':a.cmf<-.08?'negative':'neutral');setText('cmfState',a.cmf>.08?'Hacim destekli birikim':a.cmf<-.08?'Hacim destekli dağıtım':'Belirgin para akışı yok');
+setMetric('adx',a.adx.toFixed(1)+' · '+(a.pdi>a.mdi?'DI+':'DI-'),a.adx>=25?(a.pdi>a.mdi?'positive':'negative'):'neutral');setText('adxState',a.adx>=25?'Trend güçlü':a.adx>=18?'Trend gelişiyor':'Trend zayıf / yatay');
+setMetric('bbWidth',a.bbWidth.toFixed(2)+'%',a.bbWidth<2?'neutral':'');setText('bbState',a.bbWidth<2?'Daralma / sıkışma':a.bbWidth>6?'Geniş volatilite':'Normal bant genişliği');
+setMetric('atrExpansion',a.atrExpansion.toFixed(2)+'x',a.atrExpansion>1.25?'negative':a.atrExpansion<.8?'neutral':'');setText('atrExpansionState',a.atrExpansion>1.25?'Volatilite genişliyor':a.atrExpansion<.8?'Volatilite daralıyor':'ATR dengeli');
+}
+function combinedMarketExplanation(a,price,early,baseScore){
+const signals=[],reasons=[];let bull=0,bear=0,valid=0;
+const add=(name,dir,weight,detail)=>{if(dir){valid++;if(dir>0)bull+=weight;else bear+=weight;signals.push({name,dir,weight});reasons.push(detail);}};
+if(Number.isFinite(advancedState.spotImbalance))add('Spot CVD',advancedState.spotImbalance>7?1:advancedState.spotImbalance< -7?-1:0,2,'Spot CVD '+(advancedState.spotImbalance>=0?'alıcı':'satıcı')+' baskısını gösteriyor.');
+if(Number.isFinite(advancedState.futuresCvdImbalance))add('Futures CVD',advancedState.futuresCvdImbalance>7?1:advancedState.futuresCvdImbalance< -7?-1:0,1.5,'Vadeli CVD '+(advancedState.futuresCvdImbalance>=0?'alıcı':'satıcı')+' tarafında.');
+if(a){add('VWAP',price>a.vwap*1.001?1:price<a.vwap*.999?-1:0,1,'Fiyat '+(price>=a.vwap?'VWAP üzerinde':'VWAP altında')+'.');add('CMF',a.cmf>.08?1:a.cmf<-.08?-1:0,1,'CMF '+a.cmf.toFixed(3)+'; '+(a.cmf>.08?'birikim':a.cmf<-.08?'dağıtım':'nötr')+' işareti veriyor.');add('MFI',a.mfi<25?1:a.mfi>75?-1:0,.5,'MFI '+a.mfi.toFixed(1)+'.');add('ADX/DI',a.adx>=20?(a.pdi>a.mdi?1:-1):0,.75,'ADX '+a.adx.toFixed(1)+'; '+(a.pdi>a.mdi?'DI+':'DI-')+' baskın.');add('Volume Profile',price>a.poc*1.001?1:price<a.poc*.999?-1:0,.5,'Fiyat hacim POC seviyesinin '+(price>=a.poc?'üzerinde':'altında')+'.');}
+if(Number.isFinite(futuresState.bookImbalance))add('Emir defteri',futuresState.bookImbalance>10?1:futuresState.bookImbalance< -10?-1:0,.5,'İlk 20 kademe derinlik dengesi '+futuresState.bookImbalance.toFixed(1)+'%.');
+if(Number.isFinite(advancedState.basis))add('Basis',advancedState.basis<-.08?1:advancedState.basis>.12?-1:0,.35,'Mark/index basis '+advancedState.basis.toFixed(4)+'%.');
+if(early&&early.direction.startsWith('ACC'))add('Erken birikim',1,.5,'Erken birikim göstergesi destek veriyor.');else if(early&&early.direction.startsWith('DIST'))add('Erken dağıtım',-1,.5,'Erken dağıtım göstergesi baskı gösteriyor.');
+const total=bull+bear,agreement=total?Math.max(bull,bear)/total*100:0,direction=bull>bear?'ALICI ÜSTÜN':bear>bull?'SATICI ÜSTÜN':'DENGELİ';
+let verdict='KARARSIZ',cls='neutral';if(valid>=4&&agreement>=68&&Math.abs(bull-bear)>=2.5){verdict=bull>bear?'ALIM BASKISI':'SATIŞ BASKISI';cls=bull>bear?'positive':'negative';}
+setMetric('marketVerdict',verdict,cls);setText('marketAgreement',valid+' veri grubu · '+Math.round(agreement)+'% uyum');
+const flowText=Number.isFinite(advancedState.spotImbalance)&&Number.isFinite(advancedState.futuresCvdImbalance)?(advancedState.spotImbalance*advancedState.futuresCvdImbalance>0?'Spot ve vadeli akış aynı yönde.':'Spot ve vadeli akış ayrışıyor; hareket teyitsiz olabilir.'):'Spot/futures CVD verisi henüz yeterli değil.';
+const baseText='Teknik motor '+(baseScore>=4?'AL':baseScore<=-4?'SAT':'BEKLE')+' yönünde ('+baseScore.toFixed(1)+' puan).';
+setText('marketExplanation',baseText+' '+flowText+' '+(reasons.slice(0,5).join(' ')||'Göstergeler için yeterli veri bekleniyor.')+' Birleşik değerlendirme: '+direction+'.');
+setText('marketCaveat',verdict==='KARARSIZ'?'Veri grupları yeterince aynı yönde değil; bu nedenle birleşik motor güçlü yön kararı vermiyor.':'Bu sonuç olasılık değerlendirmesidir; emir sinyali veya getiri garantisi değildir. Hacim profili ve VWAP seçili zaman dilimindeki son 48 kapanmış mumdan hesaplanır.');
+return{bull,bear,valid,agreement,verdict};
+}
 function calc(){
 const data=candles.filter(x=>x.closed);if(data.length<210)return;
 const closes=data.map(x=>x.close),e20=ema(closes,20),e50=ema(closes,50),e200=ema(closes,200),rvArr=rsi(closes),fast=ema(closes,12),slow=ema(closes,26),m=fast.map((v,i)=>v===null||slow[i]===null?null:v-slow[i]),sig=ema(m.map(v=>v??NaN),9),hist=m.map((v,i)=>v===null||sig[i]===null?null:v-sig[i]);
 const n=data.length-1,c=data[n],prev=data[n-1],p=c.close,rv=rvArr[n],rPrev=rvArr[n-1],mac=hist[n],macPrev=hist[n-1]??0,atrV=atr(data.slice(-30)),volAvg=data.slice(-21,-1).reduce((s,x)=>s+x.volume,0)/20,volRatio=volAvg?c.volume/volAvg:0;
 const supportCtx=pivotContext(false,p,data,atrV),resistCtx=pivotContext(true,p,data,atrV),nearSupport=supportCtx&&Math.abs(p-supportCtx.price)<=atrV*1.25,nearResist=resistCtx&&Math.abs(p-resistCtx.price)<=atrV*1.25;
 const early=earlyFlowAnalysis(data,atrV);
+const advanced=advancedIndicators(data);updateAdvancedPanel(advanced,p);
 const body=Math.abs(c.close-c.open),lowerWick=Math.min(c.open,c.close)-c.low,upperWick=c.high-Math.max(c.open,c.close),bull=c.close>c.open,bear=c.close<c.open;
 const trendUp=e20[n]>e50[n]&&e50[n]>e200[n],trendDown=e20[n]<e50[n]&&e50[n]<e200[n];
 const priceTurnUp=bull&&c.close>prev.high&&lowerWick>body*.5,priceTurnDown=bear&&c.close<prev.low&&upperWick>body*.5;
@@ -244,6 +317,8 @@ if(lowerWick>Math.max(body*1.3,atrV*.12)&&bull){score+=1;why.push('Alt fitil al�
 if(early.direction==='ACC'&&priceTurnUp){score+=.6;why.push('Birikim ön sinyali fiyat kırılımıyla teyit edildi');}
 else if(early.direction==='DIST'&&priceTurnDown){score-=.6;why.push('Dağıtım ön sinyali fiyat kırılımıyla teyit edildi');}
 const futuresAdj=futuresAdjustment(c,prev);score+=futuresAdj.score;why.push('Futures: '+futuresAdj.text);
+if(advanced){if(advanced.cmf>.12&&p>advanced.vwap)score+=.45;else if(advanced.cmf<-.12&&p<advanced.vwap)score-=.45;if(advanced.adx>25){if(advanced.pdi>advanced.mdi&&p>advanced.vwap)score+=.35;else if(advanced.mdi>advanced.pdi&&p<advanced.vwap)score-=.35;}if(advanced.mfi<18&&p<advanced.vwap)score+=.2;else if(advanced.mfi>82&&p>advanced.vwap)score-=.2;}
+if(Number.isFinite(advancedState.spotImbalance)&&Number.isFinite(advancedState.futuresCvdImbalance)){if(advancedState.spotImbalance>10&&advancedState.futuresCvdImbalance>10)score+=.5;else if(advancedState.spotImbalance< -10&&advancedState.futuresCvdImbalance< -10)score-=.5;}
 score=Math.max(-9.5,Math.min(9.5,score));
 const rawSignal=score>=4?'AL':score<=-4?'SAT':'BEKLE';
 const signal=rawSignal;lastSignal=rawSignal;
@@ -256,6 +331,7 @@ setText('momentum',momUp?'YÜKSELİYOR':momDown?'DÜŞÜYOR':'NÖTR');$('momentu
 setText('atr',fmt(atrV)+' · '+(atrV/p*100).toFixed(2)+'%');
 setText('signal',signal);$('signal').className='signalword '+(signal==='AL'?'positive':signal==='SAT'?'negative':'neutral');setText('confidence','GÜÇ '+strength+'%');$('scorebar').style.width=strength+'%';$('scorebar').style.background=rawSignal==='AL'?'var(--green)':rawSignal==='SAT'?'var(--red)':'var(--gold)';
 setText('reason',why.length?why.join(' · '):'Fiyat dönüşü, pivot ve momentum koşulları henüz aynı yönde birleşmedi.');
+combinedMarketExplanation(advanced,p,early,score);
 const earlyLabel=early.direction==='ACC'?'ERKEN BİRİKİM':early.direction==='DIST'?'ERKEN DAĞITIM':early.direction==='ACC_WATCH'?'BİRİKİM İZİ':early.direction==='DIST_WATCH'?'DAĞITIM İZİ':'NÖTR';
 setText('earlySignal',earlyLabel);$('earlySignal').className='signalword '+(early.direction.startsWith('ACC')?'positive':early.direction.startsWith('DIST')?'negative':'neutral');
 setText('earlyScore',early.score+'/10');setText('earlyReason',early.text);
@@ -280,7 +356,7 @@ function updatePrice(p){lastPrice=p;setText('price',fmt(p));setText('tick',new D
 function connectPrice(){if(priceWs)priceWs.close();const s=coin.toLowerCase()+'usdt';priceWs=new WebSocket('wss://stream.binance.com:9443/ws/'+s+'@trade');priceWs.onopen=()=>{setText('connection','Binance Spot WebSocket bağlı');$('dot').style.background='var(--green)';};priceWs.onmessage=e=>{const d=JSON.parse(e.data);updatePrice(+d.p);};priceWs.onclose=()=>{$('dot').style.background='var(--red)';setText('connection','Fiyat bağlantısı yenileniyor');setTimeout(()=>{if(!priceWs||priceWs.readyState===WebSocket.CLOSED)connectPrice();},1200);};priceWs.onerror=()=>{try{priceWs.close();}catch(_){}};}
 function connectKline(){if(klineWs)klineWs.close();const s=coin.toLowerCase()+'usdt';klineWs=new WebSocket('wss://stream.binance.com:9443/ws/'+s+'@kline_'+tf);klineWs.onmessage=e=>{const k=JSON.parse(e.data).k,c={time:Math.floor(k.t/1000),open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.q,closed:k.x};const ix=candles.findIndex(x=>x.time===c.time);if(ix>=0)candles[ix]=c;else candles.push(c);candles=candles.slice(-500);candleSeries.update({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close});if(c.closed)calc();};}
 async function load(){const sym=coin+'USDT';setText('symbol',sym+' · '+tf.toUpperCase());try{const [rows,ticker,stats]=await Promise.all([fetch('https://api.binance.com/api/v3/klines?symbol='+sym+'&interval='+tf+'&limit=500',{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/price?symbol='+sym,{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/24hr?symbol='+sym,{cache:'no-store'}).then(r=>r.json())]);candles=rows.map(x=>({time:Math.floor(x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[7],closed:Number(x[6])<Date.now()}));candleSeries.setData(candles.map(x=>({time:x.time,open:x.open,high:x.high,low:x.low,close:x.close})));base24=+stats.prevClosePrice;updatePrice(+ticker.price);setText('volume',compact(+stats.quoteVolume));setText('high',fmt(+stats.highPrice));setText('low',fmt(+stats.lowPrice));chart.timeScale().fitContent();oscChart.timeScale().fitContent();calc();}catch(e){setText('reason','Binance mum verisi alınamadı: '+e.message);}}
-function switchMarket(){controls();candles=[];lastSignal='BEKLE';futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0,liqClusters:[],bookHistory:[],topPrevious:null,topChange:null,topChangeAt:0,oiPriceMove:null,oiInterpretation:'—'};lastPrice=null;base24=null;setText('price','Yükleniyor…');chartInit();load().then(connectKline);connectPrice();startFutures();}
+function switchMarket(){controls();candles=[];lastSignal='BEKLE';futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0,liqClusters:[],bookHistory:[],topPrevious:null,topChange:null,topChangeAt:0,oiPriceMove:null,oiInterpretation:'—'};lastPrice=null;base24=null;advancedState={spotCvd:0,futuresCvd:0,spotImbalance:null,futuresCvdImbalance:null,basis:null,depthChange:null,depthHistory:[],lastBookTotal:null};setText('price','Yükleniyor…');chartInit();load().then(connectKline);connectPrice();startFutures();}
 if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}controls();chartInit();switchMarket();
 })();
 </script></body></html>
