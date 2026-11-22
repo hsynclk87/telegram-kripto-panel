@@ -1,5 +1,6 @@
 import http from "node:http";
 import { WebSocket, WebSocketServer } from "ws";
+import { analyzeMarkets } from "./analysis.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -16,26 +17,24 @@ const state = {
   },
   markets: {},
   trades: [],
-  liquidations: [],
-  events: []
+  liquidations: []
 };
 
 for (const symbol of SYMBOLS) {
   state.markets[symbol] = {
-    symbol,
-    binanceSpot: {},
-    binanceFutures: {},
-    bybitLinear: {},
-    updatedAt: null
+    symbol, binanceSpot: {}, binanceFutures: {}, bybitLinear: {}, updatedAt: null
   };
 }
 
 const clients = new Set();
 const now = () => new Date().toISOString();
+const toNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
 
 function log(level, message, extra = {}) {
-  const row = { time: now(), level, message, ...extra };
-  console.log(JSON.stringify(row));
+  console.log(JSON.stringify({ time: now(), level, message, ...extra }));
 }
 
 function publish(type, payload) {
@@ -61,14 +60,23 @@ function updateMarket(symbol, exchange, patch) {
 
 function addTrade(trade) {
   state.trades.unshift(trade);
-  if (state.trades.length > 300) state.trades.length = 300;
+  if (state.trades.length > 3000) state.trades.length = 3000;
   publish("trade", trade);
 }
 
 function addLiquidation(item) {
   state.liquidations.unshift(item);
-  if (state.liquidations.length > 200) state.liquidations.length = 200;
+  if (state.liquidations.length > 1000) state.liquidations.length = 1000;
   publish("liquidation", item);
+}
+
+function getAnalysis() {
+  return analyzeMarkets({
+    symbols: SYMBOLS,
+    markets: state.markets,
+    trades: state.trades,
+    liquidations: state.liquidations
+  });
 }
 
 function connectSocket(name, url, onMessage, onOpen) {
@@ -202,26 +210,27 @@ function startBinanceFutures() {
 }
 
 function startBybit() {
-  const socketUrl = "wss://stream.bybit.com/v5/public/linear";
   return connectSocket(
     "bybitLinear",
-    socketUrl,
+    "wss://stream.bybit.com/v5/public/linear",
     (packet) => {
-      if (!packet.topic || !Array.isArray(packet.data)) return;
+      if (!packet.topic || packet.data == null) return;
+      const rows = Array.isArray(packet.data) ? packet.data : [packet.data];
       const topic = packet.topic;
-      for (const d of packet.data) {
+
+      for (const d of rows) {
         const symbol = symbolFrom(d.s || d.symbol || topic.split(".").at(-1));
         if (topic.startsWith("tickers.")) {
-          updateMarket(symbol, "bybitLinear", {
-            lastPrice: Number(d.lastPrice),
-            markPrice: Number(d.markPrice),
-            indexPrice: Number(d.indexPrice),
-            fundingRate: Number(d.fundingRate),
-            openInterest: Number(d.openInterest),
-            openInterestValue: Number(d.openInterestValue),
-            price24hPcnt: Number(d.price24hPcnt),
-            turnover24h: Number(d.turnover24h)
-          });
+          const patch = {};
+          for (const [key, value] of Object.entries({
+            lastPrice: d.lastPrice, markPrice: d.markPrice, indexPrice: d.indexPrice,
+            fundingRate: d.fundingRate, openInterest: d.openInterest,
+            openInterestValue: d.openInterestValue, price24hPcnt: d.price24hPcnt,
+            turnover24h: d.turnover24h
+          })) {
+            if (value !== undefined && value !== "") patch[key] = toNumber(value);
+          }
+          updateMarket(symbol, "bybitLinear", patch);
         } else if (topic.startsWith("publicTrade.")) {
           addTrade({
             exchange: "Bybit Linear", symbol, price: Number(d.p),
@@ -246,18 +255,13 @@ function startBybit() {
       socket.send(JSON.stringify({
         op: "subscribe",
         args: SYMBOLS.flatMap((s) => [
-          "tickers." + s,
-          "publicTrade." + s,
-          "orderbook.50." + s,
-          "allLiquidation." + s
+          "tickers." + s, "publicTrade." + s,
+          "orderbook.50." + s, "allLiquidation." + s
         ])
       }));
       const heartbeat = setInterval(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ op: "ping" }));
-        } else {
-          clearInterval(heartbeat);
-        }
+        if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ op: "ping" }));
+        else clearInterval(heartbeat);
       }, 20000);
       socket.once("close", () => clearInterval(heartbeat));
     }
@@ -266,6 +270,7 @@ function startBybit() {
 
 const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN);
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (req.method === "OPTIONS") {
@@ -293,16 +298,23 @@ const server = http.createServer((req, res) => {
 
   if (url.pathname === "/api/v1/snapshot") {
     const requested = url.searchParams.get("symbol");
-    const markets = requested
-      ? (state.markets[symbolFrom(requested)] ? [state.markets[symbolFrom(requested)]] : [])
-      : Object.values(state.markets);
+    const key = requested ? symbolFrom(requested) : null;
+    const markets = key ? (state.markets[key] ? [state.markets[key]] : []) : Object.values(state.markets);
     res.writeHead(200);
     return res.end(JSON.stringify({
       time: now(), symbols: SYMBOLS, markets,
+      analysis: getAnalysis().filter((item) => !key || item.symbol === key),
       latestTrades: state.trades.slice(0, 50),
       latestLiquidations: state.liquidations.slice(0, 50),
       exchanges: state.exchanges
     }));
+  }
+
+  if (url.pathname === "/api/v1/analysis") {
+    const requested = url.searchParams.get("symbol");
+    const key = requested ? symbolFrom(requested) : null;
+    res.writeHead(200);
+    return res.end(JSON.stringify(getAnalysis().filter((item) => !key || item.symbol === key)));
   }
 
   if (url.pathname === "/api/v1/trades") {
@@ -326,11 +338,13 @@ wss.on("connection", (socket) => {
   clients.add(socket);
   socket.send(JSON.stringify({
     type: "snapshot", time: now(),
-    data: { markets: state.markets, exchanges: state.exchanges }
+    data: { markets: state.markets, exchanges: state.exchanges, analysis: getAnalysis() }
   }));
   socket.on("close", () => clients.delete(socket));
   socket.on("error", () => clients.delete(socket));
 });
+
+const analysisTimer = setInterval(() => publish("analysis", getAnalysis()), 5000);
 
 server.listen(PORT, HOST, () => {
   log("info", "Analysis engine API listening", { host: HOST, port: PORT, symbols: SYMBOLS });
@@ -339,13 +353,13 @@ server.listen(PORT, HOST, () => {
   startBybit();
 });
 
-process.on("SIGTERM", () => {
-  log("info", "SIGTERM received; shutting down");
+function shutdown(signal) {
+  log("info", signal + " received; shutting down");
+  clearInterval(analysisTimer);
   for (const client of wss.clients) client.close();
+  wss.close();
   server.close(() => process.exit(0));
-});
-process.on("SIGINT", () => {
-  log("info", "SIGINT received; shutting down");
-  for (const client of wss.clients) client.close();
-  server.close(() => process.exit(0));
-});
+  setTimeout(() => process.exit(1), 10000).unref();
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
