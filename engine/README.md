@@ -7,6 +7,7 @@ Bağımsız Node.js servisidir. Telegram botu oluşturmaz. Binance Spot, Binance
 - Binance Spot: gerçekleşen işlemler, ilk 20 emir defteri seviyesi, 1 dakikalık mum.
 - Binance USD-M Futures: aggregate trade, ilk 20 emir defteri seviyesi, 1 dakikalık mum, force-order likidasyonları.
 - Bybit Linear: ticker, funding, open interest, public trade, orderbook ve liquidation akışı.
+- Son 100 Binance Futures 1 dakikalık mumunu başlangıçta REST ile yükleyip canlı mumlarla günceller; 20 mumluk hacim tabanına göre anormal hacim ve son 60 mum aralığından destek/direnç ile hacimli kırılım kontrolleri yapar.
 - Büyük işlem (whale) uyarısı: varsayılan 100.000 USDT eşik; eşik ortam değişkeniyle ayarlanabilir.
 - Sinyal modülü: son 5 dakikalık agresif alış/satış akışı, emir defteri dengesizliği, 1 dakikalık mum momentumu ve funding riskini birleştiren açıklanabilir puan.
 - HTTP API ve Mini App'in bağlanabileceği WebSocket yayını.
@@ -36,12 +37,13 @@ Servis varsayılan olarak `http://localhost:8080` adresinde açılır.
 | `GET /api/v1/snapshot?symbol=BTCUSDT` | Tek sembol görünümü |
 | `GET /api/v1/analysis` | Tüm sembollerin güncel sinyal değerlendirmesi |
 | `GET /api/v1/analysis?symbol=BTCUSDT` | Tek sembol sinyali |
+| `GET /api/v1/market-signals` | Anormal hacim, destek/direnç ve hacimli kırılım kontrolleri |
 | `GET /api/v1/trades?limit=50` | Son işlemler |
 | `GET /api/v1/liquidations?limit=50` | Son likidasyonlar |
 | `GET /api/v1/whales?limit=50` | Eşik üstü büyük işlemler |
 | `WS /stream` | Anlık olay yayını; analiz 5 saniyede bir gönderilir |
 
-WebSocket olay tipleri: `snapshot`, `market`, `trade`, `whale`, `liquidation`, `connection`, `analysis`.
+WebSocket olay tipleri: `snapshot`, `market`, `candle`, `marketSignals`, `trade`, `whale`, `liquidation`, `connection`, `analysis`.
 
 ## Sinyal puanlaması
 
