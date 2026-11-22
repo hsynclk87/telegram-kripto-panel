@@ -11,7 +11,7 @@ import { createTradeDeduplicator, isFirstFuturesDepthEventValid } from "./market
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
-const PUBLIC_DIR = fileURLToPath(new URL("../public/", import.meta.url));
+const PUBLIC_DIR = resolve(fileURLToPath(new URL("../public/", import.meta.url)));
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 const WHALE_TRADE_USD = Math.max(1, Number(process.env.WHALE_TRADE_USD || 100000));
 const SYMBOLS = (process.env.SYMBOLS || "BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT,DOGEUSDT")
