@@ -58,6 +58,8 @@ Bu ilk sürüm bir araştırma/filtreleme sinyalidir; emir göndermez, pozisyon 
 - `CORS_ORIGIN`: Mini App'in HTTPS origin'i; yerel testte * kullanılabilir
 - `SYMBOLS`: virgülle ayrılmış USDT sembolleri
 - `WHALE_TRADE_USD`: büyük işlem uyarı eşiği (varsayılan 100000 USDT)
+- `DATABASE_URL`: isteğe bağlı PostgreSQL bağlantı adresi
+- `DATABASE_SSL`: TLS gerektiren PostgreSQL sağlayıcılarında `true`
 
 Public piyasa akışları için API anahtarı gerekmez. API key/secret dosyaya eklemeyin.
 
@@ -71,7 +73,7 @@ Dağıtım sonrası servis URL'si `https://...` olur; WebSocket adresi `wss://..
 
 ## Bilinen sınırlar / sonraki faz
 
-- Akış tamponları bellektedir; servis yeniden başlarsa geçmiş tamponlar sıfırlanır.
+- PostgreSQL için `DATABASE_URL` verilirse işlemler, likidasyonlar, büyük işlemler ve kapanmış 1 dakikalık mumlar kalıcı kaydedilir. Veritabanı ayarlı değilse bellek modunda çalışır. Başlangıçta Binance REST geçmişi yüklenir; REST başarısızsa kayıtlı mumlar kullanılır.
 - Kalıcı PostgreSQL/Redis saklama, geçmiş mumların REST ile yüklenmesi, gelişmiş likidite/whale/false-breakout modülleri, alarm kuralları, kullanıcı bazlı erişim ve Mini App UI entegrasyonu sonraki fazlardır.
 - İlk dağıtımda Binance/Bybit gerçek payload'ları ve reconnect davranışı canlı ortamda ayrıca doğrulanmalıdır.
 - Mevcut kök `index.html` korunur; bu branch onu değiştirmez.
