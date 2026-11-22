@@ -109,10 +109,19 @@ async function loadCandleHistory() {
         low: Number(row[3]), close: Number(row[4]), volume: Number(row[5]),
         closeTime: Number(row[6]), quoteVolume: Number(row[7]), closed: true
       }));
-      for (const candle of history) await storage.saveCandle(symbol, candle);
     } catch (error) {
       log("warn", "Binance REST history unavailable; checking database", { symbol, error: error.message });
-      history = await storage.loadCandles(symbol, 100);
+      try {
+        history = await storage.loadCandles(symbol, 100);
+      } catch (storageError) {
+        log("warn", "Database candle restore failed", { symbol, error: storageError.message });
+        history = [];
+      }
+    }
+    if (storage.enabled && history.length) {
+      const writes = await Promise.allSettled(history.map((candle) => storage.saveCandle(symbol, candle)));
+      const failures = writes.filter((item) => item.status === "rejected").length;
+      if (failures) log("warn", "Some candle history rows were not persisted", { symbol, failures });
     }
     state.markets[symbol].candles1m = history.slice(-200);
     return { symbol, candles: history.length };
