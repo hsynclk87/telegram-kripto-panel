@@ -1,4 +1,7 @@
 import http from "node:http";
+import { readFile } from "node:fs/promises";
+import { resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { WebSocket, WebSocketServer } from "ws";
 import { analyzeMarkets } from "./analysis.js";
 import { detectWhaleTrade } from "./whales.js";
@@ -8,6 +11,7 @@ import { createTradeDeduplicator, isFirstFuturesDepthEventValid } from "./market
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
+const PUBLIC_DIR = fileURLToPath(new URL("../public/", import.meta.url));
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 const WHALE_TRADE_USD = Math.max(1, Number(process.env.WHALE_TRADE_USD || 100000));
 const SYMBOLS = (process.env.SYMBOLS || "BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT,DOGEUSDT")
@@ -567,13 +571,40 @@ const server = http.createServer((req, res) => {
   }
 
   const url = new URL(req.url || "/", "http://localhost");
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
 
   if (req.method !== "GET") {
     res.writeHead(405);
     return res.end(JSON.stringify({ error: "method_not_allowed" }));
   }
+
+  // Serve the Telegram Mini App from the same Render service as the data API.
+  if (url.pathname === "/" || url.pathname === "/index.html" || url.pathname.startsWith("/engine/")) {
+    try {
+      const requestedPath = decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname);
+      const filePath = resolve(PUBLIC_DIR, "." + requestedPath);
+      if (filePath !== PUBLIC_DIR && !filePath.startsWith(PUBLIC_DIR + sep)) {
+        res.writeHead(403);
+        return res.end("Forbidden");
+      }
+      const body = await readFile(filePath);
+      const extension = filePath.split(".").pop().toLowerCase();
+      const mime = {
+        html: "text/html; charset=utf-8",
+        js: "text/javascript; charset=utf-8",
+        css: "text/css; charset=utf-8",
+        json: "application/json; charset=utf-8",
+        svg: "image/svg+xml"
+      }[extension] || "application/octet-stream";
+      res.writeHead(200, { "Content-Type": mime, "Cache-Control": "no-store" });
+      return res.end(body);
+    } catch {
+      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+      return res.end("Mini App asset not found");
+    }
+  }
+
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
 
   if (url.pathname === "/health" || url.pathname === "/api/v1/health") {
     res.writeHead(200);
