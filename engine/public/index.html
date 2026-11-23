@@ -556,4 +556,4 @@ async function load(){const sym=coin+'USDT';setText('symbol',sym+' · '+tf.toUpp
 function switchMarket(){controls();footprintTrades={SPOT:[],FUTURES:[]};candles=[];lastSignal='BEKLE';futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0,liqClusters:[],bookHistory:[],topPrevious:null,topChange:null,topChangeAt:0,oiPriceMove:null,oiInterpretation:'—'};lastPrice=null;base24=null;advancedState={spotCvd:0,futuresCvd:0,spotImbalance:null,futuresCvdImbalance:null,basis:null,depthChange:null,depthHistory:[],lastBookTotal:null};setText('price','Yükleniyor…');chartInit();load().then(()=>{connectKline();});connectPrice();startFutures();}
 if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}controls();chartInit();switchMarket();
 })();
-</script></body></html>
+</script><script src="/validator.js"></script></body></html>
