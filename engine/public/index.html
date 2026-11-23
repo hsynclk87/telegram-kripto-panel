@@ -386,8 +386,7 @@ const levelText='Destek '+pivotLine(ctx.support)+' · Direnç '+pivotLine(ctx.re
 let breakout=ctx.breakoutText||'Kırılım değerlendirmesi için yeterli veri yok.';
 if(ctx.nearSupport&&Number.isFinite(spot)&&spot>7&&Number.isFinite(fut)&&fut>0)bull.push('Destek çevresinde Spot alıcı akışı pozitif; absorpsiyon ihtimali incelenmeli, fiyatın destek üzerinde tutunması henüz ayrıca teyit edilmeli.');
 if(ctx.nearResist&&Number.isFinite(spot)&&spot< -7)bear.push('Direnç çevresinde Spot CVD negatif; yukarı hareketin spot talep tarafından karşılanmadığına dair uyarı.');
-if(ctx.trendUp)qualityFamilies.add('trend');else if(ctx.trendDown)qualityFamilies.add('trend');
-if(a&&a.adx>=25)qualityFamilies.add('trend-strength');
+if(ctx.trendUp||ctx.trendDown||(a&&a.adx>=25))qualityFamilies.add('structure');
 if(spotFresh||futFresh)qualityFamilies.add('trade-flow');
 if(oiFresh)qualityFamilies.add('positioning');
 if(bookFresh||liqFresh)qualityFamilies.add('liquidity');
@@ -473,7 +472,8 @@ const bias=upSupport&&!downSupport?'ALICI KANITLARI ÖNDE':downSupport&&!upSuppo
 const ageNotes=[];
 ageNotes.push('Spot CVD '+(spotFresh?'güncel, '+Math.min(300,flowDuration(spotFlowTrades))+' sn birikim':'henüz oluşmadı veya akış kesik'));
 ageNotes.push('Futures CVD '+(futFresh?'güncel, '+Math.min(300,flowDuration(flowTrades))+' sn birikim':'henüz oluşmadı veya akış kesik'));
-ageNotes.push('OI '+(oiFresh?'güncel':'bayat/eksik')+', Taker '+(takerFresh?'güncel':'bayat/eksik')+', sentiment '+(sentimentFresh?'güncel':'bayat/eksik')+', order book '+(bookFresh?'güncel':'bayat/eksik')+', funding '+(fundingFresh?'güncel':'bayat/eksik')+'.');
+const secondsOld=(at)=>Number.isFinite(at)&&at>0?Math.max(0,Math.round((now-at)/1000))+' sn önce':'yok';
+ageNotes.push('Son güncelleme: OI '+secondsOld(futuresState.oiAt)+', Taker '+secondsOld(futuresState.takerAt)+', sentiment '+secondsOld(futuresState.sentimentAt)+', order book '+secondsOld(futuresState.bookAt)+', funding '+secondsOld(futuresState.fundingAt)+'.');
 if(missing.length)ageNotes.push('Eksikler: '+missing.join('; ')+'.');
 ageNotes.push('CVD yalnızca Mini App açıkken biriken kayan 5 dk işlemlerinden hesaplanır; tam tarihsel CVD değildir. Likidasyonlar oturum kapsamındadır. Order book emirleri iptal edilebilir.');
 const report='GENEL OKUMA\n'+bias+'. '+(bull.length&&bear.length?'Alıcı ve satıcı kanıtları birlikte mevcut; çelişkiler yön hükmünü sınırlandırıyor.':bull.length?'Mevcut bulgular alıcı tarafını destekliyor, ancak senaryo koşulludur.':bear.length?'Mevcut bulgular satıcı tarafını destekliyor, ancak senaryo koşulludur.':'Yön tayini için yeterli ve uyumlu kanıt yok.')+'\n\n'+lines.join('\n')+'\n\nÇELİŞKİLER\n'+conflictText+'\n\nOLASI SENARYOLAR\n'+(scenarios.length?scenarios.map((x,i)=>(i+1)+'. '+x).join('\n'):'Yeterli veri oluşmadı; senaryo üretimi ertelendi.')+'\n\nVERİ KALİTESİ VE KANIT GÜCÜ\n'+ageNotes.join(' ')+'\nKanıt gücü: '+quality+'. Bu sınıf başarı olasılığı değildir; farklı veri ailelerinin uyumunu gösterir.\n\nRİSK UYARISI\nVolatilite yükseldiğinde olağan fiyat mesafeleri yetersiz kalabilir. İşlem maliyetleri ve kayma değerlendirmeyi değiştirebilir. Bu analiz emir talimatı veya kesin tahmin değildir.';
