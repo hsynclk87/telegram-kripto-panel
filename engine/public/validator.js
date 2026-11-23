@@ -14,7 +14,7 @@ function item(id,value,note,ok=true){set('v_'+id,value);set('vn_'+id,note);$('v_
 function symbol(){const x=$('symbol')?.textContent||'BTCUSDT';return (x.match(/[A-Z0-9]+USDT/)||['BTCUSDT'])[0];}
 function trim(){const t=Date.now()-300000;spotRows=spotRows.filter(x=>x.t>=t);futRows=futRows.filter(x=>x.t>=t);}
 function cvd(rows){let b=0,s=0;rows.forEach(x=>x.buy?b+=x.q:s+=x.q);return{net:b-s,n:rows.length};}
-function parseCvd(id){const t=$(id)?.textContent||'',m=t.match(/[+-]?[0-9,.]+\\s*([KMB])?/i);if(!m)return NaN;let n=Number(m[0].replace(/[KMB]/i,''));const unit=(m[1]||'').toUpperCase();return n*(unit==='K'?1e3:unit==='M'?1e6:unit==='B'?1e9:1);}
+function parseCvd(id){const t=$(id)?.textContent||'',m=t.match(/[+-]?[0-9,.]+\s*([KMB])?/i);if(!m)return NaN;let n=Number(m[0].replace(/[KMB]/i,''));const unit=(m[1]||'').toUpperCase();return n*(unit==='K'?1e3:unit==='M'?1e6:unit==='B'?1e9:1);}
 function stopStreams(){sockets.forEach(x=>{try{x.close();}catch(_){}});sockets=[];if(timer){clearInterval(timer);timer=null;}}
 function startStreams(sym){stopStreams();spotRows=[];futRows=[];streamStartedAt=Date.now();const specs=[['wss://stream.binance.com:443/ws/'+sym.toLowerCase()+'@trade',spotRows],['wss://fstream.binance.com/ws/'+sym.toLowerCase()+'@aggTrade',futRows]];specs.forEach(([url,arr])=>{try{const w=new WebSocket(url);sockets.push(w);w.onmessage=e=>{try{const d=JSON.parse(e.data),q=+d.p*+d.q;if(q>0){arr.push({t:+(d.T||d.E||Date.now()),q,buy:!d.m});trim();}}catch(_){}};}catch(_){}});}
 function numText(s){if(!s)return NaN;let x=s.replace(/[^0-9,.-]/g,'');if(x.includes(',')&&x.includes('.'))x=x.replace(/\./g,'').replace(',','.');else if(x.includes(','))x=x.replace(',','.');return Number(x);}
