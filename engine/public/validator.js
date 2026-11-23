@@ -31,7 +31,7 @@ async function check(){
  item('sentiment',(+fr[0].fundingRate*100).toFixed(5)+'% · L/S '+(+ls[0].longShortRatio).toFixed(4),'Funding / global hesap oranı',true);
  const depth=(book)=>{const bid=book.bids.reduce((z,x)=>z+(+x[0])*(+x[1]),0),ask=book.asks.reduce((z,x)=>z+(+x[0])*(+x[1]),0);return{pct:(bid-ask)/(bid+ask||1)*100,bid,ask};};
  const s=depth(sb),f=depth(fb);item('spotBook',s.pct.toFixed(2)+'% denge','Bid '+compact(s.bid)+' / Ask '+compact(s.ask),true);item('futuresBook',f.pct.toFixed(2)+'% denge','Bid '+compact(f.bid)+' / Ask '+compact(f.ask),true);
- runs++;const issues=priceOk?0:1;status(issues?'FİYAT FARKI VAR':(a.n&&b.n?'KONTROLLER ÇALIŞIYOR':'KISMİ TEST'),issues?'#ffd166':'#35f2a1');set('vUpdated','Son kontrol '+new Date().toLocaleTimeString('tr-TR')+' · '+sym);set('vCount',runs+' kontrol');
+ runs++;const issues=(priceOk?0:1)+(windowReady&&a.n&&Number.isFinite(panelSpot)&&!sOk?1:0)+(windowReady&&b.n&&Number.isFinite(panelFut)&&!fOk?1:0);status(issues?'UYUŞMAZLIK VAR':(a.n&&b.n&&windowReady?'KONTROLLER GEÇTİ':'KISMİ TEST'),issues?'#ffd166':'#35f2a1');set('vUpdated','Son kontrol '+new Date().toLocaleTimeString('tr-TR')+' · '+sym);set('vCount',runs+' kontrol');
  set('vSummary',(issues?'Panel fiyatı ile Binance REST arasında tolerans üstü fark var. ':'Fiyat referansı tolerans içinde. ')+((a.n&&b.n)?'CVD bağımsız WS akışlarından hesaplanıyor.':'CVD için WebSocket işlem örneği birikiyor.')+' Order book anlık snapshot karşılaştırmasıdır; duvar kalıcılığı kanıtı değildir.');
  }catch(e){status('API HATASI','#ff647c');set('vSummary','Kontrol tamamlanamadı: '+e.message+' · Bir sonraki otomatik denemede yeniden kontrol edilecek.');}
  finally{busy=false;}
