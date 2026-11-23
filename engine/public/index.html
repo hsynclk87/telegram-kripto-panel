@@ -73,6 +73,7 @@ body{max-width:900px}
 .sr-list{display:grid;gap:7px}
 .sr-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:9px 10px;background:rgba(8,18,33,.72);border:1px solid rgba(91,150,220,.2);border-radius:10px}
 .sr-item b{font-size:12px;display:block}.sr-item small{display:block;color:var(--muted);font-size:10px;line-height:1.45;margin-top:3px}.sr-item strong{font-size:13px;text-align:right;font-variant-numeric:tabular-nums}.sr-empty{padding:10px;color:var(--muted);font-size:11px;background:rgba(8,18,33,.55);border-radius:9px}
+.sr-mtf-list{display:grid;gap:8px}.sr-mtf-card{padding:10px;background:rgba(8,18,33,.72);border:1px solid rgba(91,150,220,.2);border-radius:11px}.sr-mtf-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.sr-mtf-head b{font-size:12px}.sr-mtf-price{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}.sr-mtf-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.sr-mtf-level{min-width:0;padding:8px;border-radius:8px;background:rgba(15,29,48,.8)}.sr-mtf-level span{display:block;font-size:9px;color:var(--muted)}.sr-mtf-level b{display:block;font-size:12px;margin-top:4px;font-variant-numeric:tabular-nums}.sr-mtf-level small{display:block;font-size:10px;margin-top:3px;color:var(--muted);line-height:1.4}.sr-mtf-foot{font-size:10px;color:var(--muted);margin-top:7px;line-height:1.4}
 </style></head><body>
 <header class="head"><div><div class="brand">KRİPTO · İNDİKATÖR TERMİNALİ</div><div class="conn"><span class="dot" id="dot"></span><span id="connection">Binance canlı fiyat bağlantısı bekleniyor</span></div></div><div class="pill">REALTIME</div></header>
 <div class="row" id="coins"></div><div class="row" id="frames"></div><div class="row" id="mainTabs"><button id="tabMarket" class="active" type="button">PİYASA ANALİZİ</button><button id="tabLevels" type="button">DESTEK / DİRENÇ</button></div>
@@ -85,6 +86,10 @@ body{max-width:900px}
 <div class="metric"><span>DESTEK / DİRENÇ DURUMU</span><b id="srCurrentPosition">—</b><small id="srCurrentPositionNote">—</small></div>
 <div class="metric"><span>HESAPLANAN VERİ</span><b id="srDataScope">—</b><small>Seçili zaman dilimi · kapanmış Binance mumları</small></div>
 </div>
+<div class="section" style="margin-top:15px">TÜM ZAMAN DİLİMLERİ · CANLI FİYATA GÖRE DESTEK / DİRENÇ</div>
+<div class="muted" id="srLivePriceLine" style="margin:5px 0 9px">Canlı fiyat bekleniyor…</div>
+<div id="srMultiTimeframe" class="sr-mtf-list"><div class="sr-empty">Çoklu zaman dilimi verileri yükleniyor…</div></div>
+<div class="muted" style="margin-top:8px;line-height:1.5">Her zaman diliminde teyitli dip/tepe kümeleri, EMA 20/50/200, Fibonacci, yaklaşık hacim yoğunluğu ve psikolojik fiyat seviyeleri birlikte taranır. En yakın destek ve direnç, canlı fiyata göre yeniden sıralanır.</div>
 <div class="section" style="margin-top:14px">GEÇMİŞ DİP / TEPE KÜMELERİ</div><div id="srPivotLevels" class="sr-list"></div>
 <div class="section" style="margin-top:14px">DESTEK ↔ DİRENÇ ROL DEĞİŞİMİ</div><div id="srRoleFlips" class="sr-list"></div>
 <div class="section" style="margin-top:14px">TREND ÇİZGİLERİ</div><div id="srTrendLines" class="sr-list"></div>
@@ -148,7 +153,7 @@ body{max-width:900px}
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), coins=['BTC','ETH','SOL','BNB','XRP','DOGE','LINK','AVAX','HBAR'], frames=[['15m','15 DK'],['1h','1 SAAT'],['4h','4 SAAT'],['1d','GÜNLÜK'],['1w','HAFTALIK']];
-let coin='BTC',tf='1h',candles=[],footprintMarket='SPOT',footprintTrades={SPOT:[],FUTURES:[]},footprintFramePending=false,chart=null,candleSeries=null,ema20Series=null,ema50Series=null,oscChart=null,rsiSeries=null,macdSeries=null,priceWs=null,klineWs=null,tickerWs=null,lastPrice=null,base24=null,signalState=null,lastSignal='BEKLE',futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0,liqClusters:[],bookHistory:[],topPrevious:null,topChange:null,topChangeAt:0,oiPriceMove:null,oiInterpretation:'—'},futuresSockets=[],flowTrades=[],spotAggWs=null,spotFlowTrades=[],futuresRefreshTimer=null,bookRefreshTimer=null,analysisRefreshTimer=null,advancedState={spotCvd:0,futuresCvd:0,spotImbalance:null,futuresCvdImbalance:null,basis:null,basisAt:0,depthChange:null,depthHistory:[],lastBookTotal:null};
+let srMultiTimeframe=[],srMultiRequest=0;let coin='BTC',tf='1h',candles=[],footprintMarket='SPOT',footprintTrades={SPOT:[],FUTURES:[]},footprintFramePending=false,chart=null,candleSeries=null,ema20Series=null,ema50Series=null,oscChart=null,rsiSeries=null,macdSeries=null,priceWs=null,klineWs=null,tickerWs=null,lastPrice=null,base24=null,signalState=null,lastSignal='BEKLE',futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0,liqClusters:[],bookHistory:[],topPrevious:null,topChange:null,topChangeAt:0,oiPriceMove:null,oiInterpretation:'—'},futuresSockets=[],flowTrades=[],spotAggWs=null,spotFlowTrades=[],futuresRefreshTimer=null,bookRefreshTimer=null,analysisRefreshTimer=null,advancedState={spotCvd:0,futuresCvd:0,spotImbalance:null,futuresCvdImbalance:null,basis:null,basisAt:0,depthChange:null,depthHistory:[],lastBookTotal:null};
 const fmt=n=>!Number.isFinite(n)?'—':n>=1000?n.toLocaleString('tr-TR',{maximumFractionDigits:2}):n>=1?n.toLocaleString('tr-TR',{maximumFractionDigits:4}):n.toPrecision(5);
 const compact=n=>{if(!Number.isFinite(n))return'—';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return fmt(n)};
 const setText=(id,v)=>$(id).textContent=v;
@@ -692,6 +697,58 @@ function updateSupportResistanceTab(data,price,atrV){
  render('srRoundLevels',unique.map(v=>({title:v<price?'Psikolojik destek adayı':'Psikolojik direnç adayı',note:'Yuvarlak fiyat seviyesi; tek başına teknik teyit değildir.',value:fmt(v)})),'Psikolojik seviye üretilemedi.');
  setText('srMethodNote','Pivot teması + bölge kümelenmesi + rol değişimi + trend çizgisi + EMA 20/50/200 + Fibonacci + yaklaşık hacim profili + yuvarlak fiyatlar. Bölge toleransı: '+fmt(range)+'.');
 }
+
+// Çoklu zaman dilimi destek/direnç motoru. Fiyat seviyeleri kapanmış Binance mumlarından üretilir.
+const srFrames=[['15m','15 DK'],['1h','1 SAAT'],['4h','4 SAAT'],['1d','GÜNLÜK'],['1w','HAFTALIK']];
+async function loadMultiTimeframeSR(){
+ const request=++srMultiRequest,symbol=coin+'USDT';
+ setText('srMultiTimeframe','Çoklu zaman dilimi seviyeleri hesaplanıyor…');
+ const results=await Promise.all(srFrames.map(async([interval,label])=>{
+  try{
+   const rows=await fetch('https://api.binance.com/api/v3/klines?symbol='+symbol+'&interval='+interval+'&limit=300',{cache:'no-store'}).then(x=>{if(!x.ok)throw new Error('HTTP '+x.status);return x.json();});
+   const d=rows.filter(x=>Number(x[6])<Date.now()).map(x=>({time:+x[0],open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5],closed:true}));
+   if(d.length<35)throw new Error('Yetersiz mum');
+   const last=d[d.length-1],price=lastPrice||last.close,atrV=atr(d.slice(-30))||price*.01,tol=Math.max(price*.0025,atrV*.35),candidates=[];
+   const piv=[];
+   for(let i=3;i<d.length-3;i++){
+    let hi=true,lo=true;
+    for(let j=i-3;j<=i+3;j++){if(j===i)continue;if(d[j].high>=d[i].high)hi=false;if(d[j].low<=d[i].low)lo=false;}
+    if(hi)piv.push({price:d[i].high,type:'TEPE',i});
+    if(lo)piv.push({price:d[i].low,type:'DİP',i});
+   }
+   const clusters=[];
+   piv.forEach(p=>{let g=clusters.find(x=>Math.abs(x.price-p.price)<=tol);if(!g){g={price:p.price,values:[],high:p.price,low:p.price};clusters.push(g);}g.values.push(p.price);g.high=Math.max(g.high,p.price);g.low=Math.min(g.low,p.price);g.price=g.values.reduce((a,b)=>a+b,0)/g.values.length;});
+   clusters.forEach(g=>candidates.push({price:g.price,source:'Dip/tepe kümesi',strength:g.values.length}));
+   const closes=d.map(x=>x.close);
+   [['EMA 20',20],['EMA 50',50],['EMA 200',200]].forEach(([name,len])=>{if(d.length>=len){const v=ema(closes,len).at(-1);if(Number.isFinite(v))candidates.push({price:v,source:name,strength:1});}});
+   let hi=-Infinity,lo=Infinity,hiI=0,loI=0;
+   d.slice(-120).forEach((x,i)=>{if(x.high>hi){hi=x.high;hiI=i;}if(x.low<lo){lo=x.low;loI=i;}});
+   if(hi>lo){const up=hiI>loI;[.382,.5,.618].forEach(r=>candidates.push({price:up?hi-(hi-lo)*r:lo+(hi-lo)*r,source:'Fibonacci '+(r*100).toFixed(1)+'%',strength:1}));}
+   const windowData=d.slice(-120),min=Math.min(...windowData.map(x=>x.low)),max=Math.max(...windowData.map(x=>x.high)),step=(max-min)/24,bins=Array(24).fill(0);
+   if(step>0){windowData.forEach(x=>{const tp=(x.high+x.low+x.close)/3,ix=Math.max(0,Math.min(23,Math.floor((tp-min)/step)));bins[ix]+=x.volume;});bins.forEach((v,i)=>{if(v>0)candidates.push({price:min+(i+.5)*step,source:'Hacim yoğunluğu',strength:1});});}
+   const magnitude=Math.pow(10,Math.floor(Math.log10(price))-1),roundStep=magnitude*10;
+   for(let k=-3;k<=3;k++){const v=Math.round(price/roundStep)*roundStep+k*roundStep;if(v>0)candidates.push({price:v,source:'Psikolojik seviye',strength:1});}
+   const dedup=[];candidates.forEach(x=>{if(!dedup.some(y=>Math.abs(y.price-x.price)<=tol*.18&&y.source===x.source))dedup.push(x);});
+   const below=dedup.filter(x=>x.price<price).sort((a,b)=>b.price-a.price)[0]||null;
+   const above=dedup.filter(x=>x.price>price).sort((a,b)=>a.price-b.price)[0]||null;
+   return{interval,label,count:d.length,below,above,atr:atrV};
+  }catch(e){return{interval,label,error:e.message};}
+ }));
+ if(request!==srMultiRequest||symbol!==coin+'USDT')return;
+ srMultiTimeframe=results;renderMultiTimeframeSR(lastPrice||0);
+}
+function renderMultiTimeframeSR(price){
+ const el=$('srMultiTimeframe');if(!el)return;
+ if(!srMultiTimeframe.length){setText('srLivePriceLine',price>0?'CANLI FİYAT: '+fmt(price):'Canlı fiyat bekleniyor…');return;}
+ setText('srLivePriceLine',price>0?'CANLI BINANCE SPOT FİYATI: '+fmt(price)+' · Mesafeler bu fiyat üzerinden anlık güncellenir.':'Canlı fiyat bağlantısı bekleniyor…');
+ const distance=x=>{if(!x||!price)return'—';const diff=x.price-price,pct=Math.abs(diff)/price*100,near=Math.abs(diff)<=x.atr*.5?'ÇOK YAKIN':Math.abs(diff)<=x.atr*1.5?'YAKIN':'UZAK';return (diff>=0?'+':'−')+fmt(Math.abs(diff))+' ('+pct.toFixed(2)+'%) · '+near;};
+ el.innerHTML=srMultiTimeframe.map(x=>{
+  if(x.error)return '<div class="sr-mtf-card"><div class="sr-mtf-head"><b>'+x.label+'</b><span class="sr-mtf-price">Veri alınamadı</span></div><div class="sr-empty">'+x.error+'</div></div>';
+  const level=(v,type)=>v?'<div class="sr-mtf-level"><span>'+type+'</span><b>'+fmt(v.price)+'</b><small>'+v.source+(v.strength>1?' · '+v.strength+' temas':'')+'</small><small>'+distance({...v,atr:x.atr})+'</small></div>':'<div class="sr-mtf-level"><span>'+type+'</span><b>Bulunamadı</b><small>Bu fiyat tarafında geçerli seviye yok</small></div>';
+  return '<div class="sr-mtf-card"><div class="sr-mtf-head"><b>'+x.label+'</b><span class="sr-mtf-price">'+x.count+' kapanmış mum</span></div><div class="sr-mtf-grid">'+level(x.below,'EN YAKIN DESTEK')+level(x.above,'EN YAKIN DİRENÇ')+'</div><div class="sr-mtf-foot">Destek/direnç mesafesi canlı fiyata göre hesaplanır. Pozitif fark fiyatın üzerinde, negatif fark altında olduğunu gösterir.</div></div>';
+ }).join('');
+}
+
 function pivotContext(above,price,data,atrV){
 const piv=[];for(let i=Math.max(3,data.length-150);i<data.length-3;i++){let hi=true,lo=true;for(let j=i-3;j<=i+3;j++){if(j===i)continue;if(data[j].high>=data[i].high)hi=false;if(data[j].low<=data[i].low)lo=false;}if(above&&hi&&data[i].high>price)piv.push(data[i].high);if(!above&&lo&&data[i].low<price)piv.push(data[i].low);}
 if(!piv.length)return null;const tol=Math.max(price*.0035,atrV*.35),groups=[];
@@ -699,11 +756,11 @@ for(const v of piv){let g=groups.find(z=>Math.abs(z.price-v)<=tol);if(g){g.value
 const valid=groups.filter(g=>above?g.price>price:g.price<price);if(!valid.length)return null;valid.sort((a,b)=>above?a.price-b.price:b.price-a.price);const best=valid[0];return{price:best.price,strength:best.values.length};
 }
 function findPivot(above,price,data=candles){const piv=[];for(let i=Math.max(3,data.length-120);i<data.length-3;i++){let hi=true,lo=true;for(let j=i-3;j<=i+3;j++){if(j===i)continue;if(data[j].high>=data[i].high)hi=false;if(data[j].low<=data[i].low)lo=false;}if(above&&hi&&data[i].high>price)piv.push(data[i].high);if(!above&&lo&&data[i].low<price)piv.push(data[i].low);}if(!piv.length)return null;piv.sort((a,b)=>a-b);const clusters=[];for(const v of piv){let c=clusters[clusters.length-1];if(c&&Math.abs(v-c.avg)/c.avg<.004){c.values.push(v);c.avg=c.values.reduce((a,b)=>a+b,0)/c.values.length;}else clusters.push({avg:v,values:[v]});}clusters.sort((a,b)=>above?a.avg-b.avg:b.avg-a.avg);return clusters[0]?.avg||null;}
-function updatePrice(p){lastPrice=p;setText('price',fmt(p));setText('tick',new Date().toLocaleTimeString('tr-TR',{hour12:false}));if(base24){const ch=(p/base24-1)*100;setText('change',(ch>=0?'+':'')+ch.toFixed(2)+'%');$('change').className='change '+(ch>=0?'positive':'negative');}}
+function updatePrice(p){lastPrice=p;setText('price',fmt(p));setText('tick',new Date().toLocaleTimeString('tr-TR',{hour12:false}));renderMultiTimeframeSR(p);if(base24){const ch=(p/base24-1)*100;setText('change',(ch>=0?'+':'')+ch.toFixed(2)+'%');$('change').className='change '+(ch>=0?'positive':'negative');}}
 function connectPrice(){if(priceWs)priceWs.close();const s=coin.toLowerCase()+'usdt';priceWs=new WebSocket('wss://stream.binance.com:443/ws/'+s+'@trade');priceWs.onopen=()=>{setText('connection','Binance Spot WebSocket bağlı');$('dot').style.background='var(--green)';};priceWs.onmessage=e=>{const d=JSON.parse(e.data);updatePrice(+d.p);};priceWs.onclose=()=>{$('dot').style.background='var(--red)';setText('connection','Fiyat bağlantısı yenileniyor');setTimeout(()=>{if(!priceWs||priceWs.readyState===WebSocket.CLOSED)connectPrice();},1200);};priceWs.onerror=()=>{try{priceWs.close();}catch(_){}};}
 function connectKline(){if(klineWs)klineWs.close();const s=coin.toLowerCase()+'usdt';klineWs=new WebSocket('wss://stream.binance.com:443/ws/'+s+'@kline_'+tf);klineWs.onmessage=e=>{const k=JSON.parse(e.data).k,c={time:Math.floor(k.t/1000),open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v,closed:k.x};const ix=candles.findIndex(x=>x.time===c.time);if(ix>=0)candles[ix]=c;else candles.push(c);candles=candles.slice(-500);if(c.closed)calc();};}
-async function load(){const sym=coin+'USDT';setText('symbol',sym+' · '+tf.toUpperCase());try{const [rows,ticker,stats]=await Promise.all([fetch('https://api.binance.com/api/v3/klines?symbol='+sym+'&interval='+tf+'&limit=500',{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/price?symbol='+sym,{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/24hr?symbol='+sym,{cache:'no-store'}).then(r=>r.json())]);candles=rows.map(x=>({time:Math.floor(x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5],closed:Number(x[6])<Date.now()}));base24=+stats.prevClosePrice;updatePrice(+ticker.price);setText('volume',compact(+stats.quoteVolume));setText('high',fmt(+stats.highPrice));setText('low',fmt(+stats.lowPrice));calc();}catch(e){setText('reason','Binance mum verisi alınamadı: '+e.message);}}
-function switchMarket(){controls();footprintTrades={SPOT:[],FUTURES:[]};candles=[];lastSignal='BEKLE';futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0,liqClusters:[],bookHistory:[],topPrevious:null,topChange:null,topChangeAt:0,oiPriceMove:null,oiInterpretation:'—'};lastPrice=null;base24=null;advancedState={spotCvd:0,futuresCvd:0,spotImbalance:null,futuresCvdImbalance:null,basis:null,depthChange:null,depthHistory:[],lastBookTotal:null};setText('price','Yükleniyor…');chartInit();load().then(()=>{connectKline();});connectPrice();startFutures();}
+async function load(){const sym=coin+'USDT';setText('symbol',sym+' · '+tf.toUpperCase());try{const [rows,ticker,stats]=await Promise.all([fetch('https://api.binance.com/api/v3/klines?symbol='+sym+'&interval='+tf+'&limit=500',{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/price?symbol='+sym,{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/24hr?symbol='+sym,{cache:'no-store'}).then(r=>r.json())]);candles=rows.map(x=>({time:Math.floor(x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5],closed:Number(x[6])<Date.now()}));base24=+stats.prevClosePrice;updatePrice(+ticker.price);loadMultiTimeframeSR();setText('volume',compact(+stats.quoteVolume));setText('high',fmt(+stats.highPrice));setText('low',fmt(+stats.lowPrice));calc();}catch(e){setText('reason','Binance mum verisi alınamadı: '+e.message);}}
+function switchMarket(){srMultiTimeframe=[];srMultiRequest++;setText('srMultiTimeframe','Çoklu zaman dilimi seviyeleri yükleniyor…');controls();footprintTrades={SPOT:[],FUTURES:[]};candles=[];lastSignal='BEKLE';futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0,liqClusters:[],bookHistory:[],topPrevious:null,topChange:null,topChangeAt:0,oiPriceMove:null,oiInterpretation:'—'};lastPrice=null;base24=null;advancedState={spotCvd:0,futuresCvd:0,spotImbalance:null,futuresCvdImbalance:null,basis:null,depthChange:null,depthHistory:[],lastBookTotal:null};setText('price','Yükleniyor…');chartInit();load().then(()=>{connectKline();});connectPrice();startFutures();}
 
 // Ana panel ile destek/direnç modülü arasında sekme geçişi.
 function activateMainTab(which){
