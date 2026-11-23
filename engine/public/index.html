@@ -353,117 +353,135 @@ setMetric('stochRsi',a.stochRsi.toFixed(1),a.stochRsi<20?'positive':a.stochRsi>8
 setMetric('tradeCount',String(spotFlowTrades.length)+' / '+String(flowTrades.length),'');setText('tradeCountState','Spot aggTrade / Futures aggTrade · 5 dk');
 }
 function combinedMarketExplanation(a,price,early,baseScore,ctx){
-const sections=[],bull=[],bear=[],warnings=[];
-const add=(arr,msg)=>arr.push(msg);
-const pct=(v)=>Number.isFinite(v)?(v>=0?'+':'')+v.toFixed(2)+'%':'veri yok';
-const age=(at,max)=>at&&Date.now()-at<=max;
-const c=ctx.c,prev=ctx.prev,rv=ctx.rv,rPrev=ctx.rPrev,mac=ctx.mac,macPrev=ctx.macPrev;
-const priceChange=(c.close/prev.close-1)*100;
-const rsiChange=rv-rPrev;
-const rsiDivergence=ctx.rsiBull?'pozitif uyumsuzluk':ctx.rsiBear?'negatif uyumsuzluk':'belirgin kısa vadeli uyumsuzluk yok';
-let priceMomentum='';
-if(ctx.rsiBull){priceMomentum='Fiyat son salınım diplerinde daha düşük dip yaparken RSI daha yüksek dip oluşturuyor. Bu pozitif uyumsuzluk, satış momentumunun zayıflıyor olabileceğini ve tepki yükselişi ihtimalinin arttığını gösterir; tek başına trend dönüşü değildir.';add(bull,'RSI pozitif uyumsuzluğu olası satış yorulmasına işaret ediyor.');}
-else if(ctx.rsiBear){priceMomentum='Fiyat daha yüksek tepe yaparken RSI daha düşük tepe oluşturuyor. Bu negatif uyumsuzluk yükseliş momentumunun zayıflayabileceğini ve düzeltme riskinin arttığını gösterir; fiyat teyidi olmadan SAT sinyali sayılmaz.';add(bear,'RSI negatif uyumsuzluğu yükseliş gücünde zayıflama uyarısı veriyor.');}
-else if(priceChange<0&&rsiChange>0){priceMomentum='Son mumda fiyat gerilerken RSI yükseliyor. Fiyat düşüşüne momentum aynı ölçüde eşlik etmiyor; satıcıların gücü azalıyor olabilir. Daha güvenilir teyit için destek üzerinde kapanış ve alıcı hacmi gerekir.';add(bull,'Fiyat düşerken RSI yükseliyor: kısa vadeli pozitif momentum ayrışması.');}
-else if(priceChange>0&&rsiChange<0){priceMomentum='Son mumda fiyat yükselirken RSI geriliyor. Yükseliş momentumunun fiyatı doğrulamadığı görülüyor; alıcı gücü zayıflıyor olabilir.';add(bear,'Fiyat yükselirken RSI düşüyor: kısa vadeli negatif momentum ayrışması.');}
-else{priceMomentum='Fiyat ve RSI son mumda '+(priceChange<0?'aynı yönde zayıflıyor.':priceChange>0?'aynı yönde güçleniyor.':'yatay hareket ediyor.')+' RSI '+rv.toFixed(1)+' seviyesinde; '+(rv<30?'aşırı satım bölgesinde. Bu düşüşün bittiğini kanıtlamaz.':rv>70?'aşırı alım bölgesinde. Bu tek başına satış nedeni değildir.':'orta bölgede.')+' RSI değişimi '+(rsiChange>=0?'+':'')+rsiChange.toFixed(2)+' puan.';}
-sections.push('FİYAT – RSI / MOMENTUM: '+priceMomentum);
-if(ctx.mac>ctx.macPrev&&ctx.mac>0){add(bull,'MACD histogramı pozitif bölgede büyüyor; yükseliş momentumu güçleniyor.');}
-else if(ctx.mac<ctx.macPrev&&ctx.mac<0){add(bear,'MACD histogramı negatif bölgede derinleşiyor; düşüş momentumu güçleniyor.');}
-else if(ctx.mac>ctx.macPrev&&ctx.mac<=0){add(bull,'MACD histogramı toparlanıyor ancak henüz sıfır çizgisinin altında; düşüş momentumu zayıflıyor olabilir.');}
-else if(ctx.mac<ctx.macPrev&&ctx.mac>=0){add(bear,'MACD histogramı küçülüyor; pozitif momentum kaybediliyor olabilir.');}
-sections.push('MACD: '+(ctx.mac>0?'Histogram pozitif': 'Histogram negatif')+' ve son mum değişimi '+(ctx.mac>ctx.macPrev?'yukarı':ctx.mac<ctx.macPrev?'aşağı':'yatay')+'. '+(ctx.mac>0&&ctx.mac<ctx.macPrev?'Pozitif bölgede zayıflama, yükselişin soluklanabileceğini gösterir.':ctx.mac<0&&ctx.mac>ctx.macPrev?'Negatif bölgede toparlanma, satış baskısının azaldığına işaret edebilir.':'MACD tek başına dönüş teyidi değildir.'));
-if(ctx.trendUp)add(bull,'EMA20 > EMA50 > EMA200: kısa, orta ve uzun vadeli trend dizilimi yukarı.');
-else if(ctx.trendDown)add(bear,'EMA20 < EMA50 < EMA200: kısa, orta ve uzun vadeli trend dizilimi aşağı.');
-else add(warnings,'EMA20/50/200 tam sıralı değil; piyasa geçiş veya yatay trend evresinde olabilir.');
-sections.push('TREND: '+(ctx.trendUp?'Üç EMA da yükseliş yönünde sıralı.':ctx.trendDown?'Üç EMA da düşüş yönünde sıralı.':'EMA dizilimi karışık.')+' Fiyatın EMA20/50/200 konumu '+(price>ctx.e20?'EMA20 üzerinde':price<ctx.e20?'EMA20 altında':'EMA20 civarında')+'. EMA dizilimi ana eğilimi gösterir; gecikmeli bir göstergedir.');
-sections.push('HACİM: Son mum hacmi son 20 mum ortalamasının '+ctx.volRatio.toFixed(2)+' katı. '+(ctx.volRatio>=1.5?(c.close>c.open?'Yükseliş mumunda belirgin hacim artışı alıcı katılımını doğruluyor.':'Düşüş mumunda belirgin hacim artışı satış baskısını doğruluyor.'):ctx.volRatio<.8?'Hacim zayıf; fiyat hareketinin katılım desteği sınırlı.':'Hacim olağan aralıkta; tek başına güçlü teyit oluşturmuyor.'));
-if(a){
-sections.push('PARA AKIŞI: MFI '+a.mfi.toFixed(1)+' ('+(a.mfi<20?'aşırı satım':a.mfi>80?'aşırı alım':'orta bölge')+'), CMF '+a.cmf.toFixed(3)+' ('+(a.cmf>.08?'hacim destekli giriş':a.cmf<-.08?'hacim destekli çıkış':'belirgin yönlü akış yok')+'). MFI aşırı bölgeyi, CMF kapanışların mum aralığındaki yerini hacimle birlikte ölçer. Fiyat düşerken MFI/CMF toparlanıyorsa satışın emilmesi ihtimali; fiyat yükselirken ikisi bozuluyorsa dağıtım ihtimali araştırılır.');
-if(a.cmf>.08)add(bull,'CMF pozitif: kapanışlar hacim ağırlıklı olarak mumların üst tarafında gerçekleşiyor.');
-else if(a.cmf<-.08)add(bear,'CMF negatif: kapanışlar hacim ağırlıklı olarak mumların alt tarafında gerçekleşiyor.');
-if(a.mfi<20)add(warnings,'MFI aşırı satımda; düşüş trendinde düşük kalabilir, dönüş teyidi beklenmeli.');
-if(a.mfi>80)add(warnings,'MFI aşırı alımda; güçlü trendde yüksek kalabilir, otomatik SAT anlamına gelmez.');
-sections.push('VWAP / HACİM PROFİLİ: Fiyat '+(price>a.vwap?'VWAP üzerinde':'VWAP altında')+'; VWAP '+fmt(a.vwap)+'. POC '+fmt(a.poc)+' ve yaklaşık Value Area '+fmt(a.vaLow)+' – '+fmt(a.vaHigh)+'. Fiyat POC üzerinde tutunursa hacmin yoğunlaştığı bölgenin üstünde kabul görür; POC altına yerleşirse aşağı kabul riski artar. Value Area sınırları olası denge/tepki bölgeleridir, kesin destek-direnç değildir.');
-if(price>a.vwap&&price>a.poc)add(bull,'Fiyat VWAP ve POC üzerinde: ortalama işlem maliyeti ile hacim merkezi alıcıların lehine.');
-else if(price<a.vwap&&price<a.poc)add(bear,'Fiyat VWAP ve POC altında: ortalama işlem maliyeti ve hacim merkezi satıcıların lehine.');
-sections.push('STOCH RSI / TREND GÜCÜ: Stoch RSI '+a.stochRsi.toFixed(1)+' ('+(a.stochRsi<20?'aşırı satım':a.stochRsi>80?'aşırı alım':'orta bölge')+'); ADX '+a.adx.toFixed(1)+', DI+ '+a.pdi.toFixed(1)+', DI- '+a.mdi.toFixed(1)+'. ADX 25 üzerindeyse trend gücü belirginleşir; yönü DI+ / DI- verir. ADX düşükken kesişimler yatay piyasada sıkça yanıltabilir. Stoch RSI yalnızca kısa vadeli zamanlama aracıdır.');
-if(a.adx>=25&&a.pdi>a.mdi)add(bull,'ADX güçlü ve DI+ üstün: yükseliş yönlü trend gücü var.');
-else if(a.adx>=25&&a.mdi>a.pdi)add(bear,'ADX güçlü ve DI- üstün: düşüş yönlü trend gücü var.');
-else add(warnings,'ADX trend gücünü güçlü doğrulamıyor; yönlü kırılımlarda sahte sinyal riski artar.');
-sections.push('VOLATİLİTE: Bollinger genişliği '+a.bbWidth.toFixed(2)+'%, ATR genişleme katsayısı '+a.atrExpansion.toFixed(2)+'x. '+(a.bbWidth<2?'Bant daralması sıkışmaya işaret ediyor; yönü önceden söylemez.':a.bbWidth>6?'Bant genişlemesi yüksek oynaklık gösteriyor; hareket hızlanmış olabilir.':'Bant genişliği olağan aralıkta.')+' '+(a.atrExpansion>1.25?'ATR artıyor; mum aralıkları genişliyor.':a.atrExpansion<.8?'ATR daralıyor; hareket enerjisi düşüyor.':'ATR dengeli.')+' ATR stop mesafesini ve risk boyutunu ayarlamak için kullanılır.');
+const now=Date.now(),c=ctx.c,prev=ctx.prev,data=ctx.data||[];
+const lines=[],conflicts=[],bull=[],bear=[],qualityFamilies=new Set(),missing=[];
+const fresh=(at,ms)=>Number.isFinite(at)&&at>0&&now-at<=ms;
+const n=(v,d=2)=>Number.isFinite(v)?v.toFixed(d):'veri yok';
+const signed=(v,d=2)=>Number.isFinite(v)?(v>0?'+':'')+v.toFixed(d):'veri yok';
+const flow=(v)=>Number.isFinite(v)?(v>0?'+':'')+v.toFixed(1)+'%':'veri yok';
+const priceChange=prev?.close?(c.close/prev.close-1)*100:NaN;
+const spot=advancedState.spotImbalance,fut=advancedState.futuresCvdImbalance;
+const spotFresh=Number.isFinite(spot)&&spotFlowTrades.length>0&&fresh(spotFlowTrades[spotFlowTrades.length-1]?.time,15000);
+const futFresh=Number.isFinite(fut)&&flowTrades.length>0&&fresh(flowTrades[flowTrades.length-1]?.time,15000);
+const oiFresh=fresh(futuresState.oiAt,60000)&&Number.isFinite(futuresState.oiDelta);
+const takerFresh=fresh(futuresState.takerAt,60000)&&Number.isFinite(futuresState.takerRatio);
+const sentimentFresh=fresh(futuresState.sentimentAt,120000);
+const fundingFresh=fresh(futuresState.fundingAt,120000)&&Number.isFinite(futuresState.fundingRate);
+const bookFresh=fresh(futuresState.bookAt,20000)&&Number.isFinite(futuresState.bookImbalance);
+const basisFresh=Number.isFinite(advancedState.basis);
+const liqFresh=fresh(futuresState.liqAt,60000)&&futuresState.liqClusters.length>0;
+const flowDuration=(arr)=>arr.length?Math.max(0,Math.min(300,Math.round((now-arr[0].time)/1000))):0;
+const pivotLine=(x)=>x?fmt(x.price)+' ('+x.strength+' pivot)':'yakın teyitli küme yok';
+const closes=data.slice(-6);
+let structure='Yapı için yeterli kapanmış mum yok.';
+if(closes.length>=4){
+ const highs=closes.map(x=>x.high),lows=closes.map(x=>x.low);
+ const hh=highs[highs.length-1]>highs[highs.length-3],hl=lows[lows.length-1]>lows[lows.length-3];
+ const lh=highs[highs.length-1]<highs[highs.length-3],ll=lows[lows.length-1]<lows[lows.length-3];
+ structure=hh&&hl?'Son salınımlarda HH/HL eğilimi var.':lh&&ll?'Son salınımlarda LH/LL eğilimi var.': 'Son salınımlarda net HH/HL veya LH/LL dizilimi yok; yapı karışık.';
 }
-if(ctx.nearSupport)add(bull,'Fiyat '+fmt(ctx.support.price)+' civarında '+ctx.support.strength+' pivot temaslı destek kümesine yakın.');
-if(ctx.nearResist)add(bear,'Fiyat '+fmt(ctx.resistance.price)+' civarında '+ctx.resistance.strength+' pivot temaslı direnç kümesine yakın.');
-if(early){sections.push('BİRİKİM / DAĞITIM: '+early.text+' Mum baskısı '+(early.pressure*100).toFixed(1)+'%, OBV eğimi '+(early.obv*100).toFixed(1)+'%, son 5 mum hacmi baz dönemin '+(early.volRatio||1).toFixed(2)+' katı. Bu modül fiyatın dip/tepe bölgesinde hacimle emilip emilmediğini araştırır; tek başına dönüş teyidi değildir.');if(early.direction.startsWith('ACC'))add(bull,'Erken birikim modülü alım yönünde iz veriyor.');if(early.direction.startsWith('DIST'))add(bear,'Erken dağıtım modülü satış yönünde iz veriyor.');}
-if(Number.isFinite(advancedState.spotImbalance)){sections.push('SPOT CVD: Son 5 dakikada agresif spot alıcı-satıcı net farkı '+pct(advancedState.spotImbalance)+'. '+(advancedState.spotImbalance>7?'Spotta market alıcıları baskın; gerçek spot talebi lehine.':advancedState.spotImbalance< -7?'Spotta market satıcıları baskın; spot satış baskısı var.':'Spot agresif akış dengeli.'));}
-else sections.push('SPOT CVD: Akış verisi henüz oluşmadı; Mini App açık kaldıkça son 5 dakikalık pencere dolar.');
-if(Number.isFinite(advancedState.futuresCvdImbalance)){sections.push('FUTURES CVD: Son 5 dakikalık agresif vadeli akış '+pct(advancedState.futuresCvdImbalance)+'. '+(advancedState.futuresCvdImbalance>7?'Vadeli alıcılar agresif.':advancedState.futuresCvdImbalance< -7?'Vadeli satıcılar agresif.':'Vadeli akış dengeli.'));if(Number.isFinite(advancedState.spotImbalance)&&advancedState.spotImbalance*advancedState.futuresCvdImbalance<0)add(warnings,'Spot ve Futures CVD zıt yönde: vadeli hareket spot talep tarafından doğrulanmıyor; squeeze veya hedge kaynaklı geçici hareket olabilir.');else if(Number.isFinite(advancedState.spotImbalance)&&advancedState.spotImbalance>7&&advancedState.futuresCvdImbalance>7)add(bull,'Spot ve Futures CVD birlikte pozitif: alım baskısı iki piyasada da teyit alıyor.');else if(Number.isFinite(advancedState.spotImbalance)&&advancedState.spotImbalance< -7&&advancedState.futuresCvdImbalance< -7)add(bear,'Spot ve Futures CVD birlikte negatif: satış baskısı iki piyasada da teyit alıyor.');}
-if(age(futuresState.oiAt,60000)&&Number.isFinite(futuresState.oiDelta)){sections.push('AÇIK POZİSYON / FİYAT: OI '+pct(futuresState.oiDelta)+', eşleşen 5 dk fiyat hareketi '+pct(futuresState.oiPriceMove)+'. '+futuresState.oiInterpretation+'. Fiyat düşerken OI artışı yeni pozisyonların, çoğunlukla short baskısının büyüdüğünü düşündürür; fiyat düşerken OI azalması pozisyon kapanışlarına işaret eder ve düşüşün devam gücü daha düşük olabilir. OI tek başına pozisyon yönünü kesinleştirmez.');if(futuresState.oiInterpretation==='Yeni Short baskısı')add(bear,'Fiyat düşerken OI artıyor: yeni short pozisyonları satış hareketini besliyor olabilir.');if(futuresState.oiInterpretation==='Long kapanışları')add(warnings,'Fiyat düşerken OI azalıyor: hareket yeni short açılışından çok long tasfiyesi/kapanışı kaynaklı olabilir.');if(futuresState.oiInterpretation==='Yeni Long katılımı')add(bull,'Fiyat ve OI birlikte yükseliyor: yeni long katılımı yükselişi destekliyor.');if(futuresState.oiInterpretation==='Short kapanışları')add(warnings,'Fiyat yükselirken OI azalıyor: yükseliş yeni long alımından çok short kapanışlarıyla oluşuyor olabilir.');}
-if(age(futuresState.takerAt,60000)&&Number.isFinite(futuresState.takerRatio))sections.push('TAKER ORANI: Alış/satış '+futuresState.takerRatio.toFixed(3)+'x. '+(futuresState.takerRatio>1.08?'Agresif alıcı hacmi daha yüksek.':futuresState.takerRatio<.92?'Agresif satıcı hacmi daha yüksek.':'Agresif işlem dengeli.'));
-if(age(futuresState.sentimentAt,120000)){sections.push('POZİSYONLANMA: Global Long/Short '+(futuresState.globalLongShort??NaN).toFixed(3)+'x; Top Trader pozisyon oranı '+(futuresState.topLongShort??NaN).toFixed(3)+'x'+(Number.isFinite(futuresState.topChange)?'; Top Trader kısa vadeli değişim '+pct(futuresState.topChange*100):'')+'. Global ve büyük hesap oranları ayrı okunur; Long tarafının aşırı kalabalıklaşması long squeeze riskini artırabilir, ancak tek başına yön göstermez.');if(futuresState.globalLongShort>2)add(warnings,'Global Long pozisyonlanması kalabalık: aşağı yönlü tasfiye riski büyüyebilir.');if(futuresState.globalLongShort<.5)add(warnings,'Global Short pozisyonlanması kalabalık: yukarı yönlü short squeeze riski artabilir.');}
-if(age(futuresState.fundingAt,120000)){sections.push('FUNDING: '+pct(futuresState.fundingRate)+'. Pozitif ve aşırı funding long talebinin kalabalıklaştığını, negatif funding short tarafının kalabalıklaşabileceğini gösterir; ters yönlü squeeze riski için diğer verilerle birlikte değerlendirilir.');if(futuresState.fundingRate>.0005)add(warnings,'Funding belirgin pozitif: long tarafı maliyet ödüyor ve kalabalık olabilir.');if(futuresState.fundingRate<-.0005)add(warnings,'Funding belirgin negatif: short tarafı kalabalık olabilir.');}
-if(Number.isFinite(advancedState.basis))sections.push('BASIS: Mark/Index farkı '+pct(advancedState.basis)+'. Pozitif prim vadeli talebin spot endeksin üzerinde olduğunu, negatif değer iskonto durumunu gösterir. Aşırı prim/iskonto tek başına yön sinyali değildir.');
-if(Number.isFinite(futuresState.bookImbalance))sections.push('EMİR DEFTERİ: İlk 20 kademe derinlik farkı '+pct(futuresState.bookImbalance)+'. '+(futuresState.bookImbalance>10?'Alış tarafında görünen derinlik daha yüksek.':futuresState.bookImbalance< -10?'Satış tarafında görünen derinlik daha yüksek.':'İki tarafın görünen derinliği yakın. ')+'Derinlik emirleri iptal edilebilir; gerçek gerçekleşmiş işlem akışı CVD kadar güvenilir teyit değildir.');
-if(Number.isFinite(advancedState.depthChange))sections.push('DERİNLİK DEĞİŞİMİ: Toplam ilk 20 kademe notionalı son snapshotta '+pct(advancedState.depthChange)+' değişti. Bu toplam likidite miktarıdır; alış ve satış tarafı ayrı ayrıştırılmadan yönlü baskı olarak yorumlanmaz.');
-if(Number.isFinite(futuresState.liqAt)&&futuresState.liqClusters.length){const near=futuresState.liqClusters.filter(x=>Math.abs(x.price-price)/price<.015).sort((x,y)=>y.quote-x.quote)[0];if(near){sections.push('LİKİDASYON: Fiyata yakın '+near.side+' likidasyon kümesi '+fmt(near.price)+' seviyesinde, yaklaşık '+fmtUsd(near.quote)+' ve '+near.count+' olay. Tasfiyeler zorunlu piyasa emirleriyle kısa süreli hızlanma yaratabilir; tasfiye sonrası fiyatın kümeyi geri alıp alamadığı dönüş teyididir.');if(near.side==='LONG')add(warnings,'Yakın Long tasfiye kümesi aşağı yönlü zorunlu satış baskısını gösteriyor; tasfiye sonrası toparlanma izlenmeli.');else add(warnings,'Yakın Short tasfiye kümesi yukarı yönlü zorunlu alım baskısını gösteriyor; hareketin kalıcılığı izlenmeli.');}}
+const trend=ctx.trendUp?'EMA20/50/200 sıralaması yukarı':ctx.trendDown?'EMA20/50/200 sıralaması aşağı':'EMA20/50/200 sıralaması karışık';
+const vwapText=a?(price>=a.vwap?'VWAP üzerinde':'VWAP altında')+' ('+fmt(a.vwap)+')':'VWAP verisi yok';
+const levelText='Destek '+pivotLine(ctx.support)+' · Direnç '+pivotLine(ctx.resistance);
+let breakout=ctx.breakoutText||'Kırılım değerlendirmesi için yeterli veri yok.';
+if(ctx.nearSupport&&Number.isFinite(spot)&&spot>7&&Number.isFinite(fut)&&fut>0)bull.push('Destek çevresinde Spot alıcı akışı pozitif; absorpsiyon ihtimali incelenmeli, fiyatın destek üzerinde tutunması henüz ayrıca teyit edilmeli.');
+if(ctx.nearResist&&Number.isFinite(spot)&&spot< -7)bear.push('Direnç çevresinde Spot CVD negatif; yukarı hareketin spot talep tarafından karşılanmadığına dair uyarı.');
+if(ctx.trendUp)qualityFamilies.add('trend');else if(ctx.trendDown)qualityFamilies.add('trend');
+if(a&&a.adx>=25)qualityFamilies.add('trend-strength');
+if(spotFresh||futFresh)qualityFamilies.add('trade-flow');
+if(oiFresh)qualityFamilies.add('positioning');
+if(bookFresh||liqFresh)qualityFamilies.add('liquidity');
+if(a&&(a.cmf>.08||a.cmf<-.08))qualityFamilies.add('volume-flow');
 
-// ÇAPRAZ PİYASA OKUMASI: göstergeleri tek tek değil, aynı hareketin farklı kanıtları olarak eşleştir.
-const relations=[];
-const spotFlow=advancedState.spotImbalance, futFlow=advancedState.futuresCvdImbalance;
-const flowFresh=Number.isFinite(spotFlow)&&Number.isFinite(futFlow);
-if(flowFresh){
- if(priceChange<0&&spotFlow>7&&futFlow>7)relations.push('FİYAT DÜŞÜŞÜ + POZİTİF SPOT/FUTURES CVD: Fiyat gerilerken iki piyasada da agresif alım görülüyor. Bu, satışların karşılandığı veya pasif alıcıların emdiği bir bölge olabileceğini düşündürür. Ancak fiyat henüz toparlanmadıysa alıcılar fiyatı yukarı itemiyor olabilir; kapanış ve VWAP geri alımı beklenmeli.');
- else if(priceChange>0&&spotFlow< -7&&futFlow< -7)relations.push('FİYAT YÜKSELİŞİ + NEGATİF SPOT/FUTURES CVD: Fiyat yükselirken iki piyasada da agresif satış var. Yükseliş short kapanışı, likidite boşluğu veya pasif alım kaynaklı olabilir; hareketin sağlıklı spot talebiyle desteklendiği söylenemez.');
- else if(priceChange>0&&spotFlow>7&&futFlow>7)relations.push('FİYAT + SPOT CVD + FUTURES CVD AYNI YÖNDE: Yükseliş hem spot hem vadeli agresif alımla destekleniyor. VWAP/POC üzerinde kalıcılık ve OI artışı devam ederse hareketin katılım kalitesi güçlenir.');
- else if(priceChange<0&&spotFlow< -7&&futFlow< -7)relations.push('FİYAT + SPOT CVD + FUTURES CVD AYNI YÖNDE: Düşüş iki piyasadaki agresif satışla doğrulanıyor. OI artışı varsa yeni short katılımı, OI azalışı varsa pozisyon kapanışı/tasfiye etkisi ayrıştırılmalı.');
-}
-if(age(futuresState.oiAt,60000)&&Number.isFinite(futuresState.oiDelta)){
- const oi=futuresState.oiDelta,pm=futuresState.oiPriceMove;
- if(Number.isFinite(pm)&&pm<-.15&&oi>.5&&Number.isFinite(futFlow)&&futFlow< -7)relations.push('YENİ SHORT BASKISI ÜÇLÜ TEYİDİ: Fiyat düşüyor, OI büyüyor ve Futures CVD negatif. Bu üçlü yeni short katılımının satışa eşlik ettiğini gösteren daha tutarlı bir tablo; short kalabalığı ve destek yakınlığı nedeniyle geç girişte squeeze riski yine izlenmeli.');
- else if(Number.isFinite(pm)&&pm<-.15&&oi<-.5&&Number.isFinite(futFlow)&&futFlow< -7)relations.push('LONG KAPANIŞI / TASFİYE AĞIRLIKLI DÜŞÜŞ: Fiyat ve OI birlikte gerilerken Futures CVD de negatif. Mevcut long pozisyonların kapandığına işaret edebilir; yeni short açılışıyla aynı şey değildir. Satış ivmesi azalıyorsa düşüşün yakıtı tükenebilir.');
- else if(Number.isFinite(pm)&&pm>.15&&oi>.5&&Number.isFinite(futFlow)&&futFlow>7)relations.push('YENİ LONG KATILIMI ÜÇLÜ TEYİDİ: Fiyat, OI ve Futures CVD birlikte yükseliyor. Yeni pozisyon katılımı ve agresif alım yükselişi destekliyor; funding ve long/short kalabalığı aşırıysa ters hareket riski büyür.');
- else if(Number.isFinite(pm)&&pm>.15&&oi<-.5)relations.push('SHORT KAPANIŞI AĞIRLIKLI YÜKSELİŞ: Fiyat yükselirken OI düşüyor. Hareket yeni long girişinden çok short pozisyonların kapanmasıyla besleniyor olabilir; spot CVD pozitifleşmeden yükselişin devam kalitesi sınırlı kabul edilmeli.');
-}
-if(a){
- const aboveValue=price>a.vwap&&price>a.poc,belowValue=price<a.vwap&&price<a.poc;
- if(priceChange<0&&a.cmf>.08&&a.mfi>50&&aboveValue)relations.push('GERİ ÇEKİLMEDE PARA AKIŞI DİRENCİ: Mum fiyatı gerilese de CMF pozitif, MFI 50 üzerinde ve fiyat VWAP/POC üstünde. Bu, geri çekilmenin henüz hacim destekli dağıtıma dönüşmediğini düşündürür; değer alanı altına kapanış bu senaryoyu bozar.');
- if(priceChange>0&&a.cmf<-.08&&a.mfi<50&&belowValue)relations.push('TEPKİ YÜKSELİŞİNDE DAĞITIM RİSKİ: Fiyat kısa vadede yükselse de CMF negatif, MFI 50 altında ve fiyat VWAP/POC altında. Yükselişin güçlü spot talebiyle desteklenmediği, satış fırsatı/tepki hareketi olabileceği değerlendirilir.');
- if(a.adx>=25&&a.pdi>a.mdi&&ctx.trendUp&&price>a.vwap)relations.push('TREND DEVAMLILIĞI KÜMESİ: ADX güçlü, DI+ üstün, EMA dizilimi yukarı ve fiyat VWAP üzerinde. Trend yönü birden fazla bağımsız ölçümle uyumlu; Stoch RSI aşırı alımda olsa bile tek başına trendi tersine çevirmiş sayılmaz.');
- if(a.adx>=25&&a.mdi>a.pdi&&ctx.trendDown&&price<a.vwap)relations.push('DÜŞÜŞ TRENDİ DEVAMLILIK KÜMESİ: ADX güçlü, DI- üstün, EMA dizilimi aşağı ve fiyat VWAP altında. Tepki yükselişleri ana trend teyidi gelene kadar karşı-trend hareketi olarak ele alınmalı.');
- if(a.bbWidth<2&&a.atrExpansion<.8)relations.push('VOLATİLİTE SIKIŞMASI: Bollinger genişliği ve ATR birlikte daralıyor. Enerji birikimi olabilir ancak yön bilgisi vermez; kırılımın hacim, CVD ve kapanışla teyidi gerekir.');
- if(a.bbWidth>6&&a.atrExpansion>1.25)relations.push('VOLATİLİTE GENİŞLEMESİ: Bollinger ve ATR aynı anda yükseliyor. Hareket hızlanmış; mevcut fiyattan kovalamak yerine kapanış, geri test ve stop mesafesi volatiliteye göre değerlendirilmelidir.');
-}
-if(Number.isFinite(futuresState.fundingRate)&&Number.isFinite(futuresState.globalLongShort)){
- if(futuresState.fundingRate>.0005&&futuresState.globalLongShort>1.5)relations.push('LONG KALABALIKLAŞMASI: Pozitif funding ve yüksek global long/short oranı long tarafının maliyet ve pozisyon bakımından kalabalıklaştığını gösteriyor. Fiyat yükselse bile long squeeze riski artar; bu veri tek başına düşüş sinyali değildir.');
- if(futuresState.fundingRate<-.0005&&futuresState.globalLongShort<.67)relations.push('SHORT KALABALIKLAŞMASI: Negatif funding ve düşük global long/short oranı short tarafının kalabalık olabileceğini gösteriyor. Pozitif spot akışı veya direnç üstü kapanış short squeeze olasılığını artırabilir.');
-}
-if(relations.length)sections.push('GÖSTERGELER ARASI PROFESYONEL SENARYO OKUMASI:\n• '+relations.join('\n• '));
-else sections.push('GÖSTERGELER ARASI PROFESYONEL SENARYO OKUMASI: Şu an eşik değerleri aşan yeterli çapraz teyit oluşmadı. Tekil göstergelerin aynı yöne bakması yerine fiyat, spot akışı, vadeli pozisyon değişimi ve hacim/ değer alanı birlikteliği aranıyor.');
-const bullishGroups=[ctx.trendUp||(a&&a.adx>=25&&a.pdi>a.mdi),a&&a.cmf>.08&&price>a.vwap,Number.isFinite(spotFlow)&&spotFlow>7,Number.isFinite(futFlow)&&futFlow>7,age(futuresState.oiAt,60000)&&futuresState.oiInterpretation==='Yeni Long katılımı',ctx.nearSupport&&ctx.rsiBull].filter(Boolean).length;
-const bearishGroups=[ctx.trendDown||(a&&a.adx>=25&&a.mdi>a.pdi),a&&a.cmf<-.08&&price<a.vwap,Number.isFinite(spotFlow)&&spotFlow< -7,Number.isFinite(futFlow)&&futFlow< -7,age(futuresState.oiAt,60000)&&futuresState.oiInterpretation==='Yeni Short baskısı',ctx.nearResist&&ctx.rsiBear].filter(Boolean).length;
-const quality=Math.max(bullishGroups,bearishGroups);
-sections.push('KANIT KALİTESİ: '+(quality>=4?'GÜÇLÜ ÇAPRAZ TEYİT':quality>=2?'ORTA DÜZEY ÇAPRAZ TEYİT':'ZAYIF / DAĞINIK TEYİT')+'. Bu derece istatistiksel başarı olasılığı değildir; yalnızca farklı ve bağımsız veri ailelerinin aynı yönde ne kadar uyumlu olduğunun nitel değerlendirmesidir. Eksik veya bayat veri kanıt kabul edilmez.');
+lines.push('1. KATMAN — FİYAT VE YAPI');
+lines.push('Son kapanmış mum değişimi: '+signed(priceChange)+'%. '+structure+' '+trend+'. Fiyat EMA20 '+(price>ctx.e20?'üzerinde':'altında')+'; '+vwapText+'. '+levelText+'. '+breakout+' Fiyat yapısı ve kapanış teyidi, mum içi hareketten daha belirleyicidir.');
+if(ctx.nearSupport)qualityFamilies.add('structure-level');
+if(ctx.nearResist)qualityFamilies.add('structure-level');
 
-// PİYASA REJİMİ, KIRILIM KALİTESİ VE GEÇMİŞ PERFORMANS
-sections.push('PİYASA REJİMİ: '+(ctx.regimeText||'Rejim sınıflandırması bekleniyor'));
-sections.push('KIRILIM / SAHTE KIRILIM KONTROLÜ: '+(ctx.breakoutText||'Kırılım verisi bekleniyor'));
-if(ctx.replay)sections.push('GEÇMİŞ SİNYAL DAVRANIŞI: '+ctx.replay.text);
-const qualityNotes=[];
-if(!age(futuresState.oiAt,60000))qualityNotes.push('Açık pozisyon verisi güncel değil veya henüz alınmadı');
-if(!age(futuresState.takerAt,60000))qualityNotes.push('Taker akışı güncel değil');
-if(!age(futuresState.sentimentAt,120000))qualityNotes.push('Long/Short ve Top Trader verileri güncel değil');
-if(!age(futuresState.bookAt,20000))qualityNotes.push('Emir defteri anlık görüntüsü eski veya eksik');
-if(!Number.isFinite(spotFlow)||!Number.isFinite(futFlow))qualityNotes.push('Spot/Futures CVD penceresi henüz oluşmadı');
-sections.push('VERİ KALİTESİ VE GÜVEN: '+(qualityNotes.length?'Şu an '+qualityNotes.join('; ')+'. Bu eksikler ilgili yorumların kanıt gücünü düşürür; eksik veri olumlu veya olumsuz varsayılmadı.':'Kritik akışlar güncel görünüyor. Yine de CVD ve likidasyon geçmişi yalnızca uygulama açıkken birikir; emir defteri anlık görüntüdür ve iptal edilebilir.'));
-sections.push('RİSK VE ANALİZİN BOZULMA KOŞULU: '+(ctx.nearSupport?'Destek bölgesi altında kapanış alım senaryosunu zayıflatır. ': '')+(ctx.nearResist?'Direnç üzerinde kalıcılık satış senaryosunu zayıflatır. ':'')+(a&&a.adx<18?'Trend gücü zayıf olduğu için yönlü sinyaller yatay piyasada bozulabilir. ':'')+(a&&a.atrExpansion>1.5?'Volatilite belirgin yükselmiş; normal stop mesafeleri yetersiz kalabilir. ':'')+'Her senaryo, dayandığı fiyat seviyesi geri kazanılır veya kaybedilirse yeniden değerlendirilmelidir. İşlem maliyeti ve kayma gerçek sonuçları düşürür.');
-const all=[...bull,...bear],bullN=bull.length,bearN=bear.length,dominant=bullN>bearN?'ALICI LEHİNE':bearN>bullN?'SATICI LEHİNE':'DENGESİZ';
-const summary='BİRLEŞİK SONUÇ: '+dominant+'. '+(bullN&&bearN?'Alım ve satım kanıtları aynı anda mevcut; çelişen sinyaller nedeniyle acele yön kararı verilmemeli.':bullN?'Mevcut veriler alıcı tarafında kümeleniyor; fiyat kapanışıyla teyit aranmalı.':bearN?'Mevcut veriler satıcı tarafında kümeleniyor; destek tepkisi izlenmeli.':'Yönlü kanıt henüz yetersiz.')+' Teknik AL-SAT motoru ile açıklamalı piyasa okuması farklılaşırsa, açıklama bölümündeki veri çelişkileri dikkate alınmalı.'
-setMetric('marketVerdict',dominant,'signalword '+(bullN>bearN?'positive':bearN>bullN?'negative':'neutral'));
-setText('marketAgreement',bullN>bearN?'Alıcı kanıtları önde':bearN>bullN?'Satıcı kanıtları önde':'Kanıtlar dengeli');
-setText('marketExplanation',[summary,...sections,...(warnings.length?['ÇELİŞKİ / RİSK UYARILARI: '+warnings.join(' ' )]:[]),...(bull.length?['ALIM LEHİNE BULGULAR: '+bull.join(' ')]:[]),...(bear.length?['SATIŞ LEHİNE BULGULAR: '+bear.join(' ')]:[])].join('\n\n'));
-setText('marketCaveat','Bu bölüm tüm erişilebilir göstergeleri neden-sonuç ilişkisiyle yorumlar; olasılık senaryosu üretir, kesin gelecek tahmini değildir. Spot/Futures CVD yalnızca Mini App açıkken biriken son 5 dakikayı kapsar. Likidasyon kümesi de uygulama açıkken gelen olaylardan oluşur. Emir duvarları iptal edilebilir. Yeterli veri yoksa ilgili başlık veri bekliyor olarak değerlendirilmelidir.');
-return{bull:bullN,bear:bearN,verdict:dominant};
+lines.push('');
+lines.push('2. KATMAN — GERÇEKLEŞMİŞ İŞLEM AKIŞI');
+lines.push('Spot CVD: '+(spotFresh?flow(spot)+' · kayan 5 dk penceresi':'güncel akış yok')+'. Futures CVD: '+(futFresh?flow(fut)+' · kayan 5 dk penceresi':'güncel akış yok')+'. Taker alış/satış: '+(takerFresh?n(futuresState.takerRatio,3)+'x':'güncel veri yok')+'.');
+if(spotFresh&&futFresh){
+ if(spot>7&&fut>7){lines.push('Spot ve Futures agresif alımları aynı yönde; gerçekleşmiş işlem akışı yükseliş lehine uyum gösteriyor.');bull.push('Spot ve Futures CVD birlikte pozitif.');}
+ else if(spot< -7&&fut< -7){lines.push('Spot ve Futures agresif satışları aynı yönde; gerçekleşmiş işlem akışı düşüş lehine uyum gösteriyor.');bear.push('Spot ve Futures CVD birlikte negatif.');}
+ else if(spot*fut<0){lines.push('Spot ve Futures akışı ayrışıyor. Hareketin bir piyasada yoğunlaşması, spot talep teyidini veya vadeli katılım kalitesini zayıflatıyor.');conflicts.push('Spot CVD ('+flow(spot)+') ile Futures CVD ('+flow(fut)+') zıt yönde.');}
+ else lines.push('Akışlar aynı yönde güçlü değil; net agresif taraf üstünlüğü oluşmamış.');
+}else lines.push('Akış pencerelerinden en az biri güncel değil veya yeterince birikmedi. Bu nedenle Spot/Futures uyumu hakkında güçlü hüküm kurulamaz.');
+if(spotFresh&&futFresh&&priceChange>0&&spot< -7&&fut>7)conflicts.push('Fiyat yükselirken Spot CVD negatif, Futures CVD pozitif: yükseliş kaldıraç ağırlıklı veya spot satışla karşılanıyor olabilir.');
+if(spotFresh&&priceChange<0&&spot>7)bull.push('Fiyat düşerken Spot CVD pozitif: spot alımlar satışları karşılıyor olabilir; fiyat toparlanması görülmeden absorpsiyon teyit edilmiş sayılmaz.');
+if(takerFresh&&spotFresh&&((futuresState.takerRatio>1.08&&spot< -7)||(futuresState.takerRatio<.92&&spot>7)))conflicts.push('Taker oranı ile Spot CVD farklı davranıyor; taker metriğinin kapsadığı piyasa/zaman penceresi ve spot akışı birlikte kontrol edilmeli.');
+
+lines.push('');
+lines.push('3. KATMAN — POZİSYONLANMA VE KALDIRAÇ');
+if(oiFresh){
+ lines.push('OI değişimi: '+signed(futuresState.oiDelta)+'% · eşleşen 5 dk fiyat değişimi: '+signed(futuresState.oiPriceMove)+'% · yorum: '+(futuresState.oiInterpretation||'belirsiz')+'. OI artışı yeni pozisyon katılımını, düşüşü pozisyon kapanışını düşündürür; long/short yönü tek başına OI ile belirlenemez.');
+ if(futuresState.oiDelta>.15&&futuresState.oiPriceMove>.08){bull.push('Fiyat ve OI birlikte yükseliyor; yeni pozisyon katılımı yükselişe eşlik ediyor olabilir.');qualityFamilies.add('positioning');}
+ else if(futuresState.oiDelta>.15&&futuresState.oiPriceMove<-.08){bear.push('Fiyat düşerken OI artıyor; yeni pozisyon katılımı satış hareketine eşlik ediyor olabilir.');qualityFamilies.add('positioning');}
+ else if(futuresState.oiDelta<-.15&&futuresState.oiPriceMove>.08)conflicts.push('Fiyat yükselirken OI düşüyor: yükseliş yeni pozisyonlardan çok short kapanışlarıyla besleniyor olabilir.');
+ else if(futuresState.oiDelta<-.15&&futuresState.oiPriceMove<-.08)conflicts.push('Fiyat düşerken OI düşüyor: long kapanışı/tasfiye etkisi olası; yeni short açılışıyla aynı şey değildir.');
+}else missing.push('OI ve eşleşen fiyat değişimi güncel değil.');
+if(takerFresh)lines.push('Taker alış/satış oranı '+n(futuresState.takerRatio,3)+'x; '+(futuresState.takerRatio>1.08?'agresif alış hacmi yüksek.':futuresState.takerRatio<.92?'agresif satış hacmi yüksek.':'belirgin taraf üstünlüğü yok.'));
+if(sentimentFresh){
+ lines.push('Global Long/Short hesap oranı '+n(futuresState.globalLongShort,3)+'x; Top Trader pozisyon oranı '+n(futuresState.topLongShort,3)+'x'+(Number.isFinite(futuresState.topChange)?'; Top Trader değişimi '+signed(futuresState.topChange,3)+'x':'')+'. Hesap oranı ile pozisyon oranı farklı ölçümlerdir.');
+ if(futuresState.globalLongShort>1.8)conflicts.push('Global Long tarafı kalabalıklaşmış olabilir; pozitif funding veya zayıflayan spot akışla birleşirse long squeeze riski artar.');
+ if(futuresState.globalLongShort<.55)conflicts.push('Global Short tarafı kalabalıklaşmış olabilir; pozitif spot akışla birleşirse short squeeze riski artar.');
+}else missing.push('Global Long/Short ve Top Trader oranları güncel değil.');
+if(fundingFresh)lines.push('Funding: '+signed(futuresState.fundingRate,4)+'% (son alınan oran). '+(futuresState.fundingRate>.03?'Long tarafı maliyet ödüyor ve kalabalıklaşma riski izlenmeli.':futuresState.fundingRate<-.03?'Short tarafı maliyet ödüyor ve kalabalıklaşma riski izlenmeli.':'Funding aşırı bir tarafa belirgin biçimde işaret etmiyor.'));
+else missing.push('Funding verisi güncel değil.');
+if(basisFresh)lines.push('Mark/Index basis: '+signed(advancedState.basis,4)+'%; vadeli fiyatın endekse göre primi/iskontosu. Tek başına yön kanıtı değildir.');
+else missing.push('Basis verisi yok.');
+
+lines.push('');
+lines.push('4. KATMAN — LİKİDİTE VE HACİM');
+if(bookFresh){
+ lines.push('İlk 20 kademe emir defteri dengesizliği: '+signed(futuresState.bookImbalance,1)+'%. '+(futuresState.bookImbalance>8?'Görünen alış derinliği yüksek.':futuresState.bookImbalance< -8?'Görünen satış derinliği yüksek.':'Görünen derinlik dengeli.')+' Bu yalnızca snapshot verisidir; emirler iptal edilebilir.');
+ const wallRows=futuresState.bookHistory||[];
+ const bw=wallRows.filter(x=>x.bid).length,aw=wallRows.filter(x=>x.ask).length;
+ lines.push('Duvar takibi: son 60 sn içinde '+bw+' alış ve '+aw+' satış duvarı gözlemi kaydedildi. Aynı fiyat seviyesinin tekrar korunması ayrıca aranmalı; tek snapshot kalıcılık kanıtı değildir.');
+}else missing.push('Emir defteri snapshot verisi güncel değil.');
+if(a){
+ lines.push('Hacim: son kapanmış mum / önceki 20 mum ortalaması '+n(ctx.volRatio,2)+'x. VWAP '+fmt(a.vwap)+', POC '+fmt(a.poc)+', Value Area '+fmt(a.vaLow)+' – '+fmt(a.vaHigh)+'. CMF '+signed(a.cmf,3)+', MFI '+n(a.mfi,1)+'.');
+ if(price>a.vwap&&price>a.poc&&a.cmf>.08){bull.push('Fiyat VWAP ve POC üzerinde; CMF pozitif. Değer alanında alıcı kabulü ihtimali destekleniyor.');qualityFamilies.add('volume-flow');}
+ if(price<a.vwap&&price<a.poc&&a.cmf<-.08){bear.push('Fiyat VWAP ve POC altında; CMF negatif. Değer alanında satıcı kabulü ihtimali destekleniyor.');qualityFamilies.add('volume-flow');}
+ lines.push('Volatilite: Bollinger genişliği '+n(a.bbWidth,2)+'%, ATR genişleme '+n(a.atrExpansion,2)+'x. '+(a.bbWidth<2&&a.atrExpansion<.8?'Birlikte daralma sıkışmaya işaret ediyor; yön belirsiz.':a.bbWidth>6&&a.atrExpansion>1.25?'Birlikte genişleme volatilite rejiminin yükseldiğini düşündürüyor.':'Belirgin eşzamanlı sıkışma/genişleme koşulu yok.')+' ADX '+n(a.adx,1)+'; DI+ '+n(a.pdi,1)+' / DI- '+n(a.mdi,1)+'.');
+}else missing.push('Hacim profili ve gelişmiş göstergeler için yeterli mum verisi yok.');
+if(liqFresh){
+ const near=futuresState.liqClusters.filter(x=>Math.abs(x.price-price)/price<.015).sort((x,y)=>y.quote-x.quote)[0];
+ if(near)lines.push('Oturum likidasyon kümesi: '+near.side+' · '+fmt(near.price)+' · yaklaşık '+fmtUsd(near.quote)+' · '+near.count+' olay. Bu veri yalnızca uygulama oturumunda görülen olayları kapsar; tarihsel likidasyon haritası değildir.');
+ else lines.push('Son 30 dk oturum likidasyonlarında fiyata %1,5 yakın belirgin küme yok.');
+}else lines.push('Likidasyon akışı güncel/oluşmuş değil; geçmiş likidasyon haritası mevcut kabul edilmemeli.');
+if(Number.isFinite(advancedState.depthChange))lines.push('Top 20 derinlik toplam notionalı son snapshota göre '+signed(advancedState.depthChange,2)+'% değişti; alış/satış tarafı ayrı ayrıştırılmadan yönlü baskı sayılmaz.');
+
+if(early&&early.direction&&early.direction!=='WAIT')lines.push('Mum bazlı birikim/dağıtım taraması: '+early.text+' Bu yalnızca OHLCV tabanlı yardımcı bulgudur; gerçekleşmiş Spot CVD veya absorpsiyon kanıtı yerine geçmez.');
+if(a&&a.adx>=25&&a.pdi>a.mdi&&ctx.trendUp&&price>a.vwap)bull.push('ADX/DI, EMA dizilimi ve VWAP aynı yönde; trend ailesi yukarı yönü destekliyor.');
+if(a&&a.adx>=25&&a.mdi>a.pdi&&ctx.trendDown&&price<a.vwap)bear.push('ADX/DI, EMA dizilimi ve VWAP aynı yönde; trend ailesi aşağı yönü destekliyor.');
+if(ctx.nearSupport&&ctx.support)lines.push('Destek bölgesi: '+fmt(ctx.support.price)+'; '+ctx.support.strength+' pivot teması. Bölge altındaki kapanış destek tutunması senaryosunu zayıflatır.');
+if(ctx.nearResist&&ctx.resistance)lines.push('Direnç bölgesi: '+fmt(ctx.resistance.price)+'; '+ctx.resistance.strength+' pivot teması. Bölge üzerinde hacim/akış teyitli kapanış kırılım kanıtını güçlendirir.');
+
+const conflictText=conflicts.length?conflicts.map(x=>'• '+x).join('\n'):'Belirgin zıt yönlü veri eşleşmesi tespit edilmedi; bu, tüm verilerin eksiksiz olduğu anlamına gelmez.';
+const upSupport=bull.length>=2&&bull.length>bear.length;
+const downSupport=bear.length>=2&&bear.length>bull.length;
+const scenarios=[];
+if(upSupport)scenarios.push('Yukarı yönlü devam: '+bull.slice(0,3).join(' ')+' Bozulma koşulu: '+(ctx.nearSupport&&ctx.support?'destek '+fmt(ctx.support.price)+' altında kapanış':'Spot CVD’nin negatife dönmesi ve fiyatın VWAP/POC altına yerleşmesi')+'.');
+if(downSupport)scenarios.push('Aşağı yönlü devam: '+bear.slice(0,3).join(' ')+' Bozulma koşulu: '+(ctx.nearResist&&ctx.resistance?'direnç '+fmt(ctx.resistance.price)+' üzerinde kalıcı kapanış':'Spot CVD’nin pozitife dönmesi ve fiyatın VWAP/POC üzerine yerleşmesi')+'.');
+if(!upSupport&&!downSupport||conflicts.length)scenarios.push('Yataylaşma / yön belirsizliği: mevcut kanıtlar tek tarafa yeterince kümelenmiyor veya önemli çelişkiler içeriyor. Bozulma koşulu: kapanmış mumda destek/direnç dışına hacim ve Spot/Futures akışıyla teyitli yerleşme.');
+if(ctx.replay?.text)lines.push('Teknik geçmiş replay: '+ctx.replay.text);
+
+const familyCount=qualityFamilies.size;
+const quality=familyCount>=4&&conflicts.length===0?'GÜÇLÜ ÇAPRAZ TEYİT':familyCount>=2?'ORTA DÜZEY TEYİT':'ZAYIF / DAĞINIK';
+const bias=upSupport&&!downSupport?'ALICI KANITLARI ÖNDE':downSupport&&!upSupport?'SATICI KANITLARI ÖNDE':'DENGELİ / KARMAŞIK';
+const ageNotes=[];
+ageNotes.push('Spot CVD '+(spotFresh?'güncel, '+Math.min(300,flowDuration(spotFlowTrades))+' sn birikim':'henüz oluşmadı veya akış kesik'));
+ageNotes.push('Futures CVD '+(futFresh?'güncel, '+Math.min(300,flowDuration(flowTrades))+' sn birikim':'henüz oluşmadı veya akış kesik'));
+ageNotes.push('OI '+(oiFresh?'güncel':'bayat/eksik')+', Taker '+(takerFresh?'güncel':'bayat/eksik')+', sentiment '+(sentimentFresh?'güncel':'bayat/eksik')+', order book '+(bookFresh?'güncel':'bayat/eksik')+', funding '+(fundingFresh?'güncel':'bayat/eksik')+'.');
+if(missing.length)ageNotes.push('Eksikler: '+missing.join('; ')+'.');
+ageNotes.push('CVD yalnızca Mini App açıkken biriken kayan 5 dk işlemlerinden hesaplanır; tam tarihsel CVD değildir. Likidasyonlar oturum kapsamındadır. Order book emirleri iptal edilebilir.');
+const report='GENEL OKUMA\n'+bias+'. '+(bull.length&&bear.length?'Alıcı ve satıcı kanıtları birlikte mevcut; çelişkiler yön hükmünü sınırlandırıyor.':bull.length?'Mevcut bulgular alıcı tarafını destekliyor, ancak senaryo koşulludur.':bear.length?'Mevcut bulgular satıcı tarafını destekliyor, ancak senaryo koşulludur.':'Yön tayini için yeterli ve uyumlu kanıt yok.')+'\n\n'+lines.join('\n')+'\n\nÇELİŞKİLER\n'+conflictText+'\n\nOLASI SENARYOLAR\n'+(scenarios.length?scenarios.map((x,i)=>(i+1)+'. '+x).join('\n'):'Yeterli veri oluşmadı; senaryo üretimi ertelendi.')+'\n\nVERİ KALİTESİ VE KANIT GÜCÜ\n'+ageNotes.join(' ')+'\nKanıt gücü: '+quality+'. Bu sınıf başarı olasılığı değildir; farklı veri ailelerinin uyumunu gösterir.\n\nRİSK UYARISI\nVolatilite yükseldiğinde olağan fiyat mesafeleri yetersiz kalabilir. İşlem maliyetleri ve kayma değerlendirmeyi değiştirebilir. Bu analiz emir talimatı veya kesin tahmin değildir.';
+setMetric('marketVerdict',bias,'signalword '+(bias==='ALICI KANITLARI ÖNDE'?'positive':bias==='SATICI KANITLARI ÖNDE'?'negative':'neutral'));
+setText('marketAgreement',quality);
+setText('marketExplanation',report);
+setText('marketCaveat','Koşullu piyasa senaryosu · kesin tahmin veya emir talimatı değildir. CVD ve likidasyon verilerinin oturum kapsamı sınırlıdır.');
+return{bull:bull.length,bear:bear.length,verdict:bias,quality};
 }
 function calc(){
 const data=candles.filter(x=>x.closed);if(data.length<210)return;
@@ -503,7 +521,7 @@ setText('momentum',momUp?'YÜKSELİYOR':momDown?'DÜŞÜYOR':'NÖTR');$('momentu
 setText('atr',fmt(atrV)+' · '+(atrV/p*100).toFixed(2)+'%');
 setText('signal',signal);$('signal').className='signalword '+(signal==='AL'?'positive':signal==='SAT'?'negative':'neutral');setText('confidence','GÜÇ '+strength+'%');$('scorebar').style.width=strength+'%';$('scorebar').style.background=rawSignal==='AL'?'var(--green)':rawSignal==='SAT'?'var(--red)':'var(--gold)';
 setText('reason',why.length?why.join(' · '):'Fiyat dönüşü, pivot ve momentum koşulları henüz aynı yönde birleşmedi.');
-combinedMarketExplanation(advanced,p,early,score,{c,prev,rv,rPrev,mac,macPrev,trendUp,trendDown,e20:e20[n],volRatio,nearSupport,nearResist,support:supportCtx,resistance:resistCtx,replay,regimeText,breakoutText,rsiBull:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.low<x[m].low?i:m,0),yi=y.reduce((m,z,i)=>z.low<y[m].low?i:m,0);return y[yi].low<x[xi].low&&rvArr[data.length-9+yi]>rvArr[data.length-18+xi]+1;})(),rsiBear:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.high>x[m].high?i:m,0),yi=y.reduce((m,z,i)=>z.high>y[m].high?i:m,0);return y[yi].high>x[xi].high&&rvArr[data.length-9+yi]<rvArr[data.length-18+xi]-1;})()});
+combinedMarketExplanation(advanced,p,early,score,{data,c,prev,rv,rPrev,mac,macPrev,trendUp,trendDown,e20:e20[n],e50:e50[n],e200:e200[n],volRatio,nearSupport,nearResist,support:supportCtx,resistance:resistCtx,replay,regimeText,breakoutText,rsiBull:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.low<x[m].low?i:m,0),yi=y.reduce((m,z,i)=>z.low<y[m].low?i:m,0);return y[yi].low<x[xi].low&&rvArr[data.length-9+yi]>rvArr[data.length-18+xi]+1;})(),rsiBear:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.high>x[m].high?i:m,0),yi=y.reduce((m,z,i)=>z.high>y[m].high?i:m,0);return y[yi].high>x[xi].high&&rvArr[data.length-9+yi]<rvArr[data.length-18+xi]-1;})()});
 const earlyLabel=early.direction==='ACC'?'ERKEN BİRİKİM':early.direction==='DIST'?'ERKEN DAĞITIM':early.direction==='ACC_WATCH'?'BİRİKİM İZİ':early.direction==='DIST_WATCH'?'DAĞITIM İZİ':'NÖTR';
 setText('earlySignal',earlyLabel);$('earlySignal').className='signalword '+(early.direction.startsWith('ACC')?'positive':early.direction.startsWith('DIST')?'negative':'neutral');
 setText('earlyScore',early.score+'/10');setText('earlyReason',early.text);
