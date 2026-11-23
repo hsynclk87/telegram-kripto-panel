@@ -908,7 +908,8 @@ function renderAcademyTools(){
  else if(academyCategory==='volume')content.innerHTML=acVolume(d,p);
  else if(academyCategory==='orderbook')content.innerHTML='<div class="academy-card"><div class="academy-tool-head"><h3>CANLI EMİR DEFTERİ & PİYASA DERİNLİĞİ</h3><button class="ac-action" id="acDepthRefresh">DERİNLİĞİ YENİLE</button></div><div id="acOrderBookData"><div class="academy-result">Gerçek Binance emir defteri için yenile butonuna basın.</div></div></div>';
  else if(academyCategory==='patterns')content.innerHTML=acPatterns(d,p,piv);
- else if(academyCategory==='patterns')content.innerHTML=acPatterns(d,p,piv);\n else content.innerHTML=acRisk(p,a);
+ else if(academyCategory==='patterns')content.innerHTML=acPatterns(d,p,piv);
+ else content.innerHTML=acRisk(p,a);
 }
 function acStructure(d,p,piv,sup,res){
  const n=d.slice(-120),hi=Math.max(...n.map(x=>x.high)),lo=Math.min(...n.map(x=>x.low)),range=hi-lo;
