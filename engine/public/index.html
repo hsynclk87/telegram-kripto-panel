@@ -66,10 +66,34 @@ body{max-width:900px}
 #marketExplanation{white-space:pre-line;line-height:1.65;font-size:13px;color:#d6e0f0}
 #marketVerdict{font-size:16px}
 .price-card .stats{margin-top:12px}
+
+/* SUPPORT / RESISTANCE METHOD TAB */
+#srTabPanel{display:none}#srTabPanel.visible{display:block!important}
+#mainTabs{margin-top:2px}#mainTabs button{flex:1}
+.sr-list{display:grid;gap:7px}
+.sr-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:9px 10px;background:rgba(8,18,33,.72);border:1px solid rgba(91,150,220,.2);border-radius:10px}
+.sr-item b{font-size:12px;display:block}.sr-item small{display:block;color:var(--muted);font-size:10px;line-height:1.45;margin-top:3px}.sr-item strong{font-size:13px;text-align:right;font-variant-numeric:tabular-nums}.sr-empty{padding:10px;color:var(--muted);font-size:11px;background:rgba(8,18,33,.55);border-radius:9px}
 </style></head><body>
 <header class="head"><div><div class="brand">KRİPTO · İNDİKATÖR TERMİNALİ</div><div class="conn"><span class="dot" id="dot"></span><span id="connection">Binance canlı fiyat bağlantısı bekleniyor</span></div></div><div class="pill">REALTIME</div></header>
-<div class="row" id="coins"></div><div class="row" id="frames"></div>
-<section class="card price-card"><div class="pricehead"><div><div class="muted" id="symbol">BTCUSDT · 1 SAAT</div><div class="price" id="price">Bağlanıyor…</div><div id="change" class="change">—</div></div><div class="right"><div class="muted">24 SAAT HACİM</div><b id="volume">—</b></div></div><div class="stats"><div><span>24s En Yüksek</span><b id="high">—</b></div><div><span>24s En Düşük</span><b id="low">—</b></div><div><span>Son işlem</span><b id="tick">—</b></div></div></section><section class="card market-card"><div class="section">BİRLEŞİK PİYASA OKUMASI · TÜM VERİLERİN ORTAK YORUMU</div><div class="signal"><div><div class="muted">SPOT + FUTURES + HACİM + TREND</div><div class="signalword neutral" id="marketVerdict">VERİ BEKLENİYOR</div></div><div class="pill" id="marketAgreement">—</div></div><div class="explain" id="marketExplanation" style="margin-top:10px">Spot ve vadeli akış, hacim, VWAP, hacim profili, emir defteri ve trend verileri birlikte değerlendiriliyor.</div><div class="muted" id="marketCaveat" style="margin-top:8px">Yeterli ve güncel veri oluşmadan bu bölüm yön tahmini üretmez.</div></section>
+<div class="row" id="coins"></div><div class="row" id="frames"></div><div class="row" id="mainTabs"><button id="tabMarket" class="active" type="button">PİYASA ANALİZİ</button><button id="tabLevels" type="button">DESTEK / DİRENÇ</button></div>
+<section class="card price-card"><div class="pricehead"><div><div class="muted" id="symbol">BTCUSDT · 1 SAAT</div><div class="price" id="price">Bağlanıyor…</div><div id="change" class="change">—</div></div><div class="right"><div class="muted">24 SAAT HACİM</div><b id="volume">—</b></div></div><div class="stats"><div><span>24s En Yüksek</span><b id="high">—</b></div><div><span>24s En Düşük</span><b id="low">—</b></div><div><span>Son işlem</span><b id="tick">—</b></div></div></section><section class="card" id="srTabPanel" style="display:none">
+<div class="section">BINANCE ACADEMY YÖNTEMİ · DESTEK / DİRENÇ HARİTASI</div>
+<div class="muted" id="srMethodNote">Geçmiş dip-tepe tepkileri, tekrarlanan testler, rol değişimi, trend çizgileri, hareketli ortalamalar, Fibonacci, hacim ve psikolojik seviyeler.</div>
+<div class="grid" style="margin-top:10px">
+<div class="metric"><span>EN YAKIN DESTEK BÖLGESİ</span><b id="srNearestSupport">—</b><small id="srSupportStrength">—</small></div>
+<div class="metric"><span>EN YAKIN DİRENÇ BÖLGESİ</span><b id="srNearestResistance">—</b><small id="srResistanceStrength">—</small></div>
+<div class="metric"><span>DESTEK / DİRENÇ DURUMU</span><b id="srCurrentPosition">—</b><small id="srCurrentPositionNote">—</small></div>
+<div class="metric"><span>HESAPLANAN VERİ</span><b id="srDataScope">—</b><small>Seçili zaman dilimi · kapanmış Binance mumları</small></div>
+</div>
+<div class="section" style="margin-top:14px">GEÇMİŞ DİP / TEPE KÜMELERİ</div><div id="srPivotLevels" class="sr-list"></div>
+<div class="section" style="margin-top:14px">DESTEK ↔ DİRENÇ ROL DEĞİŞİMİ</div><div id="srRoleFlips" class="sr-list"></div>
+<div class="section" style="margin-top:14px">TREND ÇİZGİLERİ</div><div id="srTrendLines" class="sr-list"></div>
+<div class="section" style="margin-top:14px">HAREKETLİ ORTALAMALAR</div><div id="srMovingAverages" class="sr-list"></div>
+<div class="section" style="margin-top:14px">FIBONACCI DÜZELTME SEVİYELERİ</div><div id="srFibonacci" class="sr-list"></div>
+<div class="section" style="margin-top:14px">HACİMİN YOĞUNLAŞTIĞI FİYAT BÖLGELERİ</div><div id="srVolumeZones" class="sr-list"></div>
+<div class="section" style="margin-top:14px">PSİKOLOJİK FİYAT SEVİYELERİ</div><div id="srRoundLevels" class="sr-list"></div>
+<div class="foot">Yöntem açıklaması: Seviyeler tek çizgi değil, tolerans aralığı olan bölgelerdir. Pivotlar 3 mum sol / 3 mum sağ teyidiyle yalnızca kapanmış mumlardan alınır. Hacim bölgesi, OHLCV mum hacminin tipik fiyata dağıtıldığı yaklaşık profildir; Binance'in gerçek emir/işlem bazlı hacim profili değildir. Hiçbir seviye kesin dönüş garantisi vermez.</div>
+</section><section class="card market-card"><div class="section">BİRLEŞİK PİYASA OKUMASI · TÜM VERİLERİN ORTAK YORUMU</div><div class="signal"><div><div class="muted">SPOT + FUTURES + HACİM + TREND</div><div class="signalword neutral" id="marketVerdict">VERİ BEKLENİYOR</div></div><div class="pill" id="marketAgreement">—</div></div><div class="explain" id="marketExplanation" style="margin-top:10px">Spot ve vadeli akış, hacim, VWAP, hacim profili, emir defteri ve trend verileri birlikte değerlendiriliyor.</div><div class="muted" id="marketCaveat" style="margin-top:8px">Yeterli ve güncel veri oluşmadan bu bölüm yön tahmini üretmez.</div></section>
 <div class="layout"><div>
 <section class="card wide"><div class="section">FİYAT GRAFİĞİ · EMA 20 / EMA 50</div><div id="chart"></div><div class="legend"><span><i style="background:#e8bd68"></i>EMA 20</span><span><i style="background:#65a8ff"></i>EMA 50</span></div></section>
 <section class="card wide"><div class="section">FOOTPRINT · TEK MUM</div><div class="fp-toolbar"><div class="row" style="padding:0;margin:0"><button id="fpSpot" class="active">SPOT</button><button id="fpFutures">FUTURES</button></div><span class="muted" id="fpStatus">CANLI</span></div><div class="fp-stats"><div class="fp-stat"><span>DELTA</span><b id="fpDelta">—</b></div><div class="fp-stat"><span>HACİM</span><b id="fpVolume">—</b></div><div class="fp-stat"><span>POC</span><b id="fpPoc">—</b></div></div><div class="fp-wrap" id="fpWrap"><div class="muted" style="padding:14px">Veri bekleniyor…</div></div></section><section class="card wide"><div class="section">MOMENTUM · RSI / MACD HISTOGRAM</div><div id="osc"></div></section>
@@ -544,6 +568,7 @@ const closes=data.map(x=>x.close),e20=ema(closes,20),e50=ema(closes,50),e200=ema
 const n=data.length-1,c=data[n],prev=data[n-1],p=c.close,rv=rvArr[n],rPrev=rvArr[n-1],mac=hist[n],macPrev=hist[n-1]??0,atrV=atr(data.slice(-30)),volAvg=data.slice(-21,-1).reduce((s,x)=>s+x.volume,0)/20,volRatio=volAvg?c.volume/volAvg:0;
 const supportCtx=pivotContext(false,p,data,atrV),resistCtx=pivotContext(true,p,data,atrV),nearSupport=supportCtx&&Math.abs(p-supportCtx.price)<=atrV*1.25,nearResist=resistCtx&&Math.abs(p-resistCtx.price)<=atrV*1.25;
 const early=earlyFlowAnalysis(data,atrV);
+updateSupportResistanceTab(data,p,atrV);
 const advanced=advancedIndicators(data);updateAdvancedPanel(advanced,p);
 const body=Math.abs(c.close-c.open),lowerWick=Math.min(c.open,c.close)-c.low,upperWick=c.high-Math.max(c.open,c.close),bull=c.close>c.open,bear=c.close<c.open;
 const trendUp=e20[n]>e50[n]&&e50[n]>e200[n],trendDown=e20[n]<e50[n]&&e50[n]<e200[n];
@@ -589,6 +614,84 @@ setText('target1',stop===null?'—':fmt(rawSignal==='AL'?p+risk*1.5:p-risk*1.5))
 setText('planNote',rawSignal==='BEKLE'?'Yeterli yön uyumu yok; işlem planı oluşturulmadı.':'ATR tabanlı teknik seviyeler; emir önerisi değildir.');
 
 }
+
+// Binance Academy temel teknik analiz ilkelerinin şeffaf ve ölçülebilir uygulaması.
+function updateSupportResistanceTab(data,price,atrV){
+ const d=data.filter(x=>x.closed).slice(-300);
+ if(d.length<30)return;
+ const n=d.length,range=Math.max(price*.0025,atrV*.35),pivots=[];
+ for(let i=3;i<n-3;i++){
+  let hi=true,lo=true;
+  for(let j=i-3;j<=i+3;j++){if(j===i)continue;if(d[j].high>=d[i].high)hi=false;if(d[j].low<=d[i].low)lo=false;}
+  if(hi)pivots.push({price:d[i].high,type:'TEPE',i,volume:d[i].volume});
+  if(lo)pivots.push({price:d[i].low,type:'DİP',i,volume:d[i].volume});
+ }
+ const clusters=[];
+ pivots.forEach(p=>{
+  let g=clusters.find(x=>Math.abs(x.price-p.price)<=range);
+  if(!g){g={price:p.price,items:[],high:0,low:Infinity,last:0};clusters.push(g);}
+  g.items.push(p);g.high=Math.max(g.high,p.price);g.low=Math.min(g.low,p.price);g.last=Math.max(g.last,p.i);
+  g.price=g.items.reduce((a,x)=>a+x.price,0)/g.items.length;
+ });
+ clusters.forEach(g=>{
+  g.touches=g.items.length;g.recency=n-1-g.last;
+  g.score=g.touches*2+Math.max(0,3-g.recency/30);
+  g.role=g.price<price?'DESTEK':'DİRENÇ';
+  g.flips=0;
+  const start=Math.max(1,n-100);
+  for(let i=start;i<n;i++){
+   const prev=d[i-1].close,cur=d[i].close;
+   if((prev<g.price&&cur>g.price)||(prev>g.price&&cur<g.price))g.flips++;
+  }
+ });
+ const below=clusters.filter(g=>g.price<price).sort((a,b)=>b.price-a.price);
+ const above=clusters.filter(g=>g.price>price).sort((a,b)=>a.price-b.price);
+ const fmtZone=g=>g?fmt(g.low)+' – '+fmt(g.high):'Yeterli pivot yok';
+ setText('srNearestSupport',below.length?fmtZone(below[0]):'—');
+ setText('srSupportStrength',below.length?below[0].touches+' teyitli dip/tepe teması · '+below[0].flips+' kapanış geçişi':'Son 300 mumda destek pivotu bulunamadı');
+ setText('srNearestResistance',above.length?fmtZone(above[0]):'—');
+ setText('srResistanceStrength',above.length?above[0].touches+' teyitli dip/tepe teması · '+above[0].flips+' kapanış geçişi':'Son 300 mumda direnç pivotu bulunamadı');
+ const near=below[0]&&Math.abs(price-below[0].price)<=range*1.5?'DESTEK BÖLGESİNE YAKIN':above[0]&&Math.abs(price-above[0].price)<=range*1.5?'DİRENÇ BÖLGESİNE YAKIN':'İKİ BÖLGE ARASINDA';
+ setText('srCurrentPosition',near);
+ setText('srCurrentPositionNote',near==='İKİ BÖLGE ARASINDA'?'Fiyat en yakın iki ana bölge arasında.':'Fiyatın bölgeye tepkisi ve kapanışı izlenmeli.');
+ setText('srDataScope',d.length+' mum · '+tf.toUpperCase());
+ const render=(id,items,empty)=>{const el=$(id);if(!el)return;el.innerHTML=items.length?items.map(x=>'<div class="sr-item"><div><b>'+x.title+'</b><small>'+x.note+'</small></div><strong>'+x.value+'</strong></div>').join(''):'<div class="sr-empty">'+empty+'</div>';};
+ const main=[...below.slice(0,4),...above.slice(0,4)].sort((a,b)=>Math.abs(a.price-price)-Math.abs(b.price-price));
+ render('srPivotLevels',main.map(g=>({title:g.role+' · '+g.touches+' temas',note:'Bölge '+fmt(g.low)+' – '+fmt(g.high)+' · Son temas '+(g.recency===0?'son mum':g.recency+' mum önce')+' · Güç puanı '+g.score.toFixed(1),value:fmt(g.price)})),'Yeterli sayıda teyitli dip veya tepe oluşmadı.');
+ const flips=clusters.filter(g=>g.flips>0).sort((a,b)=>b.flips-a.flips).slice(0,6);
+ render('srRoleFlips',flips.map(g=>({title:fmt(g.price)+' · '+g.flips+' kapanış geçişi',note:'Fiyat bu bölgenin iki tarafında kapanış yaptı. Rol değişimi ancak sonraki testte tutunma/ret ile teyit edilir.',value:g.price<price?'DESTEK?':'DİRENÇ?'})),'Son 100 mumda belirgin destek-direnç geçişi yok.');
+ const trend=(type)=>{
+  const ps=pivots.filter(x=>x.type===type).slice(-8);
+  if(ps.length<2)return null;
+  const a=ps[ps.length-2],b=ps[ps.length-1],slope=(b.price-a.price)/(b.i-a.i),project=b.price+slope*(n-1-b.i);
+  return{title:type==='DİP'?'Yükselen / alçalan dip trend çizgisi':'Tepe trend çizgisi',note:'Son iki teyitli '+type.toLowerCase()+' birleştirildi; eğim mum başına '+fmt(slope)+'. İki noktalı çizgi erken aşamadadır, üçüncü temas teyidi güçlendirir.',value:fmt(project)};
+ };
+ const trendRows=[trend('DİP'),trend('TEPE')].filter(Boolean);
+ render('srTrendLines',trendRows,'Trend çizgisi için iki teyitli dip veya tepe henüz yok.');
+ const closes=d.map(x=>x.close),ma=[['EMA 20',ema(closes,20).at(-1)],['EMA 50',ema(closes,50).at(-1)],['EMA 200',ema(closes,200).at(-1)]];
+ render('srMovingAverages',ma.filter(x=>Number.isFinite(x[1])).map(x=>({title:x[0],note:price>x[1]?'Fiyat ortalamanın üzerinde.':'Fiyat ortalamanın altında.',value:fmt(x[1])})),'Hareketli ortalama hesaplanamadı.');
+ let hi=-Infinity,lo=Infinity,hiI=0,loI=0;
+ d.slice(-120).forEach((x,i)=>{if(x.high>hi){hi=x.high;hiI=i;}if(x.low<lo){lo=x.low;loI=i;}});
+ const fibRows=[];
+ if(hi>lo){
+  const up=hiI>loI;
+  [0.382,0.5,0.618].forEach(r=>{const v=up?hi-(hi-lo)*r:lo+(hi-lo)*r;fibRows.push({title:'Fibonacci '+(r*100).toFixed(1)+'%',note:'Son 120 mumun '+(up?'dip → tepe':'tepe → dip')+' salınımı üzerinden hesaplandı.',value:fmt(v)});});
+ }
+ render('srFibonacci',fibRows,'Fibonacci için yeterli fiyat aralığı yok.');
+ // Mum OHLCV verisinden tipik fiyata hacim yazan yaklaşık profil.
+ const bins=Array.from({length:24},()=>({volume:0,price:0}));
+ const min=Math.min(...d.slice(-120).map(x=>x.low)),max=Math.max(...d.slice(-120).map(x=>x.high)),step=(max-min)/bins.length;
+ if(step>0){
+  d.slice(-120).forEach(x=>{const tp=(x.high+x.low+x.close)/3;const ix=Math.max(0,Math.min(bins.length-1,Math.floor((tp-min)/step)));bins[ix].volume+=x.volume;bins[ix].price=min+(ix+.5)*step;});
+ }
+ const topBins=bins.filter(x=>x.volume>0).sort((a,b)=>b.volume-a.volume).slice(0,5);
+ render('srVolumeZones',topBins.map((x,i)=>({title:(i===0?'En yoğun yaklaşık hacim bölgesi':'Hacim kümesi '+(i+1)),note:'OHLCV mum hacmi tipik fiyata atanmıştır; gerçek trade-by-price değildir.',value:fmt(x.price)})),'Hacim profili için yeterli veri yok.');
+ const magnitude=Math.pow(10,Math.floor(Math.log10(price))-1),rounds=[];
+ for(let k=-2;k<=2;k++){const v=Math.round(price/(magnitude*10)+k)*magnitude*10;if(v>0&&v!==price)rounds.push(v);}
+ const unique=[...new Set(rounds)].sort((a,b)=>Math.abs(a-price)-Math.abs(b-price)).slice(0,5).sort((a,b)=>a-b);
+ render('srRoundLevels',unique.map(v=>({title:v<price?'Psikolojik destek adayı':'Psikolojik direnç adayı',note:'Yuvarlak fiyat seviyesi; tek başına teknik teyit değildir.',value:fmt(v)})),'Psikolojik seviye üretilemedi.');
+ setText('srMethodNote','Pivot teması + bölge kümelenmesi + rol değişimi + trend çizgisi + EMA 20/50/200 + Fibonacci + yaklaşık hacim profili + yuvarlak fiyatlar. Bölge toleransı: '+fmt(range)+'.');
+}
 function pivotContext(above,price,data,atrV){
 const piv=[];for(let i=Math.max(3,data.length-150);i<data.length-3;i++){let hi=true,lo=true;for(let j=i-3;j<=i+3;j++){if(j===i)continue;if(data[j].high>=data[i].high)hi=false;if(data[j].low<=data[i].low)lo=false;}if(above&&hi&&data[i].high>price)piv.push(data[i].high);if(!above&&lo&&data[i].low<price)piv.push(data[i].low);}
 if(!piv.length)return null;const tol=Math.max(price*.0035,atrV*.35),groups=[];
@@ -601,6 +704,23 @@ function connectPrice(){if(priceWs)priceWs.close();const s=coin.toLowerCase()+'u
 function connectKline(){if(klineWs)klineWs.close();const s=coin.toLowerCase()+'usdt';klineWs=new WebSocket('wss://stream.binance.com:443/ws/'+s+'@kline_'+tf);klineWs.onmessage=e=>{const k=JSON.parse(e.data).k,c={time:Math.floor(k.t/1000),open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v,closed:k.x};const ix=candles.findIndex(x=>x.time===c.time);if(ix>=0)candles[ix]=c;else candles.push(c);candles=candles.slice(-500);if(c.closed)calc();};}
 async function load(){const sym=coin+'USDT';setText('symbol',sym+' · '+tf.toUpperCase());try{const [rows,ticker,stats]=await Promise.all([fetch('https://api.binance.com/api/v3/klines?symbol='+sym+'&interval='+tf+'&limit=500',{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/price?symbol='+sym,{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/24hr?symbol='+sym,{cache:'no-store'}).then(r=>r.json())]);candles=rows.map(x=>({time:Math.floor(x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5],closed:Number(x[6])<Date.now()}));base24=+stats.prevClosePrice;updatePrice(+ticker.price);setText('volume',compact(+stats.quoteVolume));setText('high',fmt(+stats.highPrice));setText('low',fmt(+stats.lowPrice));calc();}catch(e){setText('reason','Binance mum verisi alınamadı: '+e.message);}}
 function switchMarket(){controls();footprintTrades={SPOT:[],FUTURES:[]};candles=[];lastSignal='BEKLE';futuresState={bookImbalance:null,bookAt:0,oiDelta:null,oiAt:0,takerRatio:null,takerAt:0,globalLongShort:null,topLongShort:null,sentimentAt:0,fundingRate:null,fundingAt:0,flowImbalance:null,flowAt:0,liqSide:null,liqValue:null,liqAt:0,liqClusters:[],bookHistory:[],topPrevious:null,topChange:null,topChangeAt:0,oiPriceMove:null,oiInterpretation:'—'};lastPrice=null;base24=null;advancedState={spotCvd:0,futuresCvd:0,spotImbalance:null,futuresCvdImbalance:null,basis:null,depthChange:null,depthHistory:[],lastBookTotal:null};setText('price','Yükleniyor…');chartInit();load().then(()=>{connectKline();});connectPrice();startFutures();}
+
+// Ana panel ile destek/direnç modülü arasında sekme geçişi.
+function activateMainTab(which){
+ const levels=which==='levels';
+ $('tabMarket').classList.toggle('active',!levels);
+ $('tabLevels').classList.toggle('active',levels);
+ $('srTabPanel').classList.toggle('visible',levels);
+ $('srTabPanel').style.display=levels?'block':'none';
+ document.querySelector('.price-card').style.display=levels?'none':'block';
+ document.querySelector('.market-card').style.display=levels?'none':'block';
+ document.querySelector('.layout').style.display=levels?'none':'';
+ const plan=document.querySelector('body>section.card:not(.price-card):not(.market-card):not(#srTabPanel)');
+ if(plan)plan.style.display='none';
+}
+$('tabMarket').addEventListener('click',()=>activateMainTab('market'));
+$('tabLevels').addEventListener('click',()=>activateMainTab('levels'));
+
 if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}controls();chartInit();switchMarket();
 })();
 </script></body></html>
