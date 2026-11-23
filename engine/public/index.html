@@ -82,9 +82,46 @@ body{max-width:900px}
 .sr-mtf-level:nth-child(1) span,.sr-mtf-level:nth-child(1) b,.sr-mtf-level:nth-child(1) small{color:#35f2a1!important}
 .sr-mtf-level:nth-child(2){border:1px solid rgba(255,85,119,.5);background:rgba(111,34,54,.24)}
 .sr-mtf-level:nth-child(2) span,.sr-mtf-level:nth-child(2) b,.sr-mtf-level:nth-child(2) small{color:#ff718b!important}
+
+/* ACADEMY LIVE TOOLKIT */
+#academyPanel{display:none;color:#eaf1ff;margin-top:9px}
+#academyPanel.visible{display:block!important}
+.academy-hero{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:17px;border:1px solid rgba(104,173,255,.35);border-radius:18px;background:radial-gradient(ellipse at 10% 0%,rgba(75,130,255,.23),transparent 55%),linear-gradient(130deg,#172943,#101b2e 65%,#16283a);box-shadow:0 14px 34px rgba(0,0,0,.2)}
+.academy-kicker{font-size:9px;letter-spacing:1.5px;font-weight:850;color:#86c7ff}
+.academy-title{font-size:19px;font-weight:900;letter-spacing:.2px;margin-top:5px}
+.academy-sub{font-size:10px;color:#aabbd3;margin-top:5px}
+.academy-live{white-space:nowrap;font-size:9px;color:#7fffc7;border:1px solid rgba(53,242,161,.35);background:rgba(53,242,161,.08);border-radius:20px;padding:7px 9px}
+.academy-live i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#35f2a1;box-shadow:0 0 9px #35f2a1;margin-right:5px}
+.academy-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin-top:9px;border:1px solid rgba(103,145,199,.23);background:rgba(14,26,44,.85);border-radius:12px}
+.academy-toolbar>div{display:grid;gap:3px}.academy-label{font-size:8px;color:#8ea4c2;letter-spacing:1px}.academy-toolbar b{font-size:12px}
+.academy-toolbar button,.academy-subnav button,.ac-action{border:1px solid rgba(106,157,218,.3);border-radius:9px;background:#1a2b45;color:#cbdcf5;padding:8px 10px;font-size:9px;font-weight:800}
+.academy-subnav{display:flex;gap:6px;overflow:auto;padding:10px 0;scrollbar-width:none}
+.academy-subnav button{white-space:nowrap;background:rgba(23,34,55,.9);color:#aebed5}
+.academy-subnav button.active{background:linear-gradient(135deg,#315b78,#31516a);border-color:#8acbda;color:#fff}
+.academy-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:9px}
+.academy-stat{padding:10px 9px;border:1px solid rgba(102,151,208,.22);border-radius:12px;background:linear-gradient(145deg,#17263c,#101a2b);min-width:0}
+.academy-stat span{display:block;font-size:8px;color:#91a8c6;letter-spacing:.7px}.academy-stat b{display:block;font-size:14px;margin-top:5px;overflow-wrap:anywhere}.academy-stat small{display:block;color:#8fa4c0;font-size:8px;margin-top:3px}
+.academy-workspace{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(220px,.8fr);gap:9px}
+.academy-main,.academy-side{min-width:0;display:grid;align-content:start;gap:9px}
+.academy-card{padding:13px;border:1px solid rgba(100,151,211,.25);border-radius:15px;background:linear-gradient(145deg,rgba(20,34,55,.98),rgba(11,21,37,.98));box-shadow:0 7px 24px rgba(0,0,0,.14)}
+.academy-card-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.academy-card h3{font-size:11px;margin:5px 0 10px;letter-spacing:.3px}.academy-tag{font-size:8px;color:#9eb9d9;background:#1c304b;padding:5px 7px;border-radius:20px}
+#academyChart{height:245px;width:100%;overflow:hidden}
+.academy-legend{display:flex;gap:13px;flex-wrap:wrap;color:#9db0ca;font-size:9px}.academy-legend i{display:inline-block;width:12px;height:3px;margin-right:4px;vertical-align:middle}.ac-legend-price{background:#f3d28a}.ac-legend-ma{background:#54c7ff}.ac-legend-sr{background:#a88cff}
+.academy-snapshot{display:grid;gap:8px}.ac-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding-bottom:7px;border-bottom:1px solid rgba(130,158,197,.13)}.ac-row:last-child{border:0;padding-bottom:0}.ac-row span{font-size:9px;color:#9eb0c9}.ac-row b{font-size:10px;text-align:right}.ac-good{color:#48e6ad}.ac-bad{color:#ff7e95}.ac-warn{color:#ffd27b}
+.academy-note{background:linear-gradient(145deg,rgba(45,55,81,.55),rgba(19,29,47,.9))}.academy-note b{font-size:9px;color:#b9c8e2;letter-spacing:1px}.academy-note p,.academy-foot{font-size:9px;line-height:1.6;color:#91a4bf;margin:7px 0 0}
+.academy-module-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.academy-module{padding:12px;border:1px solid rgba(104,153,212,.23);border-radius:12px;background:linear-gradient(145deg,#182943,#101b2d);min-width:0}
+.academy-module .ac-icon{font-size:18px}.academy-module h4{font-size:10px;margin:6px 0 4px}.academy-module p{font-size:9px;line-height:1.5;color:#9fb1ca;margin:0 0 9px}.academy-module .ac-value{font-size:17px;font-weight:850;color:#f0f4ff}.academy-module small{font-size:8px;color:#8fa5c2}
+.academy-tool-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}.academy-tool-head h3{margin:0}.academy-tool-table{width:100%;border-collapse:collapse;font-size:9px}.academy-tool-table td{padding:8px 4px;border-bottom:1px solid rgba(135,160,196,.13)}.academy-tool-table td:last-child{text-align:right;font-weight:750;font-variant-numeric:tabular-nums}
+.academy-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.academy-inputs label{font-size:8px;color:#9db1cb;display:grid;gap:4px}.academy-inputs input,.academy-inputs select{width:100%;min-width:0;background:#0b1728;border:1px solid #344c6b;border-radius:8px;color:#eef4ff;padding:9px;font-size:11px}
+.academy-result{padding:10px;border-radius:10px;background:rgba(65,122,177,.12);border:1px solid rgba(91,161,225,.22);font-size:10px;line-height:1.6;margin-top:9px}
+.academy-foot{padding:8px 3px}
+@media(max-width:650px){.academy-workspace{grid-template-columns:1fr}.academy-side{grid-template-columns:repeat(2,minmax(0,1fr))}.academy-side .academy-note{grid-column:1/-1}.academy-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.academy-title{font-size:16px}#academyChart{height:205px}}
+@media(max-width:380px){.academy-side{grid-template-columns:1fr}.academy-module-grid{grid-template-columns:1fr}}
+
 </style></head><body>
 <header class="head"><div><div class="brand">KRİPTO · İNDİKATÖR TERMİNALİ</div><div class="conn"><span class="dot" id="dot"></span><span id="connection">Binance canlı fiyat bağlantısı bekleniyor</span></div></div><div class="pill">REALTIME</div></header>
-<div class="row" id="coins"></div><div class="row" id="frames"></div><div class="row" id="mainTabs"><button id="tabMarket" class="active" type="button">PİYASA ANALİZİ</button><button id="tabLevels" type="button">DESTEK / DİRENÇ</button></div>
+<div class="row" id="coins"></div><div class="row" id="frames"></div><div class="row" id="mainTabs"><button id="tabMarket" class="active" type="button">PİYASA ANALİZİ</button><button id="tabLevels" type="button">DESTEK / DİRENÇ</button><button id="tabAcademy" type="button">ANALİZ ARAÇLARI</button></div>
 <section class="card price-card"><div class="pricehead"><div><div class="muted" id="symbol">BTCUSDT · 1 SAAT</div><div class="price" id="price">Bağlanıyor…</div><div id="change" class="change">—</div></div><div class="right"><div class="muted">24 SAAT HACİM</div><b id="volume">—</b></div></div><div class="stats"><div><span>24s En Yüksek</span><b id="high">—</b></div><div><span>24s En Düşük</span><b id="low">—</b></div><div><span>Son işlem</span><b id="tick">—</b></div></div></section><section class="card" id="srTabPanel" style="display:none">
 <div class="section">BINANCE ACADEMY YÖNTEMİ · DESTEK / DİRENÇ HARİTASI</div>
 <div class="muted" id="srMethodNote">Geçmiş dip-tepe tepkileri, tekrarlanan testler, rol değişimi, trend çizgileri, hareketli ortalamalar, Fibonacci, hacim ve psikolojik seviyeler.</div>
@@ -106,7 +143,40 @@ body{max-width:900px}
 <div class="section" style="margin-top:14px">HACİMİN YOĞUNLAŞTIĞI FİYAT BÖLGELERİ</div><div id="srVolumeZones" class="sr-list"></div>
 <div class="section" style="margin-top:14px">PSİKOLOJİK FİYAT SEVİYELERİ</div><div id="srRoundLevels" class="sr-list"></div>
 <div class="foot">Yöntem açıklaması: Seviyeler tek çizgi değil, tolerans aralığı olan bölgelerdir. Pivotlar 3 mum sol / 3 mum sağ teyidiyle yalnızca kapanmış mumlardan alınır. Hacim bölgesi, OHLCV mum hacminin tipik fiyata dağıtıldığı yaklaşık profildir; Binance'in gerçek emir/işlem bazlı hacim profili değildir. Hiçbir seviye kesin dönüş garantisi vermez.</div>
-</section><section class="card market-card"><div class="section">BİRLEŞİK PİYASA OKUMASI · TÜM VERİLERİN ORTAK YORUMU</div><div class="signal"><div><div class="muted">SPOT + FUTURES + HACİM + TREND</div><div class="signalword neutral" id="marketVerdict">VERİ BEKLENİYOR</div></div><div class="pill" id="marketAgreement">—</div></div><div class="explain" id="marketExplanation" style="margin-top:10px">Spot ve vadeli akış, hacim, VWAP, hacim profili, emir defteri ve trend verileri birlikte değerlendiriliyor.</div><div class="muted" id="marketCaveat" style="margin-top:8px">Yeterli ve güncel veri oluşmadan bu bölüm yön tahmini üretmez.</div></section>
+</section>
+<div id="academyPanel" class="academy-panel">
+ <div class="academy-hero">
+  <div><div class="academy-kicker">BINANCE ACADEMY METHODS · LIVE TOOLKIT</div><div class="academy-title">PİYASA ANALİZ LABORATUVARI</div><div class="academy-sub">Seçili Binance paritesi · canlı fiyat · seçili zaman dilimi mumları</div></div>
+  <div class="academy-live"><i></i> CANLI VERİ</div>
+ </div>
+ <div class="academy-toolbar">
+  <div><span class="academy-label">VARLIK</span><b id="academySymbol">BTCUSDT</b></div>
+  <div><span class="academy-label">ZAMAN DİLİMİ</span><b id="academyTf">1H</b></div>
+  <button type="button" id="academyRefresh">VERİYİ YENİLE</button>
+ </div>
+ <div class="academy-subnav" id="academySubnav">
+  <button class="active" data-acat="structure">FİYAT YAPISI</button><button data-acat="indicators">İNDİKATÖRLER</button><button data-acat="volume">HACİM & LİKİDİTE</button><button data-acat="patterns">FORMASYONLAR</button><button data-acat="risk">İŞLEM & RİSK</button>
+ </div>
+ <div class="academy-summary-grid">
+  <div class="academy-stat"><span>SON FİYAT</span><b id="acPrice">—</b><small id="acPriceChange">Canlı Binance Spot</small></div>
+  <div class="academy-stat"><span>TREND DURUMU</span><b id="acTrend">—</b><small id="acTrendNote">EMA 20 / 50 / 200</small></div>
+  <div class="academy-stat"><span>RSI (14)</span><b id="acRsi">—</b><small id="acRsiNote">Momentum</small></div>
+  <div class="academy-stat"><span>ATR (14)</span><b id="acAtr">—</b><small>Volatilite ölçümü</small></div>
+ </div>
+ <div class="academy-workspace">
+  <div class="academy-main">
+   <div class="academy-card academy-chart-card"><div class="academy-card-head"><div><span class="academy-kicker">PRICE ACTION</span><h3>FİYAT GRAFİĞİ & TEKNİK KATMANLAR</h3></div><span class="academy-tag" id="acChartTag">SON 100 MUM</span></div><div id="academyChart"></div><div class="academy-legend"><span><i class="ac-legend-price"></i>Fiyat</span><span><i class="ac-legend-ma"></i>EMA 20</span><span><i class="ac-legend-sr"></i>Pivot bölgeleri</span></div></div>
+   <div id="academyToolContent"></div>
+  </div>
+  <aside class="academy-side">
+   <div class="academy-card"><div class="academy-kicker">MARKET SNAPSHOT</div><h3>TEKNİK DURUM</h3><div id="acSnapshot" class="academy-snapshot"></div></div>
+   <div class="academy-card"><div class="academy-kicker">CONFLUENCE</div><h3>ÇAKIŞAN KANITLAR</h3><div id="acConfluence" class="academy-snapshot"></div></div>
+   <div class="academy-card academy-note"><b>VERİ ŞEFFAFLIĞI</b><p>Hesaplamalar seçili paritenin Binance Spot kapanmış mumlarına dayanır. Canlı fiyat ayrı WebSocket akışından gelir. Emir defteri ve vadeli piyasa verileri yalnızca ilgili veri akışı güncelse değerlendirilir.</p></div>
+  </aside>
+ </div>
+ <div class="academy-foot">Bu alan eğitim sayfası değildir; teknik analiz yöntemlerini canlı piyasa verisi üzerinde uygulayan araç setidir. Göstergeler tek başına işlem sinyali veya kesin fiyat tahmini değildir.</div>
+</div>
+<section class="card market-card"><div class="section">BİRLEŞİK PİYASA OKUMASI · TÜM VERİLERİN ORTAK YORUMU</div><div class="signal"><div><div class="muted">SPOT + FUTURES + HACİM + TREND</div><div class="signalword neutral" id="marketVerdict">VERİ BEKLENİYOR</div></div><div class="pill" id="marketAgreement">—</div></div><div class="explain" id="marketExplanation" style="margin-top:10px">Spot ve vadeli akış, hacim, VWAP, hacim profili, emir defteri ve trend verileri birlikte değerlendiriliyor.</div><div class="muted" id="marketCaveat" style="margin-top:8px">Yeterli ve güncel veri oluşmadan bu bölüm yön tahmini üretmez.</div></section>
 <div class="layout"><div>
 <section class="card wide"><div class="section">FİYAT GRAFİĞİ · EMA 20 / EMA 50</div><div id="chart"></div><div class="legend"><span><i style="background:#e8bd68"></i>EMA 20</span><span><i style="background:#65a8ff"></i>EMA 50</span></div></section>
 <section class="card wide"><div class="section">FOOTPRINT · TEK MUM</div><div class="fp-toolbar"><div class="row" style="padding:0;margin:0"><button id="fpSpot" class="active">SPOT</button><button id="fpFutures">FUTURES</button></div><span class="muted" id="fpStatus">CANLI</span></div><div class="fp-stats"><div class="fp-stat"><span>DELTA</span><b id="fpDelta">—</b></div><div class="fp-stat"><span>HACİM</span><b id="fpVolume">—</b></div><div class="fp-stat"><span>POC</span><b id="fpPoc">—</b></div></div><div class="fp-wrap" id="fpWrap"><div class="muted" style="padding:14px">Veri bekleniyor…</div></div></section><section class="card wide"><div class="section">MOMENTUM · RSI / MACD HISTOGRAM</div><div id="osc"></div></section>
@@ -773,19 +843,94 @@ function switchMarket(){srMultiTimeframe=[];srMultiRequest++;setText('srMultiTim
 
 // Ana panel ile destek/direnç modülü arasında sekme geçişi.
 function activateMainTab(which){
- const levels=which==='levels';
- $('tabMarket').classList.toggle('active',!levels);
+ const levels=which==='levels',academy=which==='academy',market=!levels&&!academy;
+ $('tabMarket').classList.toggle('active',market);
  $('tabLevels').classList.toggle('active',levels);
+ $('tabAcademy').classList.toggle('active',academy);
  $('srTabPanel').classList.toggle('visible',levels);
  $('srTabPanel').style.display=levels?'block':'none';
- document.querySelector('.price-card').style.display=levels?'none':'block';
- document.querySelector('.market-card').style.display=levels?'none':'block';
- document.querySelector('.layout').style.display=levels?'none':'';
+ $('academyPanel').classList.toggle('visible',academy);
+ $('academyPanel').style.display=academy?'block':'none';
+ document.querySelector('.price-card').style.display=market?'block':'none';
+ document.querySelector('.market-card').style.display=market?'block':'none';
+ document.querySelector('.layout').style.display=market?'':'none';
  const plan=document.querySelector('body>section.card:not(.price-card):not(.market-card):not(#srTabPanel)');
- if(plan)plan.style.display='none';
+ if(plan)plan.style.display=market?'':'none';
+ if(academy)renderAcademyTools();
 }
 $('tabMarket').addEventListener('click',()=>activateMainTab('market'));
 $('tabLevels').addEventListener('click',()=>activateMainTab('levels'));
+$('tabAcademy').addEventListener('click',()=>activateMainTab('academy'));
+$('academyRefresh').addEventListener('click',()=>{load().then(()=>renderAcademyTools());});
+$('academySubnav').addEventListener('click',e=>{const b=e.target.closest('button[data-acat]');if(!b)return;document.querySelectorAll('#academySubnav button').forEach(x=>x.classList.toggle('active',x===b));academyCategory=b.dataset.acat;renderAcademyTools();});
+
+
+/* Binance Academy-inspired live analysis toolkit: independent UI, shared Binance market feed. */
+let academyCategory='structure';
+function acRsi(values,period=14){if(values.length<period+1)return null;let up=0,dn=0;for(let i=values.length-period;i<values.length;i++){const d=values[i]-values[i-1];if(d>0)up+=d;else dn-=d;}const rs=(up/period)/((dn/period)||1e-12);return 100-100/(1+rs);}
+function acStd(a){const m=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/a.length);}
+function acMacd(v){const e12=ema(v,12),e26=ema(v,26),line=e12.map((x,i)=>x-e26[i]),sig=ema(line,9);return{line:line.at(-1),signal:sig.at(-1),hist:line.at(-1)-sig.at(-1)};}
+function acPivots(d){const out=[];for(let i=Math.max(3,d.length-100);i<d.length-3;i++){let hi=true,lo=true;for(let j=i-3;j<=i+3;j++){if(i===j)continue;if(d[j].high>=d[i].high)hi=false;if(d[j].low<=d[i].low)lo=false;}if(hi)out.push({i,p:d[i].high,t:'H'});if(lo)out.push({i,p:d[i].low,t:'L'});}return out;}
+function acRow(k,v,cls=''){return '<div class="ac-row"><span>'+k+'</span><b class="'+cls+'">'+v+'</b></div>';}
+function acNum(v){return Number.isFinite(v)?fmt(v):'—';}
+function acCandleSVG(d){
+ const rows=d.slice(-80),W=760,H=245,pad=12,lo=Math.min(...rows.map(x=>x.low)),hi=Math.max(...rows.map(x=>x.high)),span=hi-lo||1,step=(W-pad*2)/rows.length;
+ const y=v=>H-pad-(v-lo)/span*(H-pad*2);
+ const candlesSvg=rows.map((c,i)=>{const x=pad+i*step+step*.5,up=c.close>=c.open,col=up?'#35e6ad':'#ff718b',top=y(Math.max(c.open,c.close)),bot=y(Math.min(c.open,c.close)),body=Math.max(1,bot-top),w=Math.max(2,step*.54);return '<g stroke="'+col+'" fill="'+col+'"><path d="M'+x+' '+y(c.high)+'V'+y(c.low)+'" stroke-width="1.2"/><rect x="'+(x-w/2)+'" y="'+top+'" width="'+w+'" height="'+body+'" rx=".6"/></g>';}).join('');
+ const closes=rows.map(x=>x.close),ma=ema(closes,20),path=ma.map((v,i)=>(i?'L':'M')+(pad+i*step+step*.5).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+ const grid=[.25,.5,.75].map(q=>'<line x1="0" x2="'+W+'" y1="'+(H*q)+'" y2="'+(H*q)+'" stroke="#283b55" stroke-dasharray="3 5"/>').join('');
+ return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="100%" preserveAspectRatio="none">'+grid+ '<path d="'+path+'" fill="none" stroke="#54c7ff" stroke-width="2" opacity=".9"/>'+candlesSvg+'</svg>';
+}
+function renderAcademyTools(){
+ const d=candles.filter(x=>x.closed),p=lastPrice||d.at(-1)?.close;if(!d.length||!p)return;
+ $('academySymbol').textContent=coin+'USDT';$('academyTf').textContent=tf.toUpperCase();$('acPrice').textContent=fmt(p);$('acChartTag').textContent='SON '+Math.min(80,d.length)+' KAPANMIŞ MUM';
+ $('academyChart').innerHTML=acCandleSVG(d);
+ const closes=d.map(x=>x.close),rsi=acRsi(closes),a=atr(d.slice(-20)),e20=ema(closes,20).at(-1),e50=ema(closes,50).at(-1),e200=closes.length>=200?ema(closes,200).at(-1):null,macd=acMacd(closes);
+ const trend=e20>e50&&p>e20?'YUKARI':e20<e50&&p<e20?'AŞAĞI':'KARMA';$('acTrend').textContent=trend;$('acTrend').className=trend==='YUKARI'?'ac-good':trend==='AŞAĞI'?'ac-bad':'ac-warn';$('acTrendNote').textContent='EMA20 '+fmt(e20)+' · EMA50 '+fmt(e50);
+ $('acRsi').textContent=rsi===null?'—':rsi.toFixed(1);$('acRsiNote').textContent=rsi>70?'Aşırı alım bölgesi':rsi<30?'Aşırı satım bölgesi':'Orta bölge';$('acAtr').textContent=acNum(a);
+ const piv=acPivots(d),lows=piv.filter(x=>x.t==='L'),highs=piv.filter(x=>x.t==='H'),sup=lows.filter(x=>x.p<p).sort((x,y)=>y.p-x.p)[0],res=highs.filter(x=>x.p>p).sort((x,y)=>x.p-y.p)[0];
+ $('acSnapshot').innerHTML=acRow('EMA 200',e200?fmt(e200):'200 mum gerekli')+acRow('MACD histogram',macd.hist.toFixed(4),macd.hist>0?'ac-good':'ac-bad')+acRow('En yakın pivot destek',sup?fmt(sup.p):'Bulunamadı','ac-good')+acRow('En yakın pivot direnç',res?fmt(res.p):'Bulunamadı','ac-bad')+acRow('Son mum hacmi',compact(d.at(-1).volume));
+ const agrees=[];if(p>e20)agrees.push('Fiyat EMA20 üzerinde');if(e20>e50)agrees.push('EMA20, EMA50 üzerinde');if(rsi>50)agrees.push('RSI 50 üzerinde');if(macd.hist>0)agrees.push('MACD histogram pozitif');if(d.at(-1).close>d.at(-1).open)agrees.push('Son mum pozitif kapandı');
+ $('acConfluence').innerHTML=agrees.length?agrees.map(x=>acRow('TEKNİK KANIT',x,'ac-good')).join(''):acRow('UYUM','Belirgin yükseliş teyidi yok','ac-warn');
+ const content=$('academyToolContent');
+ if(academyCategory==='structure')content.innerHTML=acStructure(d,p,piv,sup,res);
+ else if(academyCategory==='indicators')content.innerHTML=acIndicators(d,closes,rsi,macd,a,e20,e50,e200);
+ else if(academyCategory==='volume')content.innerHTML=acVolume(d,p);
+ else if(academyCategory==='patterns')content.innerHTML=acPatterns(d,p,piv);
+ else content.innerHTML=acRisk(p,a);
+}
+function acStructure(d,p,piv,sup,res){
+ const n=d.slice(-120),hi=Math.max(...n.map(x=>x.high)),lo=Math.min(...n.map(x=>x.low)),range=hi-lo;
+ const fib=[.236,.382,.5,.618,.786].map(q=>({q,v:hi-range*q}));
+ const zone=(x)=>x?fmt(x.p):'—';
+ return '<div class="academy-card"><div class="academy-tool-head"><h3>DESTEK / DİRENÇ · PİVOT & FIBONACCI</h3><span class="academy-tag">120 MUM</span></div><div class="academy-module-grid">'+
+ '<div class="academy-module"><div class="ac-icon">⌄</div><h4>YAKIN DESTEK</h4><div class="ac-value ac-good">'+zone(sup)+'</div><small>3 sol / 3 sağ pivot teyidi</small></div>'+
+ '<div class="academy-module"><div class="ac-icon">⌃</div><h4>YAKIN DİRENÇ</h4><div class="ac-value ac-bad">'+zone(res)+'</div><small>3 sol / 3 sağ pivot teyidi</small></div></div><h3 style="margin-top:14px">FIBONACCI DÜZELTME HARİTASI</h3><table class="academy-tool-table">'+fib.map(x=>'<tr><td>'+ (x.q*100).toFixed(1)+'%</td><td>'+fmt(x.v)+'</td><td>'+(Math.abs(p-x.v)/p*100).toFixed(2)+'% uzaklık</td></tr>').join('')+'</table><div class="academy-result">Fibonacci son 120 kapanmış mumun en yüksek ve en düşük fiyatından hesaplandı. Salınım yönü otomatik seçilmediği için seviyeler referans haritasıdır; manuel swing başlangıç/bitiş seçimi sonraki geliştirme katmanıdır.</div></div>'+
+ '<div class="academy-card"><h3>TREND YAPISI · HH / HL / LH / LL</h3><div class="academy-module-grid"><div class="academy-module"><h4>TEPE PİVOTLARI</h4><div class="ac-value">'+piv.filter(x=>x.t==='H').length+'</div><small>Son 100 mum</small></div><div class="academy-module"><h4>DİP PİVOTLARI</h4><div class="ac-value">'+piv.filter(x=>x.t==='L').length+'</div><small>Son 100 mum</small></div></div><div class="academy-result">Piyasa yapısı, teyitli salınım tepeleri ve diplerinin sıralanmasıyla okunur. Tek pivot tek başına trend değişimi sayılmaz.</div></div>';
+}
+function acIndicators(d,c,rsi,macd,a,e20,e50,e200){
+ const last=c.slice(-20),mid=last.reduce((x,y)=>x+y,0)/last.length,sd=acStd(last),upper=mid+2*sd,lower=mid-2*sd,bb=(upper-lower)/mid*100;
+ const mfiRows=d.slice(-15);let pos=0,neg=0;for(let i=1;i<mfiRows.length;i++){const tp=(mfiRows[i].high+mfiRows[i].low+mfiRows[i].close)/3,prev=(mfiRows[i-1].high+mfiRows[i-1].low+mfiRows[i-1].close)/3,v=tp*mfiRows[i].volume;if(tp>prev)pos+=v;else neg+=v;}const mfi=100-100/(1+pos/(neg||1e-12));
+ return '<div class="academy-card"><h3>GÖSTERGE PANELİ · HESAPLANAN DEĞERLER</h3><div class="academy-module-grid">'+
+ [['RSI (14)',rsi?.toFixed(2)??'—','Momentum'],['MACD',macd.line.toFixed(4),'12 / 26 / 9'],['MACD SİNYAL',macd.signal.toFixed(4),'Sinyal çizgisi'],['HISTOGRAM',macd.hist.toFixed(4),'Momentum farkı'],['BOLLINGER ÜST',fmt(upper),'20 · 2σ'],['BOLLINGER ORTA',fmt(mid),'SMA 20'],['BOLLINGER ALT',fmt(lower),'20 · 2σ'],['BB GENİŞLİĞİ',bb.toFixed(2)+'%','Volatilite'],['MFI (14)',mfi.toFixed(1),'Hacim ağırlıklı RSI'],['ATR (14)',acNum(a),'Ortalama gerçek aralık'],['EMA 20',fmt(e20),'Kısa trend'],['EMA 50 / 200',fmt(e50)+' / '+(e200?fmt(e200):'—'),'Orta / uzun trend']].map(x=>'<div class="academy-module"><h4>'+x[0]+'</h4><div class="ac-value">'+x[1]+'</div><small>'+x[2]+'</small></div>').join('')+'</div><div class="academy-result">RSI, MFI ve MACD farklı formüllerle momentum/akış hakkında bilgi verir ancak aynı piyasa hareketinden etkilendikleri için bağımsız teyitler gibi sayılmamalıdır. ADX/DI, Stochastic RSI, Ichimoku ve Parabolic SAR ayrı hesap modülleri olarak sonraki aşamada eklenebilir.</div></div>';
+}
+function acVolume(d,p){
+ const rows=d.slice(-100),min=Math.min(...rows.map(x=>x.low)),max=Math.max(...rows.map(x=>x.high)),step=(max-min)/20,bins=Array(20).fill(0);
+ rows.forEach(x=>{const tp=(x.high+x.low+x.close)/3,i=Math.max(0,Math.min(19,Math.floor((tp-min)/(step||1))));bins[i]+=x.volume;});
+ const total=bins.reduce((x,y)=>x+y,0),ix=bins.indexOf(Math.max(...bins)),maxV=Math.max(...bins);
+ return '<div class="academy-card"><h3>HACİM PROFİLİ · YAKLAŞIK FİYAT DAĞILIMI</h3><div class="academy-module-grid"><div class="academy-module"><h4>POC ADAYI</h4><div class="ac-value">'+fmt(min+(ix+.5)*step)+'</div><small>En yüksek mum hacmi kovası</small></div><div class="academy-module"><h4>TOPLAM HACİM</h4><div class="ac-value">'+compact(total)+'</div><small>Son 100 kapanmış mum</small></div></div><table class="academy-tool-table">'+bins.map((v,i)=>({v,i})).sort((x,y)=>y.v-x.v).slice(0,10).map(x=>'<tr><td>'+fmt(min+(x.i+.5)*step)+'</td><td><div style="height:6px;width:'+Math.max(3,x.v/(maxV||1)*100)+'%;background:linear-gradient(90deg,#477ee8,#56e1c0);border-radius:5px"></div></td><td>'+((x.v/(total||1))*100).toFixed(2)+'%</td></tr>').join('')+'</table><div class="academy-result">Bu hesap OHLCV mum hacmini tipik fiyata tek kovada atar. Gerçek emir/işlem bazlı Volume Profile, footprint veya bid/ask delta değildir. Emir defteri duvarları iptal edilebilir; gerçekleşmiş işlemlerle teyit edilmeden destek sayılmaz.</div></div>';
+}
+function acPatterns(d,p,piv){
+ const x=d.at(-1),body=Math.abs(x.close-x.open),range=x.high-x.low||1,upper=x.high-Math.max(x.open,x.close),lower=Math.min(x.open,x.close)-x.low,prev=d.at(-2),prevBody=Math.abs(prev.close-prev.open);
+ const pats=[];if(lower>body*2&&upper<body*.7&&body/range<.4)pats.push(['HAMMER','Alt fitil gövdenin en az iki katı; dip bölgesi ve sonraki mum teyidi önemlidir.']);if(upper>body*2&&lower<body*.7&&body/range<.4)pats.push(['SHOOTING STAR','Üst fitil baskın; dirençte ve düşüş kapanışıyla daha anlamlıdır.']);if(x.close>x.open&&prev.close<prev.open&&x.close>=prev.open&&x.open<=prev.close)pats.push(['BULLISH ENGULFING','Son pozitif gövde önceki negatif gövdeyi kapsıyor.']);if(x.close<x.open&&prev.close>prev.open&&x.open>=prev.close&&x.close<=prev.open)pats.push(['BEARISH ENGULFING','Son negatif gövde önceki pozitif gövdeyi kapsıyor.']);if(body/range<.1)pats.push(['DOJI / KARARSIZLIK','Açılış ve kapanış birbirine yakın; tek başına yön göstermez.']);
+ const hs=piv.filter(z=>z.t==='H').slice(-2),ls=piv.filter(z=>z.t==='L').slice(-2);
+ const struct=hs.length===2&&ls.length===2?(hs[1].p>hs[0].p&&ls[1].p>ls[0].p?'HH / HL · YÜKSELEN YAPI':hs[1].p<hs[0].p&&ls[1].p<ls[0].p?'LH / LL · DÜŞEN YAPI':'KARMA / YATAY YAPI'):'YETERSİZ PİVOT';
+ return '<div class="academy-card"><h3>SON KAPANMIŞ MUM · OTOMATİK FORMASYON TARAMASI</h3><div class="academy-module-grid">'+(pats.length?pats.map(z=>'<div class="academy-module"><div class="ac-icon">◈</div><h4>'+z[0]+'</h4><p>'+z[1]+'</p></div>').join(''):'<div class="academy-module"><h4>NET MUM FORMASYONU YOK</h4><p>Son kapanmış mumda tanımlı eşiklere uyan formasyon tespit edilmedi.</p></div>')+'</div><div class="academy-result">Piyasa yapısı: <b>'+struct+'</b>. İkili tepe/dip, omuz-baş-omuz, üçgen, bayrak, flama ve kama gibi klasik formasyonların güvenilir tespiti için çoklu pivot geometrisi, kırılım kapanışı ve retest koşulları gerekir; yalnızca benzer şekil görülmesi yeterli değildir.</div></div>';
+}
+function acRisk(p,a){
+ return '<div class="academy-card"><h3>POZİSYON BOYUTU & RİSK HESAPLAYICI</h3><div class="academy-inputs"><label>HESAP BAKİYESİ (USDT)<input id="acBalance" type="number" value="1000" min="0" step="any"></label><label>İŞLEM BAŞINA RİSK (%)<input id="acRiskPct" type="number" value="1" min=".1" max="100" step=".1"></label><label>GİRİŞ FİYATI<input id="acEntry" type="number" value="'+p+'" step="any"></label><label>STOP FİYATI<input id="acStop" type="number" value="'+(p-(a||p*.01)*1.5)+'" step="any"></label></div><button class="ac-action" id="acRiskCalc" style="margin-top:10px">POZİSYONU HESAPLA</button><div class="academy-result" id="acRiskResult">Hesaplama bekleniyor. Kaldıraç, komisyon ve kayma bu basit hesapta dahil değildir.</div></div>';
+}
+document.addEventListener('click',e=>{if(e.target?.id==='acRiskCalc'){const bal=+$('acBalance').value,risk=+$('acRiskPct').value/100,entry=+$('acEntry').value,stop=+$('acStop').value,dist=Math.abs(entry-stop),loss=bal*risk,qty=dist>0?loss/dist:0;$('acRiskResult').innerHTML='Maksimum planlanan kayıp: <b>'+fmt(loss)+' USDT</b><br>Stop mesafesi: <b>'+fmt(dist)+' USDT</b><br>Yaklaşık pozisyon büyüklüğü: <b>'+fmt(qty*entry)+' USDT</b><br>Miktar: <b>'+qty.toFixed(6)+'</b><br><small>Komisyon, funding, slippage ve likidasyon riski ayrıca hesaplanmalıdır.</small>'; }});
 
 if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}controls();chartInit();switchMarket();
 })();
