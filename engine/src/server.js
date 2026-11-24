@@ -32,7 +32,7 @@ const state = {
 
 for (const symbol of SYMBOLS) {
   state.markets[symbol] = {
-    symbol, binanceSpot: {}, binanceFutures: {}, bybitLinear: {}, candles1m: [], updatedAt: null
+    symbol, binanceSpot: {}, binanceFutures: {}, bybitLinear: {}, candles1m: [], candles15m: [], candles1h: [], candles4h: [], updatedAt: null
   };
 }
 
@@ -77,60 +77,56 @@ function updateMarket(symbol, exchange, patch) {
   publish("market", { symbol: key, exchange, ...state.markets[key][exchange] });
 }
 
-function updateCandle(symbol, exchange, k) {
+function updateCandle(symbol, exchange, k, interval = "1m") {
   const key = symbolFrom(symbol);
   if (!key || !state.markets[key]) return;
   const candle = {
-    openTime: Number(k.t), closeTime: Number(k.T),
+    interval, openTime: Number(k.t), closeTime: Number(k.T),
     open: Number(k.o), high: Number(k.h), low: Number(k.l),
     close: Number(k.c), volume: Number(k.v), quoteVolume: Number(k.q),
     closed: Boolean(k.x)
   };
-  updateMarket(key, exchange, { candle1m: candle });
+  const currentKey = interval === "1m" ? "candle1m" : "candle" + interval;
+  updateMarket(key, exchange, { [currentKey]: candle });
   if (!candle.closed) return;
-
-  const history = state.markets[key].candles1m;
+  const historyKey = interval === "1m" ? "candles1m" : "candles" + interval;
+  const history = state.markets[key][historyKey] || (state.markets[key][historyKey] = []);
   const existing = history.findIndex((item) => item.openTime === candle.openTime);
   if (existing >= 0) history[existing] = candle;
   else history.push(candle);
   history.sort((a, b) => a.openTime - b.openTime);
-  if (history.length > 200) history.splice(0, history.length - 200);
+  const cap = interval === "1m" ? 2000 : 500;
+  if (history.length > cap) history.splice(0, history.length - cap);
   publish("candle", { symbol: key, candle });
-  void storage.saveCandle(key, candle).catch((error) => log("warn", "Candle persistence failed", { error: error.message }));
+  if (interval === "1m") void storage.saveCandle(key, candle).catch((error) => log("warn", "Candle persistence failed", { error: error.message }));
 }
 
 async function loadCandleHistory() {
+  const intervals = ["1m", "15m", "1h", "4h"];
   const results = await Promise.allSettled(SYMBOLS.map(async (symbol) => {
-    let history = [];
-    try {
-      const rows = await fetchBinanceJson("/fapi/v1/klines?symbol="
-        + encodeURIComponent(symbol) + "&interval=1m&limit=100");
-      history = rows
-        .filter((row) => Number(row[6]) < Date.now())
-        .map((row) => ({
-          openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]),
+    const loaded = await Promise.all(intervals.map(async (interval) => {
+      try {
+        const limit = interval === "1m" ? 1000 : 300;
+        const rows = await fetchBinanceJson("/fapi/v1/klines?symbol=" + encodeURIComponent(symbol)
+          + "&interval=" + interval + "&limit=" + limit);
+        return [interval, rows.filter((row) => Number(row[6]) < Date.now()).map((row) => ({
+          interval, openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]),
           low: Number(row[3]), close: Number(row[4]), volume: Number(row[5]),
           closeTime: Number(row[6]), quoteVolume: Number(row[7]), closed: true
-        }));
-    } catch (error) {
-      log("warn", "Binance REST history unavailable; checking database", { symbol, error: error.message });
-      try {
-        history = await storage.loadCandles(symbol, 100);
-      } catch (storageError) {
-        log("warn", "Database candle restore failed", { symbol, error: storageError.message });
-        history = [];
+        }))];
+      } catch (error) {
+        log("warn", "Candle history interval unavailable", { symbol, interval, error: error.message });
+        return [interval, []];
       }
+    }));
+    for (const [interval, candles] of loaded) {
+      const key = interval === "1m" ? "candles1m" : "candles" + interval;
+      if (candles.length) state.markets[symbol][key] = candles;
     }
-    if (storage.enabled && history.length) {
-      const writes = await Promise.allSettled(history.map((candle) => storage.saveCandle(symbol, candle)));
-      const failures = writes.filter((item) => item.status === "rejected").length;
-      if (failures) log("warn", "Some candle history rows were not persisted", { symbol, failures });
-    }
-    state.markets[symbol].candles1m = history.slice(-200);
-    return { symbol, candles: history.length };
+    return { symbol, intervals: Object.fromEntries(loaded.map(([i, rows]) => [i, rows.length])) };
   }));
   for (const result of results) {
-    if (result.status === "fulfilled") log("info", "Candle history loaded", result.value);
+    if (result.status === "fulfilled") log("info", "Multi-timeframe candle history loaded", result.value);
     else log("warn", "Candle history load failed", { error: result.reason?.message });
   }
 }
@@ -375,7 +371,7 @@ function startBinanceBookSync(exchange, symbol, restBase) {
 function startBinanceSpot() {
   const streams = SYMBOLS.flatMap((s) => {
     const x = s.toLowerCase();
-    return [x + "@trade", x + "@depth@100ms", x + "@kline_1m"];
+    return [x + "@trade", x + "@depth@100ms", x + "@kline_1m", x + "@kline_15m", x + "@kline_1h", x + "@kline_4h"];
   }).join("/");
   for (const symbol of SYMBOLS) depthHandlers.binanceSpot.set(symbol, startBinanceBookSync("binanceSpot", symbol, "https://data-api.binance.vision"));
   return connectSocket(
@@ -395,7 +391,7 @@ function startBinanceSpot() {
         depthHandlers.binanceSpot.get(symbol)?.(d);
       } else if (d.e === "kline") {
         const k = d.k;
-        updateCandle(symbol, "binanceSpot", k);
+        updateCandle(symbol, "binanceSpot", k, k.i || "1m");
       }
     }
   );
@@ -451,7 +447,7 @@ async function bootstrapBinanceFutures() {
 function startBinanceFutures() {
   const streams = SYMBOLS.flatMap((s) => {
     const x = s.toLowerCase();
-    return [x + "@aggTrade", x + "@depth@100ms", x + "@kline_1m", x + "@forceOrder"];
+    return [x + "@aggTrade", x + "@depth@100ms", x + "@kline_1m", x + "@kline_15m", x + "@kline_1h", x + "@kline_4h", x + "@forceOrder"];
   }).join("/");
   for (const symbol of SYMBOLS) depthHandlers.binanceFutures.set(symbol, startBinanceBookSync("binanceFutures", symbol, "https://fapi.binance.com"));
   void bootstrapBinanceFutures();
@@ -472,7 +468,7 @@ function startBinanceFutures() {
         depthHandlers.binanceFutures.get(symbolFrom(d.s))?.(d);
       } else if (d.e === "kline") {
         const k = d.k;
-        updateCandle(d.s, "binanceFutures", k);
+        updateCandle(d.s, "binanceFutures", k, k.i || "1m");
       } else if (d.e === "forceOrder" && d.o) {
         const o = d.o;
         addLiquidation({
