@@ -118,7 +118,7 @@ async function fetchKlineHistory(symbol, interval, limit) {
 
   const binance = async (host) => {
     const url = host + "/api/v3/klines?symbol=" + encodeURIComponent(symbol) +
-      "&interval=" + encodeURIComponent(interval) + "&limit=" + limit;
+      "&interval=" + encodeURIComponent(interval) + "&limit=" + limit + "&endTime=" + (Math.floor(Date.now() / duration) * duration - 1);
     const response = await fetch(url, { signal: AbortSignal.timeout(4500), cache: "no-store" });
     if (!response.ok) throw new Error("Binance HTTP " + response.status);
     const rows = await response.json();
@@ -132,7 +132,7 @@ async function fetchKlineHistory(symbol, interval, limit) {
 
   const bybit = async () => {
     const url = "https://api.bybit.com/v5/market/kline?category=spot&symbol=" +
-      encodeURIComponent(symbol) + "&interval=" + bybitInterval + "&limit=" + Math.min(limit, 1000);
+      encodeURIComponent(symbol) + "&interval=" + bybitInterval + "&limit=" + Math.min(limit, 1000) + "&end=" + (Math.floor(Date.now() / duration) * duration - 1);
     const response = await fetch(url, { signal: AbortSignal.timeout(4500), cache: "no-store" });
     if (!response.ok) throw new Error("Bybit HTTP " + response.status);
     const body = await response.json();
