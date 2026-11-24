@@ -560,6 +560,8 @@ function startBybit() {
   );
 }
 
+const coinglassCache = new Map();
+
 const server = http.createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN);
   res.setHeader("Vary", "Origin");
@@ -666,6 +668,15 @@ const server = http.createServer(async (req, res) => {
     const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 50), 1), 200);
     res.writeHead(200);
     return res.end(JSON.stringify(state.liquidations.slice(0, limit)));
+  }
+
+  if (url.pathname === "/api/v1/coinglass/heatmap") {
+    const key=process.env.COINGLASS_API_KEY;if(!key){res.writeHead(503);return res.end(JSON.stringify({error:"coinglass_not_configured",message:"Sunucuda COINGLASS_API_KEY tanımlı değil."}));}
+    const scope=url.searchParams.get("scope")==="aggregate"?"aggregate":"pair",model=url.searchParams.get("model")||"1",symbol=(url.searchParams.get("symbol")||"BTCUSDT").toUpperCase(),range=url.searchParams.get("range")||"24h",exchange=url.searchParams.get("exchange")||"Binance";
+    if(!["1","2","3"].includes(model)||!["12h","24h","3d","7d","30d","90d","180d","1y"].includes(range)||!/^[A-Z0-9]{2,20}$/.test(symbol)||!/^[A-Za-z0-9_-]{2,30}$/.test(exchange)){res.writeHead(400);return res.end(JSON.stringify({error:"invalid_parameters"}));}
+    const ck=[scope,model,symbol,range,exchange].join(":"),hit=coinglassCache.get(ck);if(hit&&Date.now()-hit.at<15000){res.writeHead(200);return res.end(JSON.stringify({payload:hit.payload,cached:true,upstreamStatus:200}));}
+    const path=scope==="pair"?"/api/futures/liquidation/heatmap/model"+model:"/api/futures/liquidation/aggregated-heatmap/model"+model,params=new URLSearchParams({symbol,range});if(scope==="pair")params.set("exchange",exchange);
+    try{const upstream=await fetch("https://open-api-v4.coinglass.com"+path+"?"+params,{headers:{"CG-API-KEY":key,"Accept":"application/json"},signal:AbortSignal.timeout(15000)}),body=await upstream.json().catch(()=>({}));if(!upstream.ok||(body.code&&!["0","200",0,200].includes(body.code))){res.writeHead(upstream.status===401||upstream.status===403?502:upstream.status);return res.end(JSON.stringify({error:"coinglass_upstream_error",upstreamStatus:upstream.status,message:body.msg||body.message||"CoinGlass API isteği başarısız."}));}coinglassCache.set(ck,{at:Date.now(),payload:body});if(coinglassCache.size>60)coinglassCache.delete(coinglassCache.keys().next().value);res.writeHead(200);return res.end(JSON.stringify({payload:body,cached:false,upstreamStatus:upstream.status}));}catch(e){res.writeHead(502);return res.end(JSON.stringify({error:"coinglass_unavailable",message:e.name==="TimeoutError"?"CoinGlass API zaman aşımı.":e.message}));}
   }
 
   res.writeHead(404);
