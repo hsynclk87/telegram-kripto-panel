@@ -1096,21 +1096,27 @@ setText('marketExplanation',report);
 setText('marketCaveat','Koşullu piyasa senaryosu · kesin tahmin veya emir talimatı değildir. CVD ve likidasyon verileri oturum kapsamındadır.');
 return{bull:bull.length,bear:bear.length,verdict:bias,quality};
 }
+let marketCalcStage='başlatılıyor';
+function runMarketPart(name,fn,fallback=null){
+ marketCalcStage=name;
+ try{return fn();}
+ catch(err){console.error('[Market part: '+name+']',err);return fallback;}
+}
 function calc(){
 const data=candles.filter(x=>x.closed);if(data.length<210)return;
 const closes=data.map(x=>x.close),e20=ema(closes,20),e50=ema(closes,50),e200=ema(closes,200),rvArr=rsi(closes),fast=ema(closes,12),slow=ema(closes,26),m=fast.map((v,i)=>v===null||slow[i]===null?null:v-slow[i]),sig=ema(m.map(v=>v??NaN),9),hist=m.map((v,i)=>v===null||sig[i]===null?null:v-sig[i]);
 const n=data.length-1,c=data[n],prev=data[n-1],p=c.close,rv=rvArr[n],rPrev=rvArr[n-1],mac=hist[n],macPrev=hist[n-1]??0,atrV=atr(data.slice(-30)),volAvg=data.slice(-21,-1).reduce((s,x)=>s+x.volume,0)/20,volRatio=volAvg?c.volume/volAvg:0;
-renderMarketCharts(data,e20,e50,rvArr,hist);
+runMarketPart('Fiyat grafiği',()=>renderMarketCharts(data,e20,e50,rvArr,hist));
 const prevClose=data[n-1]?.close||p,chg=prevClose?(p-prevClose)/prevClose*100:0,atrPct=atrV/p*100,ribbonTrendUp=e20[n]>e50[n]&&e50[n]>e200[n],ribbonTrendDown=e20[n]<e50[n]&&e50[n]<e200[n];
 setText('deskLast',fmt(p));setText('deskChange',(chg>=0?'+':'')+chg.toFixed(2)+'%');setText('deskAtr',atrPct.toFixed(2)+'%');setText('deskVolume',volRatio.toFixed(2)+'x');setText('deskTrend',ribbonTrendUp?'YUKARI':ribbonTrendDown?'AŞAĞI':'KARMA');
 $('deskChange')?.classList.toggle('up',chg>=0);$('deskChange')?.classList.toggle('down',chg<0);$('deskTrend')?.classList.toggle('up',ribbonTrendUp);$('deskTrend')?.classList.toggle('down',ribbonTrendDown);
 const supportCtx=pivotContext(false,p,data,atrV),resistCtx=pivotContext(true,p,data,atrV),nearSupport=supportCtx&&Math.abs(p-supportCtx.price)<=atrV*1.25,nearResist=resistCtx&&Math.abs(p-resistCtx.price)<=atrV*1.25;
 const early=earlyFlowAnalysis(data,atrV);
-updateSupportResistanceTab(data,p,atrV);
-const advanced=advancedIndicators(data);updateAdvancedPanel(advanced,p);
+runMarketPart('Destek/direnç paneli',()=>updateSupportResistanceTab(data,p,atrV));
+const advanced=runMarketPart('Gelişmiş göstergeler',()=>advancedIndicators(data));runMarketPart('Gelişmiş gösterge paneli',()=>updateAdvancedPanel(advanced,p));
 const body=Math.abs(c.close-c.open),lowerWick=Math.min(c.open,c.close)-c.low,upperWick=c.high-Math.max(c.open,c.close),bull=c.close>c.open,bear=c.close<c.open;
 const trendUp=e20[n]>e50[n]&&e50[n]>e200[n],trendDown=e20[n]<e50[n]&&e50[n]<e200[n];
-const replay=historicalReplay(data),regimeText=describeRegime(advanced,trendUp,trendDown,p),breakoutText=breakoutAssessment(data,volRatio,advanced);
+const replay=runMarketPart('Geçmiş test',()=>historicalReplay(data),{ready:false,signals:0,text:'Geçmiş test geçici olarak hesaplanamadı.'}),regimeText=runMarketPart('Piyasa rejimi',()=>describeRegime(advanced,trendUp,trendDown,p),'Rejim hesaplanamadı.'),breakoutText=runMarketPart('Kırılım analizi',()=>breakoutAssessment(data,volRatio,advanced),'Kırılım analizi hesaplanamadı.');
 const priceTurnUp=bull&&c.close>prev.high&&lowerWick>body*.5,priceTurnDown=bear&&c.close<prev.low&&upperWick>body*.5;
 const rsiTurnUp=rv<48&&rv>rPrev,rsiTurnDown=rv>52&&rv<rPrev,momUp=mac>macPrev,momDown=mac<macPrev;
 let score=0,why=[];
@@ -1139,7 +1145,8 @@ setText('momentum',momUp?'YÜKSELİYOR':momDown?'DÜŞÜYOR':'NÖTR');$('momentu
 setText('atr',fmt(atrV)+' · '+(atrV/p*100).toFixed(2)+'%');
 setText('signal',signal);$('signal').className='signalword '+(signal==='AL'?'positive':signal==='SAT'?'negative':'neutral');setText('confidence','GÜÇ '+strength+'%');$('scorebar').style.width=strength+'%';$('scorebar').style.background=rawSignal==='AL'?'var(--green)':rawSignal==='SAT'?'var(--red)':'var(--gold)';
 setText('reason',why.length?why.join(' · '):'Fiyat dönüşü, pivot ve momentum koşulları henüz aynı yönde birleşmedi.');
-combinedMarketExplanation(advanced,p,early,score,{data,c,prev,rv,rPrev,mac,macPrev,trendUp,trendDown,e20:e20[n],e50:e50[n],e200:e200[n],volRatio,nearSupport,nearResist,support:supportCtx,resistance:resistCtx,replay,regimeText,breakoutText,rsiBull:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.low<x[m].low?i:m,0),yi=y.reduce((m,z,i)=>z.low<y[m].low?i:m,0);return y[yi].low<x[xi].low&&rvArr[data.length-9+yi]>rvArr[data.length-18+xi]+1;})(),rsiBear:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.high>x[m].high?i:m,0),yi=y.reduce((m,z,i)=>z.high>y[m].high?i:m,0);return y[yi].high>x[xi].high&&rvArr[data.length-9+yi]<rvArr[data.length-18+xi]-1;})()});
+runMarketPart('Bileşik piyasa okuması',()=>combinedMarketExplanation(advanced,p,early,score,{data,c,prev,rv,rPrev,mac,macPrev,trendUp,trendDown,e20:e20[n],e50:e50[n],e200:e200[n],volRatio,nearSupport,nearResist,support:supportCtx,resistance:resistCtx,replay,regimeText,breakoutText,rsiBull:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.low<x[m].low?i:m,0),yi=y.reduce((m,z,i)=>z.low<y[m].low?i:m,0);return y[yi].low<x[xi].low&&rvArr[data.length-9+yi]>rvArr[data.length-18+xi]+1;})(),rsiBear:(()=>{const x=data.slice(-18,-9),y=data.slice(-9);if(x.length<6||y.length<6)return false;const xi=x.reduce((m,z,i)=>z.high>x[m].high?i:m,0),yi=y.reduce((m,z,i)=>z.high>y[m].high?i:m,0);return y[yi].high>x[xi].high&&rvArr[data.length-9+yi]<rvArr[data.length-18+xi]-1;})()});
+marketCalcStage='Ana analiz tamamlandı';
 const earlyLabel=early.direction==='ACC'?'ERKEN BİRİKİM':early.direction==='DIST'?'ERKEN DAĞITIM':early.direction==='ACC_WATCH'?'BİRİKİM İZİ':early.direction==='DIST_WATCH'?'DAĞITIM İZİ':'NÖTR';
 setText('earlySignal',earlyLabel);$('earlySignal').className='signalword '+(early.direction.startsWith('ACC')?'positive':early.direction.startsWith('DIST')?'negative':'neutral');
 setText('earlyScore',early.score+'/10');setText('earlyReason',early.text);
@@ -1339,12 +1346,13 @@ function safeCalc(){
   }
   calc();
  }catch(err){
-  const message=String(err&&err.message||err||'Bilinmeyen analiz hatası').slice(0,180);
-  setText('miBias','ANALİZ HATASI');
-  setText('miBiasNote','Hesaplama durdu; hata yakalandı.');
-  setText('miConclusion','Teknik hata: '+message);
-  setText('miQuality','HATA');
-  console.error('[Market analysis]',err);
+  const message=String(err&&err.message||err||'Bilinmeyen analiz hatası').slice(0,220);
+  const stage=marketCalcStage||'aşama bilinmiyor';
+  setText('miBias','KISMİ ANALİZ');
+  setText('miBiasNote','Sorunlu bölüm: '+stage);
+  setText('miConclusion','Hata: '+message+' · Diğer piyasa verileri korunuyor.');
+  setText('miQuality','KISMİ VERİ');
+  console.error('[Market analysis stage: '+stage+']',err);
  }
 }
 function connectKline(){if(klineWs)klineWs.close();if(klineReconnectTimer)clearTimeout(klineReconnectTimer);const s=coin.toLowerCase()+'usdt',ws=new WebSocket('wss://stream.binance.com:443/ws/'+s+'@kline_'+tf);klineWs=ws;ws.onmessage=e=>{if(klineWs!==ws)return;try{const k=JSON.parse(e.data).k,c={time:Math.floor(k.t/1000),open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v,closed:k.x};lastKlineAt=Date.now();const ix=candles.findIndex(x=>x.time===c.time);if(ix>=0)candles[ix]=c;else candles.push(c);candles=candles.slice(-500);if(c.closed){safeCalc();if(signalTabActive)renderSignalEngine();if($('academyPanel')?.style.display==='block')renderAcademyTools();}renderDataHealth();}catch(_){}};ws.onclose=()=>{if(klineWs!==ws)return;klineReconnectTimer=setTimeout(()=>{if(klineWs===ws&&ws.readyState===WebSocket.CLOSED)connectKline();},1800);};ws.onerror=()=>{try{ws.close();}catch(_){}};}
