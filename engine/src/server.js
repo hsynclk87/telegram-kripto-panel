@@ -162,53 +162,48 @@ async function fetchKlineHistory(symbol, interval, limit) {
   }
 }
 
-async function loadCandleHistory() {
-  if (historyLoading) return;
-  historyLoading = true;
-  const intervals = ["1m", "15m", "1h", "4h"];
-  try {
-    const results = await Promise.allSettled(SYMBOLS.map(async symbol => {
-      const market = state.markets[symbol];
-      if (!market) return { symbol, skipped: true };
-      const loaded = await Promise.all(intervals.map(async interval => {
-        try {
-          const candles = await fetchKlineHistory(symbol, interval, interval === "1m" ? 500 : 300);
-          return [interval, candles, null];
-        } catch (error) {
-          log("warn", "Parallel historical candle lookup failed", { symbol, interval, error: error.message });
-          return [interval, [], error.message];
-        }
-      }));
+const historyJobs = new Map();
 
-      for (const [interval, candles] of loaded) {
-        if (!candles.length) continue;
-        const key = "candles" + interval;
+async function loadSymbolCandleHistory(symbol) {
+  if (historyJobs.has(symbol)) return historyJobs.get(symbol);
+  const job = (async () => {
+    const market = state.markets[symbol];
+    if (!market) throw new Error("Unknown symbol: " + symbol);
+    const intervals = ["1m", "15m", "1h", "4h"];
+    const loaded = await Promise.all(intervals.map(async interval => {
+      const key = "candles" + interval;
+      if ((market[key] || []).length >= 30) return [interval, market[key], null];
+      try {
+        const candles = await fetchKlineHistory(symbol, interval, interval === "1m" ? 500 : 300);
         const live = market[key] || [];
         const merged = new Map(candles.map(c => [c.openTime, c]));
         for (const candle of live) merged.set(candle.openTime, candle);
-        market[key] = [...merged.values()].sort((a,b) => a.openTime-b.openTime).slice(-500);
+        market[key] = [...merged.values()].sort((x,y) => x.openTime-y.openTime).slice(-500);
+        return [interval, market[key], null];
+      } catch (error) {
+        log("warn", "Historical candle lookup failed", { symbol, interval, error: error.message });
+        return [interval, market[key] || [], error.message];
       }
-
-      const counts = Object.fromEntries(intervals.map(i => [i, market["candles" + i]?.length || 0]));
-      log("info", "Historical market data status", {
-        symbol, counts,
-        sources: Object.fromEntries(loaded.map(([i, rows]) => [i, rows[0]?.source || "LIVE_ONLY"])),
-        errors: Object.fromEntries(loaded.filter(([,rows,error]) => error).map(([i,,error]) => [i,error]))
-      });
-      publish("history", {
-        symbol, counts, candles1m: market.candles1m, candles15m: market.candles15m,
-        candles1h: market.candles1h, candles4h: market.candles4h
-      });
-      return { symbol, counts };
     }));
-    for (const result of results) {
-      if (result.status === "rejected") {
-        log("warn", "Historical market data load failed", { error: result.reason?.message });
-      }
-    }
-  } finally {
-    historyLoading = false;
-  }
+    const counts = Object.fromEntries(intervals.map(i => [i, market["candles" + i]?.length || 0]));
+    log("info", "Historical market data ready", {
+      symbol, counts,
+      sources: Object.fromEntries(loaded.map(([i, rows]) => [i, rows[0]?.source || "LIVE_OR_CACHE"])),
+      errors: Object.fromEntries(loaded.filter(([,rows,error]) => error).map(([i,,error]) => [i,error]))
+    });
+    publish("history", {
+      symbol, counts, candles1m: market.candles1m, candles15m: market.candles15m,
+      candles1h: market.candles1h, candles4h: market.candles4h
+    });
+    return counts;
+  })();
+  historyJobs.set(symbol, job);
+  try { return await job; }
+  finally { if (historyJobs.get(symbol) === job) historyJobs.delete(symbol); }
+}
+
+async function loadCandleHistory() {
+  await Promise.allSettled(SYMBOLS.map(symbol => loadSymbolCandleHistory(symbol)));
 }
 
 function addTrade(trade) {
@@ -708,17 +703,21 @@ const server = http.createServer(async (req, res) => {
       return res.end(JSON.stringify({ error: "invalid_symbol", message: "Geçerli bir coin sembolü gönderin." }));
     }
     const market = state.markets[key];
+    // Seçilen coin için eksik geçmişi bu isteğin içinde tamamla; diğer coinleri bekleme.
+    const countsBefore = ["1m","15m","1h","4h"].map(i => (market["candles"+i] || []).length);
+    if (countsBefore.some(count => count < 30)) {
+      try { await loadSymbolCandleHistory(key); }
+      catch (error) { log("warn", "On-demand history load failed", { symbol: key, error: error.message }); }
+    }
     const candles = {
       candles1m: market.candles1m || [], candles15m: market.candles15m || [],
-      candles1h: market.candles1h || [],
-      candles4h: market.candles4h || []
+      candles1h: market.candles1h || [], candles4h: market.candles4h || []
     };
     res.writeHead(200);
     return res.end(JSON.stringify({
       symbol: key, counts: {
         "1m": candles.candles1m.length, "15m": candles.candles15m.length,
-        "1h": candles.candles1h.length,
-        "4h": candles.candles4h.length
+        "1h": candles.candles1h.length, "4h": candles.candles4h.length
       }, ...candles, time: now()
     }));
   }
