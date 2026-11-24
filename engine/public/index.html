@@ -439,7 +439,7 @@ body{max-width:1440px!important;padding:16px!important;font-family:Inter,ui-sans
 .cm-premium .mi-chip{font-size:9px}.cm-premium .mi-scenarios{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.cm-premium .mi-scenario{padding:12px;border:1px solid #33435b;border-radius:12px;background:#111d30}.cm-premium .mi-scenario span{display:block;font-size:9px;color:#9eb0c9}.cm-premium .mi-scenario b{display:block;margin:6px 0;color:#eef4ff;font-size:13px}.cm-premium .mi-scenario small{color:#aebbd0;font-size:10px;line-height:1.4}.cm-premium .explain{margin-top:12px;padding:13px;border-radius:12px;background:#111d30;font-size:11px;line-height:1.65}
 .cm-premium.expanded .cm-details{display:block}
 @media(max-width:560px){.cm-premium{padding:12px;border-radius:17px}.cm-topline{align-items:flex-start}.cm-title{gap:8px}.cm-mark{font-size:25px}.cm-live{font-size:8px;padding:7px 8px}.cm-hero-v2{padding:14px;min-height:128px}.cm-score{width:112px;flex-basis:112px}.cm-score strong{top:25px;font-size:25px}.cm-metrics-v2{gap:6px}.cm-metric-v2{padding:10px 5px;border-radius:13px}.cm-metric-v2>span{font-size:19px;height:24px}.cm-metric-v2>small{font-size:8px}.cm-metric-v2>b{font-size:13px}.cm-metric-v2>em{font-size:8px}.cm-balance-title>b{font-size:13px}.cm-balance-label{font-size:10px}.cm-verdict-v2{padding:12px;gap:10px}.cm-check{flex-basis:40px;height:40px;font-size:24px}.cm-action-v2{gap:9px;padding:11px}.cm-action-v2 p{max-width:45%;font-size:9px;padding-left:9px}.cm-action-v2 b{font-size:18px}.cm-detail-grid{grid-template-columns:1fr}.cm-premium .mi-scenarios{grid-template-columns:1fr}}
-</style></head><body>
+.cm-score{position:relative;z-index:1}.cm-score strong{display:block!important;visibility:visible!important;opacity:1!important;z-index:2;color:#f2f5ff!important;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.35)}.cm-score>small{position:relative;z-index:2}</style></head><body>
 <header class="head"><div><div class="brand">KRİPTO · İNDİKATÖR TERMİNALİ</div><div class="conn"><span class="dot" id="dot"></span><span id="connection">Binance canlı fiyat bağlantısı bekleniyor</span></div></div><div class="pill">REALTIME</div></header>
 <div class="row" id="coins"></div><div class="row" id="frames"></div><div class="row" id="mainTabs"><button id="tabMarket" class="active" type="button">01 · PİYASA</button><button id="tabLevels" type="button">02 · SEVİYELER</button><button id="tabAcademy" type="button">03 · ANALİZ LAB</button><button id="tabSignal" type="button">04 · SİNYAL</button><button id="tabLiquidation" type="button">05 · LİKİDASYON</button></div>
 <div class="terminal-ribbon" id="terminalRibbon"><div class="ribbon-cell"><span>SON FİYAT</span><b id="deskLast">—</b></div><div class="ribbon-cell"><span>SON MUM DEĞİŞİMİ</span><b id="deskChange">—</b></div><div class="ribbon-cell"><span>ATR VOLATİLİTE</span><b id="deskAtr">—</b></div><div class="ribbon-cell"><span>HACİM KATILIMI</span><b id="deskVolume">—</b></div><div class="ribbon-cell"><span>ANA TREND</span><b id="deskTrend">—</b></div><div class="ribbon-clock"><i></i><span>BINANCE MARKET DATA</span></div></div>
@@ -881,10 +881,18 @@ function renderMarketInvestorBrief(a,price,ctx,bias,quality,bullCount,bearCount,
  set('miStrengthNote',a?'ADX '+a.adx.toFixed(1)+' · '+(a.pdi>a.mdi?'+DI alıcı yönünde':'−DI satıcı yönünde')+'.':'ADX hesaplanamadı.');
  const vr=ctx.volRatio;set('miVolume',Number.isFinite(vr)?vr.toFixed(2)+'x':'—');
  set('miVolumeNote',Number.isFinite(vr)?(vr>=1.5?'Hacim belirgin yüksek.':vr>=1.1?'Hacim ortalamanın üzerinde.':'Hacim olağan seviyede.'):'Hacim kıyaslaması yok.');
- const total=Math.max(1,bullCount+bearCount),buyerPct=Math.round(bullCount/total*100),sellerPct=100-buyerPct;
- $('miBullBar').style.width=buyerPct+'%';$('miBearBar').style.width=sellerPct+'%';
- set('miBullCount','%'+buyerPct+' Alıcı');set('miBearCount','%'+sellerPct+' Satıcı');
- set('miScore',buyerPct);const arc=$('miScoreArc');if(arc)arc.style.strokeDasharray=buyerPct+' 100';
+ const bCount=Number.isFinite(Number(bullCount))?Math.max(0,Number(bullCount)):0;
+ const sCount=Number.isFinite(Number(bearCount))?Math.max(0,Number(bearCount)):0;
+ const total=bCount+sCount,buyerPct=total>0?Math.round(bCount/total*100):null,sellerPct=buyerPct===null?null:100-buyerPct;
+ const bullBar=$('miBullBar'),bearBar=$('miBearBar');
+ if(bullBar)bullBar.style.width=(buyerPct===null?0:buyerPct)+'%';
+ if(bearBar)bearBar.style.width=(sellerPct===null?0:sellerPct)+'%';
+ set('miBullCount',buyerPct===null?'Alıcı kanıtı: veri yok':'%'+buyerPct+' Alıcı');
+ set('miBearCount',sellerPct===null?'Satıcı kanıtı: veri yok':'%'+sellerPct+' Satıcı');
+ const scoreEl=document.getElementById('miScore'),arc=document.getElementById('miScoreArc');
+ if(scoreEl){scoreEl.textContent=buyerPct===null?'—':buyerPct+'%';scoreEl.style.display='block';scoreEl.style.visibility='visible';}
+ if(arc){arc.style.strokeDasharray=(buyerPct===null?0:buyerPct)+' 100';arc.style.visibility='visible';}
+ const scoreWrap=document.querySelector('.cm-score');if(scoreWrap)scoreWrap.setAttribute('aria-label',buyerPct===null?'Alıcı kanıt oranı için veri yok':'Alıcı kanıt oranı yüzde '+buyerPct);
  set('miRisk',quality==='GÜÇLÜ'?'DÜŞÜK':quality==='ORTA'?'ORTA':'YÜKSEK');
  const action=bias==='ALICI KANITLARI ÖNDE'?'TEYİT BEKLE':bias==='SATICI KANITLARI ÖNDE'?'RİSKİ AZALT':'BEKLE';set('miAction',action);
  const verdict=$('marketVerdict');if(verdict){verdict.textContent=bias;verdict.className=bias==='ALICI KANITLARI ÖNDE'?'positive':bias==='SATICI KANITLARI ÖNDE'?'negative':'neutral';}
