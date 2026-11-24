@@ -58,10 +58,9 @@ body{
 .explain strong{color:#ffffff}\n.explain{color:#e0eaff}\n#marketVerdict{ text-shadow:0 0 18px currentColor }\n#marketExplanation{background:linear-gradient(135deg,rgba(23,44,72,.55),rgba(16,27,47,.45));border:1px solid rgba(83,160,255,.22);border-radius:12px;padding:12px}\n.metric b{ text-shadow:0 0 10px rgba(73,184,255,.08) }
 @media(min-width:700px){.advanced-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
-/* Sade görünüm: yalnızca canlı fiyat ve birleşik veri kombinasyonları */
-.layout{display:none!important}
-body>section:not(.price-card):not(.market-card),body>.foot{display:none!important}
-body{max-width:900px}
+/* Sekme görünürlüğü JavaScript tarafından yönetilir; analiz panelleri CSS ile gizlenmez. */
+.layout{display:grid}
+body{max-width:1120px}
 .market-card{margin-top:12px}
 #marketExplanation{white-space:pre-line;line-height:1.65;font-size:13px;color:#d6e0f0}
 #marketVerdict{font-size:16px}
@@ -235,6 +234,38 @@ body{max-width:900px}
 @media(max-width:700px){.layout{grid-template-columns:1fr}.desk-page-head{align-items:flex-start;flex-direction:column}.desk-page-state{align-self:flex-start}}
 @media(max-width:520px){body{padding:10px 9px 22px}#mainTabs{grid-template-columns:repeat(2,minmax(0,1fr))}#mainTabs button{font-size:9px;padding:10px 5px}.desk-page-head{padding:14px}.desk-page-head h2{font-size:15px}.price-card .price{font-size:29px}.price-card{padding:13px}.layout .card,body>section.card:not(.price-card):not(.market-card):not(#srTabPanel){padding:11px}#srTabPanel{padding:12px}#academyPanel .academy-hero{align-items:flex-start;flex-direction:column;padding:14px}#academyPanel .academy-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#academyPanel .academy-workspace{grid-template-columns:1fr}#academyPanel .academy-side{grid-template-columns:1fr}}
 
+
+/* INVESTOR-GRADE DASHBOARDS */
+.investor-brief,.sr-visual-card,.academy-investor-brief{margin-top:12px;padding:15px;border:1px solid rgba(112,164,226,.3);border-radius:16px;background:linear-gradient(145deg,rgba(19,35,58,.98),rgba(10,19,34,.98));box-shadow:0 10px 28px rgba(0,0,0,.18)}
+.investor-brief-head,.sr-visual-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.investor-brief h3,.sr-visual-head h3,.academy-investor-brief h3{font-size:14px;margin:4px 0;color:#f2f6ff}
+.investor-brief-head p,.sr-visual-head p{font-size:10px;color:#9eb1ca;margin:4px 0 0;line-height:1.5}
+.mi-chip{display:inline-flex;padding:6px 9px;border-radius:20px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.28);color:#ffd166;font-size:9px;font-weight:850;white-space:nowrap}
+.mi-grid{display:grid;grid-template-columns:1.4fr repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.mi-panel{min-width:0;padding:11px;border:1px solid rgba(115,151,199,.2);border-radius:12px;background:rgba(7,16,30,.62)}
+.mi-label{display:block;font-size:8px;letter-spacing:1px;color:#91a8c5;font-weight:800}
+.mi-panel>b{display:block;font-size:15px;margin-top:7px;color:#edf4ff;overflow-wrap:anywhere}
+.mi-panel>small{display:block;font-size:9px;line-height:1.5;color:#9db0c9;margin-top:4px}
+.mi-main>b{font-size:17px}
+.mi-balance{display:flex;height:8px;overflow:hidden;border-radius:10px;background:#27364c;margin-top:12px}
+.mi-balance i:first-child{background:#36e4aa;width:50%;transition:width .2s}.mi-balance i:last-child{background:#ff6683;width:50%;transition:width .2s}
+.mi-balance-label{display:flex;justify-content:space-between;gap:5px;margin-top:6px;color:#9aadc7;font-size:8px}
+.mi-scenarios{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.mi-scenario{padding:10px;border-radius:11px;border:1px solid rgba(117,158,211,.2);background:rgba(10,20,36,.7)}
+.mi-scenario span{display:block;font-size:8px;color:#91a8c5;letter-spacing:.8px}.mi-scenario b{display:block;font-size:11px;color:#eaf2ff;margin-top:5px}.mi-scenario small{display:block;font-size:9px;line-height:1.5;color:#9fb2ca;margin-top:4px}
+.mi-foot{margin-top:10px;padding:10px;border-left:3px solid #65b9ff;background:rgba(65,133,194,.09);border-radius:7px;color:#c7d7ec;font-size:10px;line-height:1.65}
+.sr-visual-head{align-items:center}.sr-price-map{margin-top:10px;padding:5px 2px}.sr-price-map svg{display:block;width:100%;height:auto;max-height:190px}
+.sr-scenario{margin-top:7px;padding:12px;border:1px solid rgba(104,166,223,.22);border-radius:11px;background:rgba(7,16,30,.65)}
+.sr-scenario>b{font-size:9px;letter-spacing:.9px;color:#8fb9e7}.sr-scenario p{margin:6px 0 0;color:#c7d6e9;font-size:10px;line-height:1.65}
+.sr-map-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:9px;color:#a9bbd1;margin-top:4px}.sr-map-legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+.ai-meters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:11px}
+.ai-meter{padding:10px;border:1px solid rgba(112,158,213,.2);border-radius:10px;background:rgba(8,17,31,.7);min-width:0}
+.ai-meter span{display:block;font-size:8px;color:#91a8c5;letter-spacing:.4px}.ai-meter b{display:block;font-size:11px;margin-top:6px;overflow-wrap:anywhere}.ai-meter small{display:block;font-size:8px;color:#9aadc6;line-height:1.45;margin-top:4px}
+.ai-meter .ai-track{height:5px;background:#26354b;border-radius:8px;margin-top:8px;overflow:hidden}.ai-meter .ai-track i{display:block;height:100%;border-radius:8px}
+.ai-good{color:#55e9b5!important}.ai-bad{color:#ff8299!important}
+@media(max-width:760px){.mi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mi-main{grid-column:1/-1}.ai-meters{grid-template-columns:repeat(2,minmax(0,1fr))}.mi-scenarios{grid-template-columns:1fr}}
+@media(max-width:430px){.investor-brief,.sr-visual-card,.academy-investor-brief{padding:11px}.mi-panel{padding:9px}.mi-panel>b{font-size:13px}.investor-brief h3,.sr-visual-head h3,.academy-investor-brief h3{font-size:12px}.mi-balance-label{font-size:7px}.ai-meters{grid-template-columns:1fr 1fr}}
+
 </style></head><body>
 <header class="head"><div><div class="brand">KRİPTO · İNDİKATÖR TERMİNALİ</div><div class="conn"><span class="dot" id="dot"></span><span id="connection">Binance canlı fiyat bağlantısı bekleniyor</span></div></div><div class="pill">REALTIME</div></header>
 <div class="row" id="coins"></div><div class="row" id="frames"></div><div class="row" id="mainTabs"><button id="tabMarket" class="active" type="button">PİYASA ANALİZİ</button><button id="tabLevels" type="button">DESTEK / DİRENÇ</button><button id="tabAcademy" type="button">ANALİZ ARAÇLARI</button><button id="tabSignal" type="button">SİNYAL MOTORU</button></div>
@@ -249,6 +280,7 @@ body{max-width:900px}
 <div class="metric"><span>DESTEK / DİRENÇ DURUMU</span><b id="srCurrentPosition">—</b><small id="srCurrentPositionNote">—</small></div>
 <div class="metric"><span>HESAPLANAN VERİ</span><b id="srDataScope">—</b><small>Seçili zaman dilimi · kapanmış Binance mumları</small></div>
 </div>
+<div class="sr-visual-card"><div class="sr-visual-head"><div><span class="desk-kicker">PRICE MAP / SCENARIO ENGINE</span><h3>FİYATIN HARİTADAKİ KONUMU</h3><p>Canlı fiyatın destek ve direnç bölgelerine göre yeri.</p></div><span id="srMapState" class="mi-chip">HESAPLANIYOR</span></div><div id="srPriceMap" class="sr-price-map"><div class="sr-empty">Fiyat bölgeleri hesaplanıyor…</div></div><div class="sr-scenario" id="srScenario"><b>İŞLEM SENARYOSU</b><p>Destek ve direnç bölgeleri hesaplanıyor.</p></div></div>
 <div class="section" style="margin-top:15px">TÜM ZAMAN DİLİMLERİ · CANLI FİYATA GÖRE DESTEK / DİRENÇ</div>
 <div class="muted" id="srLivePriceLine" style="margin:5px 0 9px">Canlı fiyat bekleniyor…</div>
 <div id="srMultiTimeframe" class="sr-mtf-list"><div class="sr-empty">Çoklu zaman dilimi verileri yükleniyor…</div></div>
@@ -267,6 +299,7 @@ body{max-width:900px}
   <div><div class="academy-kicker">BINANCE ACADEMY METHODS · LIVE TOOLKIT</div><div class="academy-title">PİYASA ANALİZ LABORATUVARI</div><div class="academy-sub">Seçili Binance paritesi · canlı fiyat · seçili zaman dilimi mumları</div></div>
   <div class="academy-live"><i></i> CANLI VERİ</div>
  </div>
+ <div id="academyInvestorBrief" class="academy-investor-brief"><div class="investor-brief-head"><div><span class="desk-kicker">TECHNICAL EVIDENCE</span><h3>TEKNİK DURUM ÖZETİ</h3><p>Göstergelerin ne söylediği ve hangi yönde birleştiği.</p></div><span id="aiGrade" class="mi-chip">HESAPLANIYOR</span></div><div id="aiMeters" class="ai-meters"></div><div id="aiPlainRead" class="mi-foot">Kapanmış mumlar hesaplanıyor.</div></div>
  <div class="academy-toolbar">
   <div><span class="academy-label">VARLIK</span><b id="academySymbol">BTCUSDT</b></div>
   <div><span class="academy-label">ZAMAN DİLİMİ</span><b id="academyTf">1H</b></div>
@@ -304,7 +337,11 @@ body{max-width:900px}
  <div class="pro-section-head"><div><span>05 / HISTORICAL VALIDATION</span><h3>Geçmiş sinyal performansı</h3></div><small>İleriye dönük garanti değildir</small></div><div class="pro-section-copy">Test, sonraki 12 mum içinde TP2 veya stop seviyesine önce ulaşılmasını sayar. İşlem maliyetleri ve piyasa rejimi etkileri tam modellenmez.</div><div class="siggrid sigsummary pro-history-grid"><div class="sigstat"><div class="siglabel">TEST EDİLEN SİNYAL</div><div class="sigvalue" id="sigSamples">—</div><div class="sigmicro">Bulunan geçmiş örnek sayısı</div></div><div class="sigstat"><div class="siglabel">STOP / TP2 SONUCU</div><div class="sigvalue" id="sigStats">—</div><div class="signote" id="sigStatsNote">—</div></div></div>
  <div class="pro-section-head"><div><span>06 / ANALYST BRIEF</span><h3>Karar gerekçesi ve veri kaynağı</h3></div><small>Otomatik yorum</small></div><div class="sigbox siginterpret pro-brief"><div class="signote signarrative" id="sigNarrative">Analiz bekleniyor.</div><div class="sig-local-divider"></div><div class="pro-card-kicker">DATA LINEAGE & MODEL NOTES</div><div class="signote" id="sigDataNote"></div></div>
  <div class="sigdisclaimer"><b>Model sınırları:</b> Bu motor, açıklanmayan üçüncü taraf puanlama formüllerinin birebir kopyası değildir. Bağımsız ve şeffaf bir teknik modeldir. Binance Spot mum verileri kullanılır; otomatik emir gönderilmez. Geçmiş performans gelecekteki sonucu garanti etmez. Kaldıraç, likidasyon, komisyon ve kayma ayrıca değerlendirilmelidir.</div>
-</section><section class="card market-card"><div class="section">BİRLEŞİK PİYASA OKUMASI · TÜM VERİLERİN ORTAK YORUMU</div><div class="signal"><div><div class="muted">SPOT + FUTURES + HACİM + TREND</div><div class="signalword neutral" id="marketVerdict">VERİ BEKLENİYOR</div></div><div class="pill" id="marketAgreement">—</div></div><div class="explain" id="marketExplanation" style="margin-top:10px">Spot ve vadeli akış, hacim, VWAP, hacim profili, emir defteri ve trend verileri birlikte değerlendiriliyor.</div><div class="muted" id="marketCaveat" style="margin-top:8px">Yeterli ve güncel veri oluşmadan bu bölüm yön tahmini üretmez.</div></section>
+</section><section class="card market-card"><div class="section">BİRLEŞİK PİYASA OKUMASI · TÜM VERİLERİN ORTAK YORUMU</div><div class="signal"><div><div class="muted">SPOT + FUTURES + HACİM + TREND</div><div class="signalword neutral" id="marketVerdict">VERİ BEKLENİYOR</div></div><div class="pill" id="marketAgreement">—</div></div><div class="explain" id="marketExplanation" style="margin-top:10px">Spot ve vadeli akış, hacim, VWAP, hacim profili, emir defteri ve trend verileri birlikte değerlendiriliyor.</div><div class="muted" id="marketCaveat" style="margin-top:8px">Yeterli ve güncel veri oluşmadan bu bölüm yön tahmini üretmez.</div>
+<div id="marketInvestorBrief" class="investor-brief"><div class="investor-brief-head"><div><span class="desk-kicker">INVESTOR READOUT</span><h3>YATIRIMCI İÇİN PİYASA ÖZETİ</h3><p>Yön, para akışı, trend gücü ve hacim tek bakışta.</p></div><span id="miQuality" class="mi-chip">VERİ BEKLENİYOR</span></div>
+<div class="mi-grid"><div class="mi-panel mi-main"><span class="mi-label">GENEL YÖN</span><b id="miBias">—</b><small id="miBiasNote">—</small><div class="mi-balance"><i id="miBullBar"></i><i id="miBearBar"></i></div><div class="mi-balance-label"><span id="miBullCount">Alıcı kanıtı: —</span><span id="miBearCount">Satıcı kanıtı: —</span></div></div>
+<div class="mi-panel"><span class="mi-label">TREND</span><b id="miTrend">—</b><small id="miTrendNote">—</small></div><div class="mi-panel"><span class="mi-label">PARA AKIŞI</span><b id="miFlow">—</b><small id="miFlowNote">—</small></div><div class="mi-panel"><span class="mi-label">TREND GÜCÜ</span><b id="miStrength">—</b><small id="miStrengthNote">—</small></div><div class="mi-panel"><span class="mi-label">HACİM</span><b id="miVolume">—</b><small id="miVolumeNote">—</small></div></div>
+<div class="mi-scenarios"><div class="mi-scenario"><span>ÖNE ÇIKAN SENARYO</span><b id="miScenario1">—</b><small id="miScenario1Note">—</small></div><div class="mi-scenario"><span>ALTERNATİF SENARYO</span><b id="miScenario2">—</b><small id="miScenario2Note">—</small></div></div><div class="mi-foot" id="miConclusion">Analiz için yeterli veri bekleniyor.</div></div></section>
 <div class="layout"><div>
 <section class="card wide"><div class="section">FİYAT GRAFİĞİ · EMA 20 / EMA 50</div><div id="chart"></div><div class="legend"><span><i style="background:#e8bd68"></i>EMA 20</span><span><i style="background:#65a8ff"></i>EMA 50</span></div></section>
 <section class="card wide"><div class="section">FOOTPRINT · TEK MUM</div><div class="fp-toolbar"><div class="row" style="padding:0;margin:0"><button id="fpSpot" class="active">SPOT</button><button id="fpFutures">FUTURES</button></div><span class="muted" id="fpStatus">CANLI</span></div><div class="fp-stats"><div class="fp-stat"><span>DELTA</span><b id="fpDelta">—</b></div><div class="fp-stat"><span>HACİM</span><b id="fpVolume">—</b></div><div class="fp-stat"><span>POC</span><b id="fpPoc">—</b></div></div><div class="fp-wrap" id="fpWrap"><div class="muted" style="padding:14px">Veri bekleniyor…</div></div></section><section class="card wide"><div class="section">MOMENTUM · RSI / MACD HISTOGRAM</div><div id="osc"></div></section>
@@ -587,6 +624,26 @@ setMetric('atrExpansion',a.atrExpansion.toFixed(2)+'x',a.atrExpansion>1.25?'nega
 setMetric('stochRsi',a.stochRsi.toFixed(1),a.stochRsi<20?'positive':a.stochRsi>80?'negative':'neutral');setText('stochRsiState',a.stochRsi<20?'Momentum aşırı satım':a.stochRsi>80?'Momentum aşırı alım':'Momentum orta bölgede');
 setMetric('tradeCount',String(spotFlowTrades.length)+' / '+String(flowTrades.length),'');setText('tradeCountState','Spot aggTrade / Futures aggTrade · 5 dk');
 }
+
+function renderMarketInvestorBrief(a,price,ctx,bias,quality,bullCount,bearCount,scenarios){
+ const set=(id,v)=>{const e=$(id);if(e)e.textContent=v;};
+ const trend=ctx.trendUp?'YÜKSELİŞ':ctx.trendDown?'DÜŞÜŞ':'KARMA / YATAY';
+ set('miBias',bias);set('miBiasNote','Kanıtların ağırlığıdır; fiyat hedefi veya başarı olasılığı değildir.');
+ set('miQuality',quality+' VERİ KALİTESİ');set('miTrend',trend);
+ set('miTrendNote',ctx.trendUp?'EMA20 > EMA50 > EMA200; fiyat EMA20 üzerinde.':ctx.trendDown?'EMA20 < EMA50 < EMA200; fiyat EMA20 altında.':'Ortalamalar tam sıralı değil; yön teyidi zayıf.');
+ set('miFlow',a?(a.cmf>.08?'ALICI LEHİNE':a.cmf<-.08?'SATICI LEHİNE':'DENGELİ'):'VERİ YOK');
+ set('miFlowNote',a?'CMF '+a.cmf.toFixed(3)+' · VWAP '+(price>=a.vwap?'üzeri':'altı')+'.':'Para akışı verisi yok.');
+ set('miStrength',a?(a.adx>=25?'GÜÇLÜ':a.adx>=18?'GELİŞİYOR':'ZAYIF'):'—');
+ set('miStrengthNote',a?'ADX '+a.adx.toFixed(1)+' · '+(a.pdi>a.mdi?'+DI alıcı yönünde':'−DI satıcı yönünde')+'.':'ADX hesaplanamadı.');
+ const vr=ctx.volRatio;set('miVolume',Number.isFinite(vr)?vr.toFixed(2)+'x':'—');
+ set('miVolumeNote',Number.isFinite(vr)?(vr>=1.5?'Hacim belirgin yüksek.':vr>=1.1?'Hacim ortalamanın üzerinde.':'Hacim olağan seviyede.'):'Hacim kıyaslaması yok.');
+ const total=Math.max(1,bullCount+bearCount);$('miBullBar').style.width=(bullCount/total*100)+'%';$('miBearBar').style.width=(bearCount/total*100)+'%';
+ set('miBullCount','Alıcı kanıtı: '+bullCount);set('miBearCount','Satıcı kanıtı: '+bearCount);
+ const x=scenarios?.[0],y=scenarios?.[1];set('miScenario1',x?.name||'Yön belirsizliği');set('miScenario1Note',x?(x.probability||'Koşullu senaryo')+' · '+(x.invalidation||'Kapanış teyidi izlenmeli'):'Yeni kapanış ve akış teyidi bekleniyor.');
+ set('miScenario2',y?.name||'Teyit bekleme');set('miScenario2Note',y?(y.probability||'Alternatif senaryo')+' · '+(y.watch||'Hacim ve kapanış izlenmeli'):'Veriler aynı yönde birleşene kadar acele karar verilmemeli.');
+ set('miConclusion','Trend: '+trend+'. '+(a?'Para akışı CMF '+a.cmf.toFixed(3)+'; fiyat VWAP '+(price>=a.vwap?'üzerinde':'altında')+'. ':'')+(Number.isFinite(vr)?'Hacim '+vr.toFixed(2)+'x. ':'')+'Veri kalitesi '+quality.toLowerCase()+'. Eksik veri olumlu veya olumsuz varsayılmaz.');
+}
+
 function combinedMarketExplanation(a,price,early,baseScore,ctx){
 const now=Date.now(),c=ctx.c,prev=ctx.prev,data=ctx.data||[];
 const lines=[],conflicts=[],bull=[],bear=[],qualityFamilies=new Set(),missing=[];
@@ -765,7 +822,7 @@ const report='DURUM ÖZETİ\n'+summary+'\n\nBİRLEŞİK PİYASA OKUMASI · TÜM 
 setMetric('marketVerdict',bias,'signalword '+(bias==='ALICI KANITLARI ÖNDE'?'positive':bias==='SATICI KANITLARI ÖNDE'?'negative':'neutral'));
 setText('marketAgreement',quality==='GÜÇLÜ'?'GÜÇLÜ TEYİT':quality==='ORTA'?'ORTA DÜZEY TEYİT':'ZAYIF / DAĞINIK');
 setText('marketExplanation',report);
-setText('marketCaveat','Koşullu piyasa senaryoları · kesin tahmin veya emir talimatı değildir. CVD ve likidasyon verileri oturum kapsamındadır.');
+setText('marketCaveat','Koşullu piyasa senaryoları · kesin tahmin veya emir talimatı değildir. CVD ve likidasyon verileri oturum kapsamındadır.');renderMarketInvestorBrief(a,price,ctx,bias,quality,bull.length,bear.length,scenarioList);
 return{bull:bull.length,bear:bear.length,verdict:bias,quality};
 setMetric('marketVerdict',bias,'signalword '+(bias==='ALICI KANITLARI ÖNDE'?'positive':bias==='SATICI KANITLARI ÖNDE'?'negative':'neutral'));
 setText('marketAgreement',quality);
@@ -846,7 +903,7 @@ function updateSupportResistanceTab(data,price,atrV){
  });
  clusters.forEach(g=>{
   g.touches=g.items.length;g.recency=n-1-g.last;
-  g.score=g.touches*2+Math.max(0,3-g.recency/30);
+  const volAvg=d.slice(-21,-1).reduce((a,x)=>a+x.volume,0)/Math.max(1,d.slice(-21,-1).length);const volFactor=volAvg?g.items.reduce((a,x)=>a+x.volume,0)/g.touches/volAvg:1;g.score=Math.max(0,Math.min(100,Math.round(Math.min(4,g.touches)*15+Math.max(0,20-g.recency/5)+Math.min(15,Math.max(0,volFactor-1)*5)-(g.touches>=6?10:0))));
   g.role=g.price<price?'DESTEK':'DİRENÇ';
   g.flips=0;
   const start=Math.max(1,n-100);
@@ -866,9 +923,26 @@ function updateSupportResistanceTab(data,price,atrV){
  setText('srCurrentPosition',near);
  setText('srCurrentPositionNote',near==='İKİ BÖLGE ARASINDA'?'Fiyat en yakın iki ana bölge arasında.':'Fiyatın bölgeye tepkisi ve kapanışı izlenmeli.');
  setText('srDataScope',d.length+' mum · '+tf.toUpperCase());
+
+ const strengthLabel=g=>g.score>=70?'GÜÇLÜ':g.score>=45?'ORTA':'ZAYIF';
+ const map=$('srPriceMap'),state=$('srMapState'),scenario=$('srScenario');
+ if(map){
+  const s=below[0],r=above[0],lo=s?s.low:price-range*4,hi=r?r.high:price+range*4,span=Math.max(hi-lo,range*4),xp=90+Math.max(0,Math.min(1,(price-lo)/span))*620;
+  const sx=s?90+Math.max(0,Math.min(1,(s.low-lo)/span))*620:90,sw=s?Math.max(22,(s.high-s.low)/span*620):22,rx=r?90+Math.max(0,Math.min(1,(r.low-lo)/span))*620:688,rw=r?Math.max(22,(r.high-r.low)/span*620):22;
+  map.innerHTML='<svg viewBox="0 0 800 145" role="img" aria-label="Destek, canlı fiyat ve direnç bölgeleri"><line x1="90" y1="69" x2="710" y2="69" stroke="#53647d" stroke-width="12" stroke-linecap="round"/><rect x="'+sx+'" y="48" width="'+sw+'" height="42" rx="8" fill="#35e4aa" fill-opacity=".24" stroke="#35e4aa" stroke-width="1.5"/><rect x="'+rx+'" y="48" width="'+rw+'" height="42" rx="8" fill="#ff6683" fill-opacity=".22" stroke="#ff6683" stroke-width="1.5"/><line x1="'+xp+'" y1="23" x2="'+xp+'" y2="112" stroke="#ffd166" stroke-width="2.5"/><circle cx="'+xp+'" cy="69" r="6" fill="#ffd166" stroke="#fff" stroke-width="1.5"/><text x="'+sx+'" y="35" fill="#62efbd" font-size="12" font-weight="700">DESTEK</text><text x="'+rx+'" y="35" fill="#ff8299" font-size="12" font-weight="700">DİRENÇ</text><text x="'+xp+'" y="17" fill="#ffd166" font-size="12" text-anchor="middle" font-weight="700">CANLI FİYAT</text><text x="90" y="126" fill="#9fb2ca" font-size="11">'+(s?fmt(s.low):'Destek yok')+'</text><text x="710" y="126" fill="#9fb2ca" font-size="11" text-anchor="end">'+(r?fmt(r.high):'Direnç yok')+'</text><text x="'+xp+'" y="141" fill="#f4f6ff" font-size="10" text-anchor="middle">'+fmt(price)+'</text></svg><div class="sr-map-legend"><span><i style="background:#35e4aa"></i>Alıcı tepkisi görülen alan</span><span><i style="background:#ff6683"></i>Satıcı tepkisi görülen alan</span><span><i style="background:#ffd166"></i>Canlı fiyat</span></div>';
+ }
+ const last=d.at(-1),vbar=d.slice(-21,-1),avg=vbar.reduce((z,x)=>z+x.volume,0)/Math.max(1,vbar.length),vr=last.volume/(avg||1),close=last.close;
+ let stateText='İKİ BÖLGE ARASINDA',title='BEKLE · FİYAT ARALIKTA',msg='Fiyat iki ana bölge arasında. Desteğe yaklaşırsa alıcı tepkisi, dirence yaklaşırsa satıcı tepkisi aranmalı. Bölgeye dokunmak tek başına AL/SAT sinyali değildir.';
+ const ns=below[0]&&price-below[0].high<=atrV*.7,nr=above[0]&&above[0].low-price<=atrV*.7,bs=below[0]&&close<below[0].low&&vr>=1.3,br=above[0]&&close>above[0].high&&vr>=1.3;
+ if(bs){stateText='DESTEK KIRILIMI';title='AŞAĞI KIRILIM ADAYI';msg='Son kapanmış mum destek bölgesinin altında ve hacim '+vr.toFixed(2)+'x. Eski destek alanına dönüşte altında kalması (retest reddi) izlenmeli. Eski destek direnç gibi çalışabilir.';}
+ else if(br){stateText='DİRENÇ KIRILIMI';title='YUKARI KIRILIM ADAYI';msg='Son kapanmış mum direnç bölgesinin üzerinde ve hacim '+vr.toFixed(2)+'x. Eski direnç alanına dönüşte üzerinde tutunması izlenmeli. Eski direnç destek gibi çalışabilir.';}
+ else if(ns){stateText='DESTEĞE YAKIN';title='DESTEK TESTİ · TEPKİ BEKLE';msg='Fiyat destek bölgesine yakın. Alıcı tepkisi için bölge üzerinde kapanış, alt fitil ve hacim teyidi aranmalı. Bölge altında kapanış destek senaryosunu bozar.';}
+ else if(nr){stateText='DİRENCE YAKIN';title='DİRENÇ TESTİ · RED BEKLE';msg='Fiyat direnç bölgesine yakın. Satıcı tepkisi için bölge altında kapanış ve üst fitil izlenmeli. Hacimle bölge üstü kapanış direnç senaryosunu bozar.';}
+ if(state)state.textContent=stateText;if(scenario)scenario.innerHTML='<b>'+title+'</b><p>'+msg+'</p><p style="color:#8fa7c3">Son kapanmış mum hacmi: '+vr.toFixed(2)+'x · Kırılım teyidi için kapanış ve retest aranır. Emir sinyali değildir.</p>';
+
  const render=(id,items,empty)=>{const el=$(id);if(!el)return;el.innerHTML=items.length?items.map(x=>'<div class="sr-item"><div><b>'+x.title+'</b><small>'+x.note+'</small></div><strong>'+x.value+'</strong></div>').join(''):'<div class="sr-empty">'+empty+'</div>';};
  const main=[...below.slice(0,4),...above.slice(0,4)].sort((a,b)=>Math.abs(a.price-price)-Math.abs(b.price-price));
- render('srPivotLevels',main.map(g=>({title:g.role+' · '+g.touches+' temas',note:'Bölge '+fmt(g.low)+' – '+fmt(g.high)+' · Son temas '+(g.recency===0?'son mum':g.recency+' mum önce')+' · Güç puanı '+g.score.toFixed(1),value:fmt(g.price)})),'Yeterli sayıda teyitli dip veya tepe oluşmadı.');
+ render('srPivotLevels',main.map(g=>({title:g.role+' · '+g.touches+' temas',note:'Bölge '+fmt(g.low)+' – '+fmt(g.high)+' · Son temas '+(g.recency===0?'son mum':g.recency+' mum önce')+' · Bölge gücü '+(g.score>=70?'GÜÇLÜ':g.score>=45?'ORTA':'ZAYIF')+' ('+g.score+'/100; olasılık değildir)',value:fmt(g.price)})),'Yeterli sayıda teyitli dip veya tepe oluşmadı.');
  const flips=clusters.filter(g=>g.flips>0).sort((a,b)=>b.flips-a.flips).slice(0,6);
  render('srRoleFlips',flips.map(g=>({title:fmt(g.price)+' · '+g.flips+' kapanış geçişi',note:'Fiyat bu bölgenin iki tarafında kapanış yaptı. Rol değişimi ancak sonraki testte tutunma/ret ile teyit edilir.',value:g.price<price?'DESTEK?':'DİRENÇ?'})),'Son 100 mumda belirgin destek-direnç geçişi yok.');
  const trend=(type)=>{
@@ -935,8 +1009,11 @@ async function loadMultiTimeframeSR(){
    const magnitude=Math.pow(10,Math.floor(Math.log10(price))-1),roundStep=magnitude*10;
    for(let k=-3;k<=3;k++){const v=Math.round(price/roundStep)*roundStep+k*roundStep;if(v>0)candidates.push({price:v,source:'Psikolojik seviye',strength:1});}
    const dedup=[];candidates.forEach(x=>{if(!dedup.some(y=>Math.abs(y.price-x.price)<=tol*.18&&y.source===x.source))dedup.push(x);});
-   const below=dedup.filter(x=>x.price<price).sort((a,b)=>b.price-a.price)[0]||null;
-   const above=dedup.filter(x=>x.price>price).sort((a,b)=>a.price-b.price)[0]||null;
+   const zones=[];dedup.forEach(x=>{let g=zones.find(y=>Math.abs(y.price-x.price)<=tol*.65);if(!g){g={price:x.price,high:x.price,low:x.price,sources:[],strength:0};zones.push(g);}g.low=Math.min(g.low,x.price);g.high=Math.max(g.high,x.price);if(!g.sources.includes(x.source))g.sources.push(x.source);g.strength+=x.source==='Dip/tepe kümesi'?Math.max(2,x.strength*2):1;g.price=(g.low+g.high)/2;});
+   const rank=x=>Math.abs(x.price-price)/price/(1+x.sources.length*.2+x.strength*.04);
+   const below=zones.filter(x=>x.price<price).sort((a,b)=>rank(a)-rank(b))[0]||null;
+   const above=zones.filter(x=>x.price>price).sort((a,b)=>rank(a)-rank(b))[0]||null;
+   if(below){below.source=below.sources.join(' + ');}if(above){above.source=above.sources.join(' + ');}
    return{interval,label,count:d.length,below,above,atr:atrV};
   }catch(e){return{interval,label,error:e.message};}
  }));
@@ -1041,6 +1118,10 @@ function renderAcademyTools(){
  const trend=e20>e50&&p>e20?'YUKARI':e20<e50&&p<e20?'AŞAĞI':'KARMA';$('acTrend').textContent=trend;$('acTrend').className=trend==='YUKARI'?'ac-good':trend==='AŞAĞI'?'ac-bad':'ac-warn';$('acTrendNote').textContent='EMA20 '+fmt(e20)+' · EMA50 '+fmt(e50);
  $('acRsi').textContent=rsi===null?'—':rsi.toFixed(1);$('acRsiNote').textContent=rsi>70?'Aşırı alım bölgesi':rsi<30?'Aşırı satım bölgesi':'Orta bölge';$('acAtr').textContent=acNum(a);
  const piv=acPivots(d),lows=piv.filter(x=>x.t==='L'),highs=piv.filter(x=>x.t==='H'),sup=lows.filter(x=>x.p<p).sort((x,y)=>y.p-x.p)[0],res=highs.filter(x=>x.p>p).sort((x,y)=>x.p-y.p)[0];
+ const vavg=d.slice(-21,-1).reduce((z,x)=>z+x.volume,0)/Math.max(1,d.slice(-21,-1).length),vr=d.at(-1).volume/(vavg||1),checks=[['FİYAT / EMA20',p>e20,'Fiyat '+(p>e20?'EMA20 üzerinde':'EMA20 altında')],['EMA20 / EMA50',e20>e50,'Kısa trend '+(e20>e50?'pozitif':'negatif')],['RSI 50',rsi!==null&&rsi>50,'RSI '+(rsi===null?'yok':rsi.toFixed(1))],['MACD MOMENTUM',macd.hist>0,'Histogram '+(macd.hist>0?'pozitif':'negatif')],['HACİM KATILIMI',vr>=1.2,'Son mum hacmi '+vr.toFixed(2)+'x']],up=checks.filter(x=>x[1]).length,down=checks.length-up;
+ $('aiGrade').textContent=up>=4?'YÜKSELİŞ KANITI AĞIR':down>=4?'DÜŞÜŞ KANITI AĞIR':'KARMA / NET DEĞİL';
+ $('aiMeters').innerHTML=checks.map(x=>'<div class="ai-meter"><span>'+x[0]+'</span><b class="'+(x[1]?'ai-good':'ai-bad')+'">'+(x[1]?'POZİTİF':'NEGATİF')+'</b><small>'+x[2]+'</small><div class="ai-track"><i style="width:'+(x[1]?100:25)+'%;background:'+(x[1]?'#55e9b5':'#ff8299')+'"></i></div></div>').join('');
+ $('aiPlainRead').textContent='Yükseliş yönünde '+up+'/5, düşüş yönünde '+down+'/5 kontrol olumlu. Hacim tek başına yön göstermez; fiyat hareketini teyit edip etmediğine bakılır. Bu kontrol listesi işlem sinyali veya başarı olasılığı değildir.';
  $('acSnapshot').innerHTML=acRow('EMA 200',e200?fmt(e200):'200 mum gerekli')+acRow('MACD histogram',macd.hist.toFixed(4),macd.hist>0?'ac-good':'ac-bad')+acRow('En yakın pivot destek',sup?fmt(sup.p):'Bulunamadı','ac-good')+acRow('En yakın pivot direnç',res?fmt(res.p):'Bulunamadı','ac-bad')+acRow('Son mum hacmi',compact(d.at(-1).volume));
  const agrees=[];if(p>e20)agrees.push('Fiyat EMA20 üzerinde');if(e20>e50)agrees.push('EMA20, EMA50 üzerinde');if(rsi>50)agrees.push('RSI 50 üzerinde');if(macd.hist>0)agrees.push('MACD histogram pozitif');if(d.at(-1).close>d.at(-1).open)agrees.push('Son mum pozitif kapandı');
  $('acConfluence').innerHTML=agrees.length?agrees.map(x=>acRow('TEKNİK KANIT',x,'ac-good')).join(''):acRow('UYUM','Belirgin yükseliş teyidi yok','ac-warn');
