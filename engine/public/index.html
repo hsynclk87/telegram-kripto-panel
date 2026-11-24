@@ -1377,7 +1377,7 @@ $('academySubnav').addEventListener('click',e=>{const b=e.target.closest('button
 
 /* Binance Academy-inspired live analysis toolkit: independent UI, shared Binance market feed. */
 let academyCategory='structure';
-function acRsi(values,period=14){if(values.length<period+1)return null;let up=0,dn=0;for(let i=values.length-period;i<values.length;i++){const d=values[i]-values[i-1];if(d>0)up+=d;else dn-=d;}const rs=(up/period)/((dn/period)||1e-12);return 100-100/(1+rs);}
+function acRsi(values,period=14){if(!Array.isArray(values)||values.length<period+1||!values.every(Number.isFinite))return null;let gain=0,loss=0;for(let i=1;i<=period;i++){const d=values[i]-values[i-1];gain+=Math.max(d,0);loss+=Math.max(-d,0);}gain/=period;loss/=period;for(let i=period+1;i<values.length;i++){const d=values[i]-values[i-1];gain=(gain*(period-1)+Math.max(d,0))/period;loss=(loss*(period-1)+Math.max(-d,0))/period;}if(loss===0)return gain===0?50:100;const rs=gain/loss;return 100-100/(1+rs);}
 function acStd(a){const m=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/a.length);}
 function acMacd(v){const e12=ema(v,12),e26=ema(v,26),line=e12.map((x,i)=>x-e26[i]),sig=ema(line,9);return{line:line.at(-1),signal:sig.at(-1),hist:line.at(-1)-sig.at(-1)};}
 function acPivots(d){const out=[];for(let i=Math.max(3,d.length-100);i<d.length-3;i++){let hi=true,lo=true;for(let j=i-3;j<=i+3;j++){if(i===j)continue;if(d[j].high>=d[i].high)hi=false;if(d[j].low<=d[i].low)lo=false;}if(hi)out.push({i,p:d[i].high,t:'H'});if(lo)out.push({i,p:d[i].low,t:'L'});}return out;}
