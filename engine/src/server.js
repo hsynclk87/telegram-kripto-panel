@@ -96,7 +96,7 @@ function updateCandle(symbol, exchange, k, interval = "1m") {
   if (existing >= 0) history[existing] = candle;
   else history.push(candle);
   history.sort((a, b) => a.openTime - b.openTime);
-  const cap = interval === "1m" ? 2000 : 500;
+  const cap = 1000;
   if (history.length > cap) history.splice(0, history.length - cap);
   publish("candle", { symbol: key, candle });
   if (interval === "1m") void storage.saveCandle(key, candle).catch((error) => log("warn", "Candle persistence failed", { error: error.message }));
@@ -172,13 +172,13 @@ async function loadSymbolCandleHistory(symbol) {
     const intervals = ["1m", "15m", "1h", "4h"];
     const loaded = await Promise.all(intervals.map(async interval => {
       const key = "candles" + interval;
-      if ((market[key] || []).length >= 30) return [interval, market[key], null];
+      if ((market[key] || []).length >= 1000) return [interval, market[key], null];
       try {
-        const candles = await fetchKlineHistory(symbol, interval, interval === "1m" ? 500 : 300);
+        const candles = await fetchKlineHistory(symbol, interval, 1000);
         const live = market[key] || [];
         const merged = new Map(candles.map(c => [c.openTime, c]));
         for (const candle of live) merged.set(candle.openTime, candle);
-        market[key] = [...merged.values()].sort((x,y) => x.openTime-y.openTime).slice(-500);
+        market[key] = [...merged.values()].sort((x,y) => x.openTime-y.openTime).slice(-1000);
         return [interval, market[key], null];
       } catch (error) {
         log("warn", "Historical candle lookup failed", { symbol, interval, error: error.message });
@@ -705,7 +705,7 @@ const server = http.createServer(async (req, res) => {
     const market = state.markets[key];
     // Seçilen coin için eksik geçmişi bu isteğin içinde tamamla; diğer coinleri bekleme.
     const countsBefore = ["1m","15m","1h","4h"].map(i => (market["candles"+i] || []).length);
-    if (countsBefore.some(count => count < 30)) {
+    if (countsBefore.some(count => count < 1000)) {
       try { await loadSymbolCandleHistory(key); }
       catch (error) { log("warn", "On-demand history load failed", { symbol: key, error: error.message }); }
     }
@@ -728,13 +728,13 @@ const server = http.createServer(async (req, res) => {
       const counts = Object.fromEntries(["1m","15m","1h","4h"].map(interval => [
         interval, Array.isArray(market["candles" + interval]) ? market["candles" + interval].length : 0
       ]));
-      return [symbol, { counts, ready: Object.values(counts).every(count => count >= 30) }];
+      return [symbol, { counts, ready: Object.values(counts).every(count => count >= 1000) }];
     }));
     const readySymbols = Object.values(symbols).filter(item => item.ready).length;
     res.writeHead(200);
     return res.end(JSON.stringify({
       ok: readySymbols > 0, readySymbols, totalSymbols: SYMBOLS.length,
-      minimumCandlesPerInterval: 30, symbols, time: now()
+      minimumCandlesPerInterval: 1000, symbols, time: now()
     }));
   }
 
@@ -869,7 +869,7 @@ server.listen(PORT, HOST, () => {
   upstreamStops.push(startBinanceSpot(), startBinanceFutures(), startBybit());
   // Başlangıç yüklemesi başarısız/eksik kalan sembolleri otomatik tamamla.
   const historyRetry = setInterval(() => {
-    const incomplete = SYMBOLS.some(symbol => ["15m","1h","4h"].some(i => (state.markets[symbol]?.["candles"+i]?.length || 0) < 100));
+    const incomplete = SYMBOLS.some(symbol => ["1m","15m","1h","4h"].some(i => (state.markets[symbol]?.["candles"+i]?.length || 0) < 1000));
     if (incomplete) void loadCandleHistory();
   }, 60000);
   upstreamStops.push(() => clearInterval(historyRetry));
