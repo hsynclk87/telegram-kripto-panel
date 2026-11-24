@@ -382,6 +382,7 @@ function startBinanceSpot() {
       if (!d) return;
       const symbol = symbolFrom(d.s);
       if (d.e === "trade") {
+        updateMarket(symbol, "binanceSpot", { lastPrice: Number(d.p), priceTimestamp: Number(d.T) });
         addTrade({
           exchange: "Binance Spot", id: "spot:" + d.t, symbol, price: Number(d.p),
           quantity: Number(d.q), quoteValue: Number(d.p) * Number(d.q),
@@ -458,6 +459,7 @@ function startBinanceFutures() {
       const d = packet?.data ?? packet;
       if (!d || typeof d !== "object") return;
       if (d.e === "aggTrade") {
+        updateMarket(d.s, "binanceFutures", { lastPrice: Number(d.p), priceTimestamp: Number(d.T) });
         addTrade({
           exchange: "Binance Futures", id: "futures:" + d.a, symbol: symbolFrom(d.s),
           price: Number(d.p), quantity: Number(d.q),
