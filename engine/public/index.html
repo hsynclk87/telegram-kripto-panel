@@ -179,10 +179,68 @@ body{max-width:900px}
 @media(max-width:760px){#signalEnginePanel .pro-trigger-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#signalEnginePanel .pro-decision-layout{grid-template-columns:1fr}#signalEnginePanel .pro-decision-aside{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){#signalEnginePanel .pro-topline{align-items:flex-start;flex-direction:column;padding:14px}#signalEnginePanel .pro-top-actions{width:100%;justify-content:space-between}#signalEnginePanel .pro-context{grid-template-columns:repeat(2,minmax(0,1fr))}#signalEnginePanel .pro-decision-main .sigvalue{font-size:26px}#signalEnginePanel .pro-score-ring{width:78px;height:78px}#signalEnginePanel .pro-trigger-grid{grid-template-columns:1fr 1fr}#signalEnginePanel .pro-levels{grid-template-columns:repeat(2,minmax(0,1fr))}#signalEnginePanel .pro-decision-aside{grid-template-columns:1fr}#signalEnginePanel .pro-section-head{align-items:flex-start;flex-direction:column;gap:4px}#signalEnginePanel .pro-section-head>small{text-align:left}}
 
+
+/* APP-WIDE PROFESSIONAL TRADING DESK SYSTEM — UI only */
+#mainTabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:5px;margin:12px 0 13px;border:1px solid rgba(107,153,211,.2);border-radius:13px;background:rgba(9,18,32,.78)}
+#mainTabs button{min-width:0;flex:initial;padding:11px 8px;border:1px solid transparent;border-radius:9px;background:transparent;color:#91a7c5;font-size:10px;font-weight:850;letter-spacing:.25px}
+#mainTabs button.active{background:linear-gradient(135deg,#294e72,#1a3856);border-color:#5d8bb8;color:#f3f8ff;box-shadow:inset 0 1px rgba(255,255,255,.08),0 5px 15px rgba(0,0,0,.18)}
+.desk-page-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:9px 0 10px;padding:17px 18px;border:1px solid rgba(105,157,218,.28);border-radius:15px;background:radial-gradient(ellipse at 0 0,rgba(68,127,202,.2),transparent 48%),linear-gradient(120deg,#172b44,#101b2d 72%,#14263a)}
+.desk-kicker{font-size:9px;font-weight:900;letter-spacing:1.45px;color:#83bff0}
+.desk-page-head h2{font-size:17px;letter-spacing:.3px;margin:5px 0 0;color:#f0f5ff}
+.desk-page-head p{font-size:10px;color:#9fb2cc;line-height:1.55;margin:5px 0 0}
+.desk-page-state{white-space:nowrap;padding:8px 10px;border:1px solid rgba(53,242,161,.27);border-radius:9px;background:rgba(53,242,161,.06);color:#78e9bb;font-size:9px;font-weight:800;letter-spacing:.45px}
+.desk-page-state i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#35f2a1;box-shadow:0 0 9px #35f2a1;margin-right:6px}
+.price-card{padding:17px 18px;border-color:rgba(106,158,218,.3);background:linear-gradient(145deg,#172943,#101b2d);box-shadow:0 9px 25px rgba(0,0,0,.16)}
+.price-card .price{font-size:34px;letter-spacing:-1.2px}
+.price-card .pricehead{align-items:center}
+.price-card .stats>div{padding:9px 10px;border:1px solid rgba(117,151,193,.15);border-radius:9px;background:rgba(8,17,30,.35)}
+.market-card{padding:16px;border-color:rgba(105,157,218,.26);background:linear-gradient(145deg,#15263d,#101a2b)}
+.market-card>.section,.layout .section,body>section.card>.section{font-size:10px;letter-spacing:1px;font-weight:900;color:#a9c9ed}
+.market-card .signal{padding:12px;border:1px solid rgba(115,153,201,.2);border-radius:11px;background:rgba(7,16,29,.35)}
+.market-card .signalword{font-size:18px;font-weight:900;letter-spacing:.3px}
+.market-card .pill{border:1px solid rgba(116,158,207,.25);background:#1b304b}
+.market-card .explain{font-size:11px;line-height:1.75}
+.layout{gap:10px;align-items:start}
+.layout>div{min-width:0;display:grid;align-content:start;gap:9px}
+.layout .card,body>section.card:not(.price-card):not(.market-card):not(#srTabPanel){margin:0;padding:14px;border-color:rgba(105,151,207,.23);border-radius:13px;background:linear-gradient(145deg,#14243a,#101a2b);box-shadow:0 6px 19px rgba(0,0,0,.12)}
+.layout .section,body>section.card:not(.price-card):not(.market-card):not(#srTabPanel)>.section{padding-bottom:9px;margin-bottom:10px;border-bottom:1px solid rgba(125,157,199,.15)}
+.metric{border:1px solid rgba(111,151,201,.16);border-radius:10px;background:rgba(8,17,30,.35);padding:10px}
+.metric>span{font-size:8px;letter-spacing:.55px;color:#91a8c6}
+.metric>b{font-size:13px;font-variant-numeric:tabular-nums}
+.metric>small{font-size:9px;line-height:1.45;color:#8ea5c4}
+.advanced-grid{gap:7px}
+.levels .level,.level{padding:11px;border:1px solid rgba(111,151,201,.2);border-radius:10px;background:rgba(8,17,30,.35)}
+.table,.sigtable{font-variant-numeric:tabular-nums}
+#srTabPanel{padding:17px;border:1px solid rgba(105,157,218,.27);border-radius:15px;background:linear-gradient(145deg,#15263e,#0f1a2b);box-shadow:0 10px 26px rgba(0,0,0,.16)}
+#srTabPanel>.section{font-size:10px;letter-spacing:.85px;font-weight:900;color:#a9c9ed;padding-bottom:9px;border-bottom:1px solid rgba(125,157,199,.15)}
+#srTabPanel .grid{gap:8px}
+#srTabPanel .metric{padding:12px;background:linear-gradient(145deg,#172a43,#101c2e)}
+#srTabPanel .sr-mtf-card,#srTabPanel .sr-item{background:linear-gradient(145deg,#172a43,#101c2e);border-color:rgba(105,157,218,.24);padding:12px}
+#srTabPanel .sr-mtf-head b{font-size:12px;color:#e5efff}
+#srTabPanel .foot{font-size:9px;line-height:1.7;color:#8fa5c2;border-top:1px solid rgba(125,157,199,.15);padding-top:10px;margin-top:14px}
+#academyPanel{padding:0 0 8px}
+#academyPanel .academy-hero{padding:19px;border-color:rgba(105,157,218,.32);background:radial-gradient(ellipse at 0 0,rgba(68,127,202,.2),transparent 48%),linear-gradient(120deg,#172b44,#101b2d 72%,#14263a)}
+#academyPanel .academy-title{font-size:20px;letter-spacing:.45px}
+#academyPanel .academy-toolbar{padding:12px 14px;background:linear-gradient(145deg,#14243a,#101b2c);border-color:rgba(105,157,218,.24)}
+#academyPanel .academy-toolbar button{border:1px solid #456d96;background:#1c3b5c;color:#edf5ff;border-radius:8px;padding:9px 12px;font-size:9px;font-weight:850}
+#academyPanel .academy-subnav{padding:10px 0 12px;gap:7px}
+#academyPanel .academy-subnav button{border:1px solid rgba(111,151,201,.2);border-radius:9px;padding:9px 11px;font-size:9px;font-weight:850;letter-spacing:.2px}
+#academyPanel .academy-subnav button.active{background:linear-gradient(135deg,#315b78,#24455f);border-color:#79b9cf;box-shadow:0 4px 12px rgba(0,0,0,.16)}
+#academyPanel .academy-stat{padding:12px;background:linear-gradient(145deg,#172a43,#101c2e);border-color:rgba(105,157,218,.24)}
+#academyPanel .academy-stat b{font-size:15px;font-variant-numeric:tabular-nums}
+#academyPanel .academy-card{border-color:rgba(105,157,218,.25);box-shadow:0 7px 22px rgba(0,0,0,.13)}
+#academyPanel .academy-card h3{font-size:12px;letter-spacing:.4px}
+#academyPanel .academy-foot{margin-top:12px;padding:12px 3px;border-top:1px solid rgba(125,157,199,.15);font-size:9px;line-height:1.65;color:#8fa5c2}
+#academyToolContent .academy-card,#academyToolContent .academy-section{border-radius:13px}
+@media(max-width:700px){.layout{grid-template-columns:1fr}.desk-page-head{align-items:flex-start;flex-direction:column}.desk-page-state{align-self:flex-start}}
+@media(max-width:520px){body{padding:10px 9px 22px}#mainTabs{grid-template-columns:repeat(2,minmax(0,1fr))}#mainTabs button{font-size:9px;padding:10px 5px}.desk-page-head{padding:14px}.desk-page-head h2{font-size:15px}.price-card .price{font-size:29px}.price-card{padding:13px}.layout .card,body>section.card:not(.price-card):not(.market-card):not(#srTabPanel){padding:11px}#srTabPanel{padding:12px}#academyPanel .academy-hero{align-items:flex-start;flex-direction:column;padding:14px}#academyPanel .academy-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#academyPanel .academy-workspace{grid-template-columns:1fr}#academyPanel .academy-side{grid-template-columns:1fr}}
+
 </style></head><body>
 <header class="head"><div><div class="brand">KRİPTO · İNDİKATÖR TERMİNALİ</div><div class="conn"><span class="dot" id="dot"></span><span id="connection">Binance canlı fiyat bağlantısı bekleniyor</span></div></div><div class="pill">REALTIME</div></header>
 <div class="row" id="coins"></div><div class="row" id="frames"></div><div class="row" id="mainTabs"><button id="tabMarket" class="active" type="button">PİYASA ANALİZİ</button><button id="tabLevels" type="button">DESTEK / DİRENÇ</button><button id="tabAcademy" type="button">ANALİZ ARAÇLARI</button><button id="tabSignal" type="button">SİNYAL MOTORU</button></div>
-<section class="card price-card"><div class="pricehead"><div><div class="muted" id="symbol">BTCUSDT · 1 SAAT</div><div class="price" id="price">Bağlanıyor…</div><div id="change" class="change">—</div></div><div class="right"><div class="muted">24 SAAT HACİM</div><b id="volume">—</b></div></div><div class="stats"><div><span>24s En Yüksek</span><b id="high">—</b></div><div><span>24s En Düşük</span><b id="low">—</b></div><div><span>Son işlem</span><b id="tick">—</b></div></div></section><section class="card" id="srTabPanel" style="display:none">
+<div class="desk-page-head" id="marketDeskHeader"><div><span class="desk-kicker">MARKET INTELLIGENCE / LIVE MONITOR</span><h2>GENEL PİYASA TERMİNALİ</h2><p>Spot fiyat, vadeli piyasa, emir akışı, hacim ve teknik görünüm tek ekranda.</p></div><div class="desk-page-state"><i></i> CANLI PİYASA TAKİBİ</div></div>
+<section class="card price-card"><div class="pricehead"><div><div class="muted" id="symbol">BTCUSDT · 1 SAAT</div><div class="price" id="price">Bağlanıyor…</div><div id="change" class="change">—</div></div><div class="right"><div class="muted">24 SAAT HACİM</div><b id="volume">—</b></div></div><div class="stats"><div><span>24s En Yüksek</span><b id="high">—</b></div><div><span>24s En Düşük</span><b id="low">—</b></div><div><span>Son işlem</span><b id="tick">—</b></div></div></section><div class="desk-page-head" id="levelsDeskHeader" style="display:none"><div><span class="desk-kicker">MARKET STRUCTURE / MULTI-TIMEFRAME</span><h2>DESTEK & DİRENÇ ANALİZ MASASI</h2><p>Fiyatın tepki verdiği bölgeler, tekrar testleri ve zaman dilimleri arası seviye uyumu.</p></div><div class="desk-page-state"><i></i> SEVİYE HARİTASI</div></div>
+<section class="card" id="srTabPanel" style="display:none">
 <div class="section">BINANCE ACADEMY YÖNTEMİ · DESTEK / DİRENÇ HARİTASI</div>
 <div class="muted" id="srMethodNote">Geçmiş dip-tepe tepkileri, tekrarlanan testler, rol değişimi, trend çizgileri, hareketli ortalamalar, Fibonacci, hacim ve psikolojik seviyeler.</div>
 <div class="grid" style="margin-top:10px">
@@ -921,6 +979,8 @@ function activateMainTab(which){
  $('tabAcademy').classList.toggle('active',academy);$('tabSignal').classList.toggle('active',signal);
  $('srTabPanel').classList.toggle('visible',levels);
  $('srTabPanel').style.display=levels?'block':'none';
+ $('marketDeskHeader').style.display=market?'flex':'none';
+ $('levelsDeskHeader').style.display=levels?'flex':'none';
  $('academyPanel').classList.toggle('visible',academy);
  $('academyPanel').style.display=academy?'block':'none';$('signalEnginePanel').classList.toggle('visible',signal);$('signalEnginePanel').style.display=signal?'block':'none';
  document.querySelector('.price-card').style.display=market?'block':'none';
