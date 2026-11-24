@@ -103,89 +103,112 @@ function updateCandle(symbol, exchange, k, interval = "1m") {
 }
 
 async function fetchKlineHistory(symbol, interval, limit) {
-  const binanceHosts = [
-    "https://data-api.binance.vision",
-    "https://api.binance.com",
-    "https://api1.binance.com",
-    "https://api2.binance.com",
-    "https://api3.binance.com",
-    "https://api4.binance.com"
-  ];
-  const query = "/api/v3/klines?symbol=" + encodeURIComponent(symbol) + "&interval=" + encodeURIComponent(interval) + "&limit=" + limit;
-  let lastError;
-  for (const host of binanceHosts) {
-    try {
-      const response = await fetch(host + query, { signal: AbortSignal.timeout(9000), cache: "no-store" });
-      if (!response.ok) throw new Error("Binance HTTP " + response.status + " " + host);
-      const rows = await response.json();
-      if (!Array.isArray(rows) || rows.length < 30) throw new Error("Binance returned insufficient candles: " + (rows?.length || 0));
-      const candles = rows.filter(row => Number(row[6]) < Date.now()).map(row => ({
-        interval, openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]), low: Number(row[3]),
-        close: Number(row[4]), volume: Number(row[5]), closeTime: Number(row[6]), quoteVolume: Number(row[7]), closed: true,
-        source: "BINANCE"
-      }));
-      if (candles.length >= 30) return candles;
-    } catch (error) { lastError = error; }
-  }
+  const duration = ({ "1m": 60000, "15m": 900000, "1h": 3600000, "4h": 14400000 })[interval];
+  const bybitInterval = ({ "1m": "1", "15m": "15", "1h": "60", "4h": "240" })[interval];
+  if (!duration || !bybitInterval) throw new Error("Unsupported candle interval: " + interval);
 
-  // Binance erişilemiyorsa aynı spot mum geçmişini Bybit public market API'den al.
-  try {
-    const bybitInterval = ({ "1m": "1", "15m": "15", "1h": "60", "4h": "240" })[interval];
+  const validate = (candles, source) => {
+    const clean = candles
+      .filter(c => c.openTime + duration <= Date.now())
+      .filter(c => [c.openTime,c.open,c.high,c.low,c.close,c.volume,c.quoteVolume].every(Number.isFinite))
+      .sort((a,b) => a.openTime - b.openTime);
+    if (clean.length < 30) throw new Error(source + " returned only " + clean.length + " closed candles");
+    return clean.slice(-limit).map(c => ({ ...c, interval, closed: true, source }));
+  };
+
+  const binance = async (host) => {
+    const url = host + "/api/v3/klines?symbol=" + encodeURIComponent(symbol) +
+      "&interval=" + encodeURIComponent(interval) + "&limit=" + limit;
+    const response = await fetch(url, { signal: AbortSignal.timeout(4500), cache: "no-store" });
+    if (!response.ok) throw new Error("Binance HTTP " + response.status);
+    const rows = await response.json();
+    if (!Array.isArray(rows)) throw new Error("Binance invalid kline response");
+    return validate(rows.map(row => ({
+      openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]), low: Number(row[3]),
+      close: Number(row[4]), volume: Number(row[5]), closeTime: Number(row[6]),
+      quoteVolume: Number(row[7])
+    })), "BINANCE");
+  };
+
+  const bybit = async () => {
     const url = "https://api.bybit.com/v5/market/kline?category=spot&symbol=" +
       encodeURIComponent(symbol) + "&interval=" + bybitInterval + "&limit=" + Math.min(limit, 1000);
-    const response = await fetch(url, { signal: AbortSignal.timeout(12000), cache: "no-store" });
+    const response = await fetch(url, { signal: AbortSignal.timeout(4500), cache: "no-store" });
     if (!response.ok) throw new Error("Bybit HTTP " + response.status);
     const body = await response.json();
     if (body.retCode !== 0 || !Array.isArray(body.result?.list)) {
       throw new Error("Bybit kline error: " + (body.retMsg || "invalid response"));
     }
-    const duration = ({ "1m": 60000, "15m": 900000, "1h": 3600000, "4h": 14400000 })[interval];
-    const candles = body.result.list.map(row => ({
-      interval, openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]), low: Number(row[3]),
+    return validate(body.result.list.map(row => ({
+      openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]), low: Number(row[3]),
       close: Number(row[4]), volume: Number(row[5]), quoteVolume: Number(row[6]),
-      closeTime: Number(row[0]) + duration - 1, closed: Number(row[0]) + duration <= Date.now(),
-      source: "BYBIT"
-    })).filter(c => c.closed && [c.openTime,c.open,c.high,c.low,c.close,c.volume].every(Number.isFinite))
-      .sort((a,b) => a.openTime - b.openTime);
-    if (candles.length < 30) throw new Error("Bybit returned insufficient closed candles: " + candles.length);
-    return candles;
+      closeTime: Number(row[0]) + duration - 1
+    })), "BYBIT");
+  };
+
+  // İki borsa aynı anda sorgulanır; ilk yeterli ve geçerli geçmiş veri kazanır.
+  // Diğer isteklerin yavaş yanıtı uygulamanın açılmasını geciktirmez.
+  try {
+    return await Promise.any([
+      binance("https://data-api.binance.vision"),
+      binance("https://api.binance.com"),
+      bybit()
+    ]);
   } catch (error) {
-    lastError = error;
+    const reasons = error instanceof AggregateError
+      ? error.errors.map(item => item?.message || String(item)).join(" | ")
+      : error.message;
+    throw new Error("All parallel history sources failed: " + reasons);
   }
-  throw lastError || new Error("All historical candle sources failed");
 }
 
 async function loadCandleHistory() {
   if (historyLoading) return;
   historyLoading = true;
   const intervals = ["1m", "15m", "1h", "4h"];
-  const results = await Promise.allSettled(SYMBOLS.map(async symbol => {
-    const loaded = await Promise.all(intervals.map(async interval => {
-      try { return [interval, await fetchKlineHistory(symbol, interval, interval === "1m" ? 500 : 300), null]; }
-      catch (error) {
-        log("warn", "Historical candle source failed", { symbol, interval, error: error.message });
-        return [interval, [], error.message];
+  try {
+    const results = await Promise.allSettled(SYMBOLS.map(async symbol => {
+      const market = state.markets[symbol];
+      if (!market) return { symbol, skipped: true };
+      const loaded = await Promise.all(intervals.map(async interval => {
+        try {
+          const candles = await fetchKlineHistory(symbol, interval, interval === "1m" ? 500 : 300);
+          return [interval, candles, null];
+        } catch (error) {
+          log("warn", "Parallel historical candle lookup failed", { symbol, interval, error: error.message });
+          return [interval, [], error.message];
+        }
+      }));
+
+      for (const [interval, candles] of loaded) {
+        if (!candles.length) continue;
+        const key = "candles" + interval;
+        const live = market[key] || [];
+        const merged = new Map(candles.map(c => [c.openTime, c]));
+        for (const candle of live) merged.set(candle.openTime, candle);
+        market[key] = [...merged.values()].sort((a,b) => a.openTime-b.openTime).slice(-500);
       }
+
+      const counts = Object.fromEntries(intervals.map(i => [i, market["candles" + i]?.length || 0]));
+      log("info", "Historical market data status", {
+        symbol, counts,
+        sources: Object.fromEntries(loaded.map(([i, rows]) => [i, rows[0]?.source || "LIVE_ONLY"])),
+        errors: Object.fromEntries(loaded.filter(([,rows,error]) => error).map(([i,,error]) => [i,error]))
+      });
+      publish("history", {
+        symbol, counts, candles1m: market.candles1m, candles15m: market.candles15m,
+        candles1h: market.candles1h, candles4h: market.candles4h
+      });
+      return { symbol, counts };
     }));
-    for (const [interval, candles] of loaded) {
-      if (!candles.length) continue;
-      const key = "candles" + interval, live = state.markets[symbol][key] || [];
-      const merged = new Map(candles.map(c => [c.openTime, c]));
-      for (const candle of live) merged.set(candle.openTime, candle);
-      state.markets[symbol][key] = [...merged.values()].sort((a,b)=>a.openTime-b.openTime).slice(-500);
+    for (const result of results) {
+      if (result.status === "rejected") {
+        log("warn", "Historical market data load failed", { error: result.reason?.message });
+      }
     }
-    const counts = Object.fromEntries(intervals.map(i => [i, state.markets[symbol]["candles" + i]?.length || 0]));
-    log("info", "Historical market data status", {
-      symbol, counts, sources: Object.fromEntries(loaded.map(([i, rows]) => [i, rows[0]?.source || "LIVE_ONLY"])),
-      errors: Object.fromEntries(loaded.filter(([,rows,error]) => error).map(([i,,error]) => [i,error]))
-    });
-    publish("history", { symbol, counts, candles1m: state.markets[symbol].candles1m, candles15m: state.markets[symbol].candles15m, candles1h: state.markets[symbol].candles1h, candles4h: state.markets[symbol].candles4h });
-    return { symbol, counts };
-  }));
-  for (const result of results) {
-    if (result.status === "rejected") log("warn", "Historical market data load failed", { error: result.reason?.message });
+  } finally {
+    historyLoading = false;
   }
-  historyLoading = false;
 }
 
 function addTrade(trade) {
