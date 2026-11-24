@@ -669,14 +669,14 @@ futuresJson('/fapi/v1/fundingRate?symbol='+s+'&limit=1'),
 futuresJson('/fapi/v1/premiumIndex?symbol='+s)
 ]);
 const [oiR,price5mR,histR,takerR,globalR,topR,fundingR,markR]=jobs;if(requestCoin!==coin)return;let updated=0;
-if(oiR.status==='fulfilled'&&histR.status==='fulfilled'){
-const oi=oiR.value,h=histR.value,mark=markR.status==='fulfilled'?+markR.value.markPrice:NaN;
-const oiNow=+oi.openInterest,oiPrev=h.length>1?+h[h.length-2].sumOpenInterest:oiNow,delta=oiPrev?(oiNow/oiPrev-1)*100:0;
+if(oiR.status==='fulfilled'){
+const oi=oiR.value,h=histR.status==='fulfilled'&&Array.isArray(histR.value)?histR.value:[],mark=markR.status==='fulfilled'?+markR.value.markPrice:NaN;
+const oiNow=+oi.openInterest,oiPrev=h.length>1?+h[h.length-2].sumOpenInterest:null,delta=oiPrev?(oiNow/oiPrev-1)*100:null;
 const k5=price5mR.status==='fulfilled'?price5mR.value:[],priceMove=k5.length>1?(+k5[1][4]/+k5[0][1]-1)*100:null;
 futuresState.oiDelta=delta;futuresState.oiPriceMove=priceMove;futuresState.oiAt=Date.now();updated++;
-let oiText='Nötr';if(priceMove!==null){if(delta>.15&&priceMove<-.08)oiText='Yeni Short baskısı';else if(delta<-.15&&priceMove<-.08)oiText='Long kapanışları';else if(delta>.15&&priceMove>.08)oiText='Yeni Long katılımı';else if(delta<-.15&&priceMove>.08)oiText='Short kapanışları';}
-futuresState.oiInterpretation=oiText;setMetric('openInterest',fmt(oiNow)+' '+coin,delta>=0?'positive':'negative');setText('oiState','OI 5dk '+(delta>=0?'+':'')+delta.toFixed(2)+'% · fiyat '+(priceMove===null?'—':(priceMove>=0?'+':'')+priceMove.toFixed(2)+'%')+' · '+fmtUsd(oiNow*mark));setMetric('oiInterpretation',oiText,oiText.includes('Short baskısı')?'negative':oiText.includes('Long kapanış')?'neutral':oiText.includes('Long katılım')?'positive':'neutral');setText('oiInterpretationState','5 dakikalık fiyat + OI birlikte');
-}else setText('oiState','OI verisi geçici olarak alınamadı');
+let oiText='Nötr';if(delta!==null&&priceMove!==null){if(delta>.15&&priceMove<-.08)oiText='Yeni Short baskısı';else if(delta<-.15&&priceMove<-.08)oiText='Long kapanışları';else if(delta>.15&&priceMove>.08)oiText='Yeni Long katılımı';else if(delta<-.15&&priceMove>.08)oiText='Short kapanışları';}
+futuresState.oiInterpretation=oiText;setMetric('openInterest',fmt(oiNow)+' '+coin,delta===null?'neutral':delta>=0?'positive':'negative');setText('oiState',(delta===null?'OI geçmişi bekleniyor':'OI 5dk '+(delta>=0?'+':'')+delta.toFixed(2)+'%')+' · fiyat '+(priceMove===null?'—':(priceMove>=0?'+':'')+priceMove.toFixed(2)+'%')+' · '+fmtUsd(oiNow*mark));setMetric('oiInterpretation',oiText,oiText.includes('Short baskısı')?'negative':oiText.includes('Long kapanış')?'neutral':oiText.includes('Long katılım')?'positive':'neutral');setText('oiInterpretationState',delta===null?'Geçmiş OI endpointi yanıt vermedi':'5 dakikalık fiyat + OI birlikte');
+}else{futuresState.oiDelta=null;futuresState.oiAt=0;setText('oiState','Anlık OI verisi alınamadı');}
 if(takerR.status==='fulfilled'&&takerR.value.length){
 const t=takerR.value[takerR.value.length-1],ratio=+t.buySellRatio;futuresState.takerRatio=ratio;futuresState.takerAt=Date.now();updated++;
 setMetric('takerRatio',ratio.toFixed(3)+'x',ratio>1.05?'positive':ratio<.95?'negative':'neutral');setText('takerState','Alış '+fmt(+t.buyVol)+' / Satış '+fmt(+t.sellVol)+' '+coin+' · 5 dk');
