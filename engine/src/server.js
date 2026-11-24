@@ -39,6 +39,7 @@ for (const symbol of SYMBOLS) {
 const clients = new Set();
 const isDuplicateTrade = createTradeDeduplicator(20000);
 const upstreamStops = [];
+let historyLoading = false;
 let storage = {
   enabled: false,
   async saveEvent() {},
@@ -155,6 +156,8 @@ async function fetchKlineHistory(symbol, interval, limit) {
 }
 
 async function loadCandleHistory() {
+  if (historyLoading) return;
+  historyLoading = true;
   const intervals = ["15m", "1h", "4h"];
   const results = await Promise.allSettled(SYMBOLS.map(async symbol => {
     const loaded = await Promise.all(intervals.map(async interval => {
@@ -182,6 +185,7 @@ async function loadCandleHistory() {
   for (const result of results) {
     if (result.status === "rejected") log("warn", "Historical market data load failed", { error: result.reason?.message });
   }
+  historyLoading = false;
 }
 
 function addTrade(trade) {
@@ -671,6 +675,28 @@ const server = http.createServer(async (req, res) => {
         lastMessageType: item.lastMessageType, messageCounts: item.messageCounts,
         lastError: item.lastError, reconnects: item.reconnects
       }]))
+    }));
+  }
+
+  if (url.pathname === "/api/v1/history") {
+    const key = symbolFrom(url.searchParams.get("symbol") || "");
+    if (!key || !state.markets[key]) {
+      res.writeHead(400);
+      return res.end(JSON.stringify({ error: "invalid_symbol", message: "Geçerli bir coin sembolü gönderin." }));
+    }
+    const market = state.markets[key];
+    const candles = {
+      candles15m: market.candles15m || [],
+      candles1h: market.candles1h || [],
+      candles4h: market.candles4h || []
+    };
+    res.writeHead(200);
+    return res.end(JSON.stringify({
+      symbol: key, counts: {
+        "15m": candles.candles15m.length,
+        "1h": candles.candles1h.length,
+        "4h": candles.candles4h.length
+      }, ...candles, time: now()
     }));
   }
 
