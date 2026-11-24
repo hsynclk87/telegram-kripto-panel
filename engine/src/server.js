@@ -674,6 +674,22 @@ const server = http.createServer(async (req, res) => {
     }));
   }
 
+  if (url.pathname === "/api/v1/history-status") {
+    const symbols = Object.fromEntries(SYMBOLS.map(symbol => {
+      const market = state.markets[symbol] || {};
+      const counts = Object.fromEntries(["15m","1h","4h"].map(interval => [
+        interval, Array.isArray(market["candles" + interval]) ? market["candles" + interval].length : 0
+      ]));
+      return [symbol, { counts, ready: Object.values(counts).every(count => count >= 30) }];
+    }));
+    const readySymbols = Object.values(symbols).filter(item => item.ready).length;
+    res.writeHead(200);
+    return res.end(JSON.stringify({
+      ok: readySymbols > 0, readySymbols, totalSymbols: SYMBOLS.length,
+      minimumCandlesPerInterval: 30, symbols, time: now()
+    }));
+  }
+
   if (url.pathname === "/api/v1/snapshot") {
     const requested = url.searchParams.get("symbol");
     const key = requested ? symbolFrom(requested) : null;
@@ -793,13 +809,14 @@ const analysisTimer = setInterval(() => {
 server.listen(PORT, HOST, () => {
   log("info", "Analysis engine API listening", { host: HOST, port: PORT, symbols: SYMBOLS });
   void (async () => {
+    // Geçmiş mum yüklemesi veritabanı bağlantısına bağlı değildir; sunucu açılır açılmaz başlat.
+    void loadCandleHistory();
     try {
       storage = await createStorage();
       log("info", "Storage initialized", { mode: storage.enabled ? "postgresql" : "memory" });
     } catch (error) {
       log("error", "PostgreSQL initialization failed; continuing in memory", { error: error.message });
     }
-    await loadCandleHistory();
   })();
   upstreamStops.push(startBinanceSpot(), startBinanceFutures(), startBybit());
   // Başlangıç yüklemesi başarısız/eksik kalan sembolleri otomatik tamamla.
