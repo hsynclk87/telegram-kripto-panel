@@ -1345,20 +1345,27 @@ function acMiniLine(values,w=520,h=142,color='#35d6ae',minV=null,maxV=null){
  return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none"><path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+pts.at(-1)[0]+'" cy="'+pts.at(-1)[1]+'" r="3.5" fill="'+color+'"/></svg>';
 }
 function renderAcademyVisuals(d,closes,p,rsiNow,macdNow,volRatio){
- const n=closes.length,cut=closes.slice(-64),e20=ema(closes,20).slice(-64),e50=ema(closes,50).slice(-64),rs=rsi(closes).slice(-64);
+ const cut=closes.slice(-64),e20=ema(closes,20).slice(-64),e50=ema(closes,50).slice(-64),rs=rsi(closes).slice(-64),priceSet=[...cut,...e20.filter(Number.isFinite),...e50.filter(Number.isFinite)],priceLo=Math.min(...priceSet),priceHi=Math.max(...priceSet);
  const fast=ema(closes,12),slow=ema(closes,26),ml=fast.map((v,i)=>v-slow[i]),ms=ema(ml,9),hist=ml.map((v,i)=>v-ms[i]).slice(-32);
- const priceSvg='<div class="viz-svg">'+acMiniLine(cut,520,142,'#e8b45d')+'<div class="viz-overlay">'+acMiniLine(e20,520,142,'#35d6ae')+'</div><div class="viz-overlay">'+acMiniLine(e50,520,142,'#7c9cff')+'</div></div>';
- const rsiSvg='<div class="viz-svg"><svg viewBox="0 0 520 142" preserveAspectRatio="none"><rect x="0" y="0" width="520" height="142" fill="#0b1725"/><rect x="0" y="0" width="520" height="42" fill="#ef667c" opacity=".08"/><rect x="0" y="100" width="520" height="42" fill="#20c7a0" opacity=".08"/><path d="M0 42H520M0 71H520M0 100H520" stroke="#53667d" stroke-dasharray="4 5"/>'+acMiniLine(rs,520,142,'#b58cff',0,100).replace('<svg viewBox="0 0 520 142" preserveAspectRatio="none">','<svg viewBox="0 0 520 142" preserveAspectRatio="none">')+'</svg></div>';
- const histBars=hist.map((v,i)=>{const x=8+i*504/Math.max(1,hist.length),base=72,y=base-Math.max(-1,Math.min(1,v/(Math.max(...hist.map(Math.abs),1e-9))))*58;return '<rect x="'+x.toFixed(1)+'" y="'+Math.min(base,y).toFixed(1)+'" width="11" height="'+Math.max(1,Math.abs(base-y)).toFixed(1)+'" rx="1" fill="'+(v>=0?'#20c7a0':'#ef667c')+'" opacity=".85"/>';}).join('');
+ const priceSvg='<div class="viz-svg">'+acMiniLine(cut,520,142,'#e8b45d',priceLo,priceHi)+'<div class="viz-overlay">'+acMiniLine(e20,520,142,'#35d6ae',priceLo,priceHi)+'</div><div class="viz-overlay">'+acMiniLine(e50,520,142,'#7c9cff',priceLo,priceHi)+'</div></div>';
+ const rsiLine=acMiniLine(rs,520,142,'#b58cff',0,100).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
+ const rsiSvg='<div class="viz-svg"><svg viewBox="0 0 520 142" preserveAspectRatio="none"><rect x="0" y="0" width="520" height="142" fill="#0b1725"/><rect x="0" y="0" width="520" height="42" fill="#ef667c" opacity=".08"/><rect x="0" y="100" width="520" height="42" fill="#20c7a0" opacity=".08"/><path d="M0 42H520M0 71H520M0 100H520" stroke="#53667d" stroke-dasharray="4 5"/>'+rsiLine+'</svg></div>';
+ const histMax=Math.max(...hist.map(Math.abs),1e-9),histBars=hist.map((v,i)=>{const x=8+i*504/Math.max(1,hist.length),base=71,y=base-v/histMax*55;return '<rect x="'+x.toFixed(1)+'" y="'+Math.min(base,y).toFixed(1)+'" width="10" height="'+Math.max(1,Math.abs(base-y)).toFixed(1)+'" rx="1.5" fill="'+(v>=0?'#20c7a0':'#ef667c')+'" opacity=".9"/>';}).join('');
  const macdSvg='<svg viewBox="0 0 520 142" preserveAspectRatio="none"><path d="M0 71H520" stroke="#64758b" stroke-dasharray="4 5"/>'+histBars+'</svg>';
- const rows=Array.from({length:18},(_,i)=>({p:Math.min(...d.slice(-100).map(x=>x.low))+(i+.5)*(Math.max(...d.slice(-100).map(x=>x.high))-Math.min(...d.slice(-100).map(x=>x.low)))/18,v:0})),lo=Math.min(...d.slice(-100).map(x=>x.low)),hi=Math.max(...d.slice(-100).map(x=>x.high));
- d.slice(-100).forEach(x=>{const tp=(x.high+x.low+x.close)/3,k=Math.min(17,Math.max(0,Math.floor((tp-lo)/(hi-lo||1)*18)));rows[k].v+=x.volume;});
+ const sample=d.slice(-100),lo=Math.min(...sample.map(x=>x.low)),hi=Math.max(...sample.map(x=>x.high)),rows=Array.from({length:18},(_,i)=>({p:lo+(i+.5)*(hi-lo||1)/18,v:0}));
+ sample.forEach(x=>{const tp=(x.high+x.low+x.close)/3,k=Math.min(17,Math.max(0,Math.floor((tp-lo)/(hi-lo||1)*18)));rows[k].v+=x.volume;});
  const vmax=Math.max(...rows.map(x=>x.v),1),profile=rows.slice().reverse().map(x=>'<div class="profile-row"><span>'+fmt(x.p)+'</span><i><b style="width:'+(x.v/vmax*100)+'%"></b></i><small>'+Math.round(x.v/vmax*100)+'%</small></div>').join('');
+ const tail=d.slice(-32),ranges=tail.map((x,i)=>{const prev=d[Math.max(0,d.length-tail.length+i-1)]?.close??x.close,tr=Math.max(x.high-x.low,Math.abs(x.high-prev),Math.abs(x.low-prev));return tr/x.close*100;}),rangeSvg=acMiniLine(ranges,520,142,'#54b8ff');
+ const avgVol=tail.reduce((z,x)=>z+x.volume,0)/Math.max(1,tail.length),vMax=Math.max(...tail.map(x=>x.volume/(avgVol||1)),1),volBars=tail.map((x,i)=>{const ratio=x.volume/(avgVol||1),h=Math.max(2,Math.min(112,ratio/vMax*112)),y=126-h;return '<rect x="'+(8+i*504/Math.max(1,tail.length)).toFixed(1)+'" y="'+y.toFixed(1)+'" width="10" height="'+h.toFixed(1)+'" rx="1.5" fill="'+(x.close>=x.open?'#20c7a0':'#ef667c')+'" opacity=".88"/>';}).join('');
+ const volSvg='<svg viewBox="0 0 520 142" preserveAspectRatio="none"><path d="M0 126H520" stroke="#53667d" stroke-dasharray="4 5"/>'+volBars+'</svg>';
  const card=(tag,title,metric,body,legend)=>'<div class="academy-viz-card"><div class="academy-viz-head"><span>'+tag+'</span><b>'+title+'</b><strong>'+metric+'</strong></div>'+body+(legend?'<div class="viz-legend">'+legend+'</div>':'')+'</div>';
- $('academyVisualGrid').innerHTML=card('01 / PRICE STRUCTURE','TREND RIBBON',fmt(p),priceSvg,'<i style="background:#e8b45d"></i>FİYAT <i style="background:#35d6ae"></i>EMA20 <i style="background:#7c9cff"></i>EMA50')+
- card('02 / MOMENTUM','RSI OSCILLATOR',rsiNow===null?'—':rsiNow.toFixed(1),rsiSvg,'<i style="background:#b58cff"></i>RSI14 <i style="background:#ef667c"></i>70 <i style="background:#20c7a0"></i>30')+
- card('03 / MOMENTUM FLOW','MACD HISTOGRAM',macdNow.hist.toFixed(4),macdSvg,'<i style="background:#20c7a0"></i>POZİTİF <i style="background:#ef667c"></i>NEGATİF')+
- card('04 / VOLUME DISTRIBUTION','MUM HACMİ PROFİLİ','RVOL '+volRatio.toFixed(2)+'x','<div class="profile-chart">'+profile+'</div>','<i style="background:#7c9cff"></i>OHLCV TİPİK FİYAT DAĞILIMI');
+ const host=$('academyVisualGrid');if(!host)return;
+ host.innerHTML=card('01 / PRICE STRUCTURE','EMA TREND RIBBON',fmt(p),priceSvg,'<i style="background:#e8b45d"></i>FİYAT <i style="background:#35d6ae"></i>EMA20 <i style="background:#7c9cff"></i>EMA50')+
+ card('02 / MOMENTUM','RSI 14 OSCILLATOR',rsiNow===null?'—':rsiNow.toFixed(1),rsiSvg,'<i style="background:#b58cff"></i>RSI14 <i style="background:#ef667c"></i>70 <i style="background:#20c7a0"></i>30')+
+ card('03 / MOMENTUM FLOW','MACD HISTOGRAM',macdNow.hist.toFixed(5),macdSvg,'<i style="background:#20c7a0"></i>POZİTİF <i style="background:#ef667c"></i>NEGATİF')+
+ card('04 / VOLUME DISTRIBUTION','FİYAT HACİM PROFİLİ','RVOL '+volRatio.toFixed(2)+'x','<div class="profile-chart">'+profile+'</div>','<i style="background:#7c9cff"></i>SON 100 MUM · TİPİK FİYAT TAHMİNİ')+
+ card('05 / VOLATILITY','ATR / FİYAT ORANI',ranges.at(-1).toFixed(3)+'%','<div class="viz-svg">'+rangeSvg+'</div>','<i style="background:#54b8ff"></i>SON 32 MUM · TRUE RANGE %')+
+ card('06 / PARTICIPATION','GÖRECELİ HACİM AKIŞI',volRatio.toFixed(2)+'x RVOL','<div class="viz-svg">'+volSvg+'</div>','<i style="background:#20c7a0"></i>YÜKSELEN MUM <i style="background:#ef667c"></i>DÜŞEN MUM');
 }
 function renderAcademyTools(){
  try{
