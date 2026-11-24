@@ -176,7 +176,7 @@ async function loadCandleHistory() {
       symbol, counts, sources: Object.fromEntries(loaded.map(([i, rows]) => [i, rows[0]?.source || "LIVE_ONLY"])),
       errors: Object.fromEntries(loaded.filter(([,rows,error]) => error).map(([i,,error]) => [i,error]))
     });
-    publish("history", { symbol, counts });
+    publish("history", { symbol, counts, candles15m: state.markets[symbol].candles15m, candles1h: state.markets[symbol].candles1h, candles4h: state.markets[symbol].candles4h });
     return { symbol, counts };
   }));
   for (const result of results) {
