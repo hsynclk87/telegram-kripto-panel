@@ -560,7 +560,7 @@ function startBybit() {
   );
 }
 
-const coinglassCache = new Map();
+const smartMoneyCache = new Map();
 
 const server = http.createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN);
@@ -670,13 +670,53 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify(state.liquidations.slice(0, limit)));
   }
 
-  if (url.pathname === "/api/v1/coinglass/heatmap") {
-    const key=process.env.COINGLASS_API_KEY;if(!key){res.writeHead(503);return res.end(JSON.stringify({error:"coinglass_not_configured",message:"Sunucuda COINGLASS_API_KEY tanımlı değil."}));}
-    const scope=url.searchParams.get("scope")==="aggregate"?"aggregate":"pair",model=url.searchParams.get("model")||"1",symbol=(url.searchParams.get("symbol")||"BTCUSDT").toUpperCase(),range=url.searchParams.get("range")||"24h",exchange=url.searchParams.get("exchange")||"Binance";
-    if(!["1","2","3"].includes(model)||!["12h","24h","3d","7d","30d","90d","180d","1y"].includes(range)||!/^[A-Z0-9]{2,20}$/.test(symbol)||!/^[A-Za-z0-9_-]{2,30}$/.test(exchange)){res.writeHead(400);return res.end(JSON.stringify({error:"invalid_parameters"}));}
-    const ck=[scope,model,symbol,range,exchange].join(":"),hit=coinglassCache.get(ck);if(hit&&Date.now()-hit.at<15000){res.writeHead(200);return res.end(JSON.stringify({payload:hit.payload,cached:true,upstreamStatus:200}));}
-    const path=scope==="pair"?"/api/futures/liquidation/heatmap/model"+model:"/api/futures/liquidation/aggregated-heatmap/model"+model,params=new URLSearchParams({symbol,range});if(scope==="pair")params.set("exchange",exchange);
-    try{const upstream=await fetch("https://open-api-v4.coinglass.com"+path+"?"+params,{headers:{"CG-API-KEY":key,"Accept":"application/json"},signal:AbortSignal.timeout(15000)}),body=await upstream.json().catch(()=>({}));if(!upstream.ok||(body.code&&!["0","200",0,200].includes(body.code))){res.writeHead(upstream.status===401||upstream.status===403?502:upstream.status);return res.end(JSON.stringify({error:"coinglass_upstream_error",upstreamStatus:upstream.status,message:body.msg||body.message||"CoinGlass API isteği başarısız."}));}coinglassCache.set(ck,{at:Date.now(),payload:body});if(coinglassCache.size>60)coinglassCache.delete(coinglassCache.keys().next().value);res.writeHead(200);return res.end(JSON.stringify({payload:body,cached:false,upstreamStatus:upstream.status}));}catch(e){res.writeHead(502);return res.end(JSON.stringify({error:"coinglass_unavailable",message:e.name==="TimeoutError"?"CoinGlass API zaman aşımı.":e.message}));}
+  if (url.pathname === "/api/v1/smartmoney/liquidations/heatmap" || url.pathname === "/api/v1/smartmoney/liquidations/symbols") {
+    const isSymbols = url.pathname.endsWith("/symbols");
+    const symbol = (url.searchParams.get("symbol") || "BTC").trim().toUpperCase();
+    const windowMinutes = Number(url.searchParams.get("window_minutes") || 240);
+    const priceBuckets = Number(url.searchParams.get("price_buckets") || 50);
+    const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 500), 1), 2000);
+    if (!isSymbols && (!/^[A-Z0-9]{2,20}$/.test(symbol) || !Number.isInteger(windowMinutes) || windowMinutes < 5 || windowMinutes > 1440 || !Number.isInteger(priceBuckets) || priceBuckets < 5 || priceBuckets > 100)) {
+      res.writeHead(400);
+      return res.end(JSON.stringify({ error: "invalid_parameters", message: "symbol, window_minutes veya price_buckets değeri geçersiz." }));
+    }
+    const cacheKey = isSymbols ? "symbols:" + limit : ["heatmap", symbol, windowMinutes, priceBuckets].join(":");
+    const hit = smartMoneyCache.get(cacheKey);
+    const ttl = isSymbols ? 300000 : 30000;
+    if (hit && Date.now() - hit.at < ttl) {
+      res.writeHead(200);
+      return res.end(JSON.stringify({ payload: hit.payload, cached: true, upstreamStatus: 200 }));
+    }
+    const params = new URLSearchParams(isSymbols ? { limit: String(limit) } : {
+      symbol, window_minutes: String(windowMinutes), price_buckets: String(priceBuckets)
+    });
+    const path = isSymbols ? "/v1/liquidations/symbols" : "/v1/liquidations/heatmap";
+    try {
+      const upstream = await fetch("https://api.smartmoneyapi.com" + path + "?" + params, {
+        headers: { "Accept": "application/json" },
+        signal: AbortSignal.timeout(18000)
+      });
+      const body = await upstream.json().catch(() => ({}));
+      if (!upstream.ok || body.error || body.ok === false) {
+        const status = upstream.status || 502;
+        res.writeHead(status >= 400 ? status : 502);
+        return res.end(JSON.stringify({
+          error: "smartmoney_upstream_error",
+          upstreamStatus: upstream.status,
+          message: body.message || body.msg || body.error || "SmartMoneyAPI likidasyon isteği başarısız."
+        }));
+      }
+      smartMoneyCache.set(cacheKey, { at: Date.now(), payload: body });
+      if (smartMoneyCache.size > 120) smartMoneyCache.delete(smartMoneyCache.keys().next().value);
+      res.writeHead(200);
+      return res.end(JSON.stringify({ payload: body, cached: false, upstreamStatus: upstream.status }));
+    } catch (error) {
+      res.writeHead(502);
+      return res.end(JSON.stringify({
+        error: "smartmoney_unavailable",
+        message: error.name === "TimeoutError" ? "SmartMoneyAPI zaman aşımı." : error.message
+      }));
+    }
   }
 
   res.writeHead(404);
