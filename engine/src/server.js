@@ -101,32 +101,49 @@ function updateCandle(symbol, exchange, k, interval = "1m") {
   if (interval === "1m") void storage.saveCandle(key, candle).catch((error) => log("warn", "Candle persistence failed", { error: error.message }));
 }
 
+async function fetchKlineHistory(symbol, interval, limit) {
+  const query = "/api/v3/klines?symbol=" + encodeURIComponent(symbol) + "&interval=" + encodeURIComponent(interval) + "&limit=" + limit;
+  const hosts = ["https://data-api.binance.vision", "https://api.binance.com", "https://fapi.binance.com"];
+  let lastError;
+  for (const host of hosts) {
+    try {
+      const path = host.includes("fapi.") ? query.replace("/api/v3/klines", "/fapi/v1/klines") : query;
+      const response = await fetch(host + path, { signal: AbortSignal.timeout(10000), cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status + " from " + host);
+      const rows = await response.json();
+      if (!Array.isArray(rows) || !rows.length) throw new Error("Empty kline response from " + host);
+      return rows.filter(row => Number(row[6]) < Date.now()).map(row => ({
+        interval, openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]), low: Number(row[3]),
+        close: Number(row[4]), volume: Number(row[5]), closeTime: Number(row[6]), quoteVolume: Number(row[7]), closed: true
+      }));
+    } catch (error) { lastError = error; }
+  }
+  throw lastError || new Error("All Binance kline endpoints failed");
+}
 async function loadCandleHistory() {
-  const intervals = ["1m", "15m", "1h", "4h"];
-  const results = await Promise.allSettled(SYMBOLS.map(async (symbol) => {
-    const loaded = await Promise.all(intervals.map(async (interval) => {
-      try {
-        const limit = interval === "1m" ? 1000 : 300;
-        const rows = await fetchBinanceJson("/fapi/v1/klines?symbol=" + encodeURIComponent(symbol)
-          + "&interval=" + interval + "&limit=" + limit);
-        return [interval, rows.filter((row) => Number(row[6]) < Date.now()).map((row) => ({
-          interval, openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]),
-          low: Number(row[3]), close: Number(row[4]), volume: Number(row[5]),
-          closeTime: Number(row[6]), quoteVolume: Number(row[7]), closed: true
-        }))];
-      } catch (error) {
+  const intervals = ["15m", "1h", "4h"];
+  const results = await Promise.allSettled(SYMBOLS.map(async symbol => {
+    const loaded = await Promise.all(intervals.map(async interval => {
+      try { return [interval, await fetchKlineHistory(symbol, interval, 300), null]; }
+      catch (error) {
         log("warn", "Candle history interval unavailable", { symbol, interval, error: error.message });
-        return [interval, []];
+        return [interval, [], error.message];
       }
     }));
     for (const [interval, candles] of loaded) {
-      const key = interval === "1m" ? "candles1m" : "candles" + interval;
-      if (candles.length) state.markets[symbol][key] = candles;
+      if (!candles.length) continue;
+      const key = "candles" + interval, live = state.markets[symbol][key] || [];
+      const merged = new Map(candles.map(c => [c.openTime, c]));
+      for (const candle of live) merged.set(candle.openTime, candle);
+      state.markets[symbol][key] = [...merged.values()].sort((a,b)=>a.openTime-b.openTime).slice(-500);
     }
+    log("info", "Multi-timeframe history load result", {
+      symbol, intervals: Object.fromEntries(loaded.map(([i, rows, error]) => [i, { count: rows.length, error }]))
+    });
     return { symbol, intervals: Object.fromEntries(loaded.map(([i, rows]) => [i, rows.length])) };
   }));
   for (const result of results) {
-    if (result.status === "fulfilled") log("info", "Multi-timeframe candle history loaded", result.value);
+    if (result.status === "fulfilled") log("info", "Candle history loaded", result.value);
     else log("warn", "Candle history load failed", { error: result.reason?.message });
   }
 }
