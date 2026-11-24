@@ -1111,7 +1111,7 @@ const prevClose=data[n-1]?.close||p,chg=prevClose?(p-prevClose)/prevClose*100:0,
 setText('deskLast',fmt(p));setText('deskChange',(chg>=0?'+':'')+chg.toFixed(2)+'%');setText('deskAtr',atrPct.toFixed(2)+'%');setText('deskVolume',volRatio.toFixed(2)+'x');setText('deskTrend',ribbonTrendUp?'YUKARI':ribbonTrendDown?'AŞAĞI':'KARMA');
 $('deskChange')?.classList.toggle('up',chg>=0);$('deskChange')?.classList.toggle('down',chg<0);$('deskTrend')?.classList.toggle('up',ribbonTrendUp);$('deskTrend')?.classList.toggle('down',ribbonTrendDown);
 const supportCtx=pivotContext(false,p,data,atrV),resistCtx=pivotContext(true,p,data,atrV),nearSupport=supportCtx&&Math.abs(p-supportCtx.price)<=atrV*1.25,nearResist=resistCtx&&Math.abs(p-resistCtx.price)<=atrV*1.25;
-const early=earlyFlowAnalysis(data,atrV);
+const early=runMarketPart('Erken akış analizi',()=>earlyFlowAnalysis(data,atrV),{direction:'WAIT',score:0,text:'Erken akış analizi geçici olarak hesaplanamadı.',pressure:0,obv:0});
 runMarketPart('Destek/direnç paneli',()=>updateSupportResistanceTab(data,p,atrV));
 const advanced=runMarketPart('Gelişmiş göstergeler',()=>advancedIndicators(data));runMarketPart('Gelişmiş gösterge paneli',()=>updateAdvancedPanel(advanced,p));
 const body=Math.abs(c.close-c.open),lowerWick=Math.min(c.open,c.close)-c.low,upperWick=c.high-Math.max(c.open,c.close),bull=c.close>c.open,bear=c.close<c.open;
@@ -1130,7 +1130,7 @@ if(volRatio>=1.25&&bull){score+=1;why.push('Yükseliş mumunda hacim artışı')
 if(lowerWick>Math.max(body*1.3,atrV*.12)&&bull){score+=1;why.push('Alt fitil alım tepkisi');}else if(upperWick>Math.max(body*1.3,atrV*.12)&&bear){score-=1;why.push('Üst fitil satış tepkisi');}
 if(early.direction==='ACC'&&priceTurnUp){score+=.6;why.push('Birikim ön sinyali fiyat kırılımıyla teyit edildi');}
 else if(early.direction==='DIST'&&priceTurnDown){score-=.6;why.push('Dağıtım ön sinyali fiyat kırılımıyla teyit edildi');}
-const futuresAdj=futuresAdjustment(c,prev);score+=futuresAdj.score;why.push('Futures: '+futuresAdj.text);
+const futuresAdj=runMarketPart('Futures kanıtları',()=>futuresAdjustment(c,prev),{score:0,text:'Vadeli piyasa verisi geçici olarak hesaplanamadı.'});score+=futuresAdj.score;why.push('Futures: '+futuresAdj.text);
 if(advanced){if(advanced.cmf>.12&&p>advanced.vwap)score+=.45;else if(advanced.cmf<-.12&&p<advanced.vwap)score-=.45;if(advanced.adx>25){if(advanced.pdi>advanced.mdi&&p>advanced.vwap)score+=.35;else if(advanced.mdi>advanced.pdi&&p<advanced.vwap)score-=.35;}if(advanced.mfi<18&&p<advanced.vwap)score+=.2;else if(advanced.mfi>82&&p>advanced.vwap)score-=.2;}
 if(Number.isFinite(advancedState.spotImbalance)&&Number.isFinite(advancedState.futuresCvdImbalance)){if(advancedState.spotImbalance>10&&advancedState.futuresCvdImbalance>10)score+=.5;else if(advancedState.spotImbalance< -10&&advancedState.futuresCvdImbalance< -10)score-=.5;}
 score=Math.max(-9.5,Math.min(9.5,score));
