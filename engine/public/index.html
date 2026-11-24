@@ -342,6 +342,30 @@ body{max-width:1120px}
  .sr-price-map{min-height:220px!important}
 }
 
+/* INSTITUTIONAL TERMINAL SKIN */
+:root{--bg:#080d16;--card:#0e1725;--line:#26374b;--muted:#8293a8;--txt:#e5edf6;--green:#20c7a0;--red:#ef667c;--blue:#7c9cff;--gold:#e8b45d}
+html,body{background:#080d16!important;color:#e5edf6!important}
+body{max-width:1440px!important;padding:16px!important;font-family:Inter,ui-sans-serif,system-ui,sans-serif!important;letter-spacing:0!important}
+.card,.academy-card,.pro-card,.mi-panel,.visual-tile{background:#0e1725!important;border:1px solid #26374b!important;border-radius:8px!important;box-shadow:0 8px 22px rgba(0,0,0,.18)!important}
+.card{padding:15px!important;margin:8px 0!important}
+.row button{border-radius:5px!important;background:#101b2b!important;border:1px solid #2a3b50!important;color:#9fb0c4!important}
+.row button.active{background:#1b3545!important;border-color:#20a98e!important;color:#dffbf4!important;box-shadow:inset 0 -2px #20c7a0!important}
+.desk-page-head{border-bottom:1px solid #26374b!important;margin:18px 0 12px!important}
+.desk-page-head h2,.academy-title,.pro-heading{letter-spacing:1.1px!important;font-weight:750!important}
+.section,.pro-card-kicker,.desk-kicker,.academy-kicker{color:#8ca1b8!important;letter-spacing:1.15px!important;font-size:9px!important}
+#chart,#osc,#macdChart{width:100%;background:#0b1220;border:1px solid #223248;border-radius:6px;overflow:hidden}
+#chart{height:390px!important}#osc{height:180px!important}#macdChart{height:145px!important}
+.layout{grid-template-columns:minmax(0,1.75fr) minmax(300px,1fr)!important;gap:12px!important}
+.mi-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.mi-panel{min-height:85px!important}.visual-tile{min-height:95px!important}
+.visual-track,.bar,.ai-track{height:5px!important;border-radius:2px!important;background:#26374b!important}
+.visual-track i,.bar i,.ai-track i{border-radius:2px!important;box-shadow:none!important}
+.price{font-size:34px!important;letter-spacing:-1.4px!important}
+.metric,.academy-stat,.fp-stat{background:#0a1320!important;border:1px solid #24364b!important;border-radius:6px!important}
+.pro-terminal,.academy-panel{background:#0b1421!important;border-color:#26374b!important}
+.pro-context>div{background:#0c1726!important;border:1px solid #26374b!important;border-radius:5px!important}
+.investor-brief-head p,.sr-visual-head p,.academy-sub,.mi-foot,.foot,.academy-foot{display:none!important}
+@media(max-width:720px){body{padding:8px!important}.layout{display:block!important}.layout .card{margin-bottom:9px!important}#chart{height:320px!important}#osc{height:155px!important}#macdChart{height:125px!important}.mi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 </style></head><body>
 <header class="head"><div><div class="brand">KRİPTO · İNDİKATÖR TERMİNALİ</div><div class="conn"><span class="dot" id="dot"></span><span id="connection">Binance canlı fiyat bağlantısı bekleniyor</span></div></div><div class="pill">REALTIME</div></header>
 <div class="row" id="coins"></div><div class="row" id="frames"></div><div class="row" id="mainTabs"><button id="tabMarket" class="active" type="button">PİYASA ANALİZİ</button><button id="tabLevels" type="button">DESTEK / DİRENÇ</button><button id="tabAcademy" type="button">ANALİZ ARAÇLARI</button><button id="tabSignal" type="button">SİNYAL MOTORU</button></div>
@@ -421,7 +445,7 @@ body{max-width:1120px}
 <div class="mi-scenarios"><div class="mi-scenario"><span>ÖNE ÇIKAN SENARYO</span><b id="miScenario1">—</b><small id="miScenario1Note">—</small></div><div class="mi-scenario"><span>ALTERNATİF SENARYO</span><b id="miScenario2">—</b><small id="miScenario2Note">—</small></div></div><div class="mi-foot" id="miConclusion">Analiz için yeterli veri bekleniyor.</div></div></section>
 <div class="layout"><div>
 <section class="card wide"><div class="section">FİYAT GRAFİĞİ · EMA 20 / EMA 50</div><div id="chart"></div><div class="legend"><span><i style="background:#e8bd68"></i>EMA 20</span><span><i style="background:#65a8ff"></i>EMA 50</span></div></section>
-<section class="card wide"><div class="section">FOOTPRINT · TEK MUM</div><div class="fp-toolbar"><div class="row" style="padding:0;margin:0"><button id="fpSpot" class="active">SPOT</button><button id="fpFutures">FUTURES</button></div><span class="muted" id="fpStatus">CANLI</span></div><div class="fp-stats"><div class="fp-stat"><span>DELTA</span><b id="fpDelta">—</b></div><div class="fp-stat"><span>HACİM</span><b id="fpVolume">—</b></div><div class="fp-stat"><span>POC</span><b id="fpPoc">—</b></div></div><div class="fp-wrap" id="fpWrap"><div class="muted" style="padding:14px">Veri bekleniyor…</div></div></section><section class="card wide"><div class="section">MOMENTUM · RSI / MACD HISTOGRAM</div><div id="osc"></div></section>
+<section class="card wide"><div class="section">FOOTPRINT · TEK MUM</div><div class="fp-toolbar"><div class="row" style="padding:0;margin:0"><button id="fpSpot" class="active">SPOT</button><button id="fpFutures">FUTURES</button></div><span class="muted" id="fpStatus">CANLI</span></div><div class="fp-stats"><div class="fp-stat"><span>DELTA</span><b id="fpDelta">—</b></div><div class="fp-stat"><span>HACİM</span><b id="fpVolume">—</b></div><div class="fp-stat"><span>POC</span><b id="fpPoc">—</b></div></div><div class="fp-wrap" id="fpWrap"><div class="muted" style="padding:14px">Veri bekleniyor…</div></div></section><section class="card wide"><div class="section">MOMENTUM · RSI / MACD HISTOGRAM</div><div id="osc"></div><div class="section" style="margin-top:14px">MACD · MOMENTUM HİSTOGRAMI</div><div id="macdChart"></div></section>
 </div><div>
 <section class="card"><div class="section">BİRLEŞİK SİNYAL</div><div class="signal"><div><div class="muted">SİSTEM KARARI</div><div class="signalword neutral" id="signal">VERİ BEKLENİYOR</div></div><div class="pill" id="confidence">—</div></div><div class="muted" id="reason" style="margin-top:9px;line-height:1.5">Mum verisi yükleniyor.</div><div class="bar"><i id="scorebar" style="width:50%"></i></div></section>
 
@@ -480,7 +504,38 @@ const setText=(id,v)=>$(id).textContent=v;
 function controls(){ $('coins').innerHTML=coins.map(c=>'<button data-c="'+c+'" class="'+(coin===c?'active':'')+'">'+c+'</button>').join('');$('frames').innerHTML=frames.map(([v,l])=>'<button data-t="'+v+'" class="'+(tf===v?'active':'')+'">'+l+'</button>').join('');}
 $('coins').onclick=e=>{const b=e.target.closest('[data-c]');if(b){coin=b.dataset.c;switchMarket();}};
 $('frames').onclick=e=>{const b=e.target.closest('[data-t]');if(b){tf=b.dataset.t;switchMarket();}};
-function chartInit(){}
+let terminalMainChart=null,terminalCandle=null,terminalEma20=null,terminalEma50=null,terminalVolume=null,terminalRsiChart=null,terminalRsi=null,terminalRsi70=null,terminalRsi30=null,terminalMacdChart=null,terminalMacd=null;
+function terminalChartTheme(){return{layout:{background:{type:'solid',color:'#0b1220'},textColor:'#aab8ca',fontFamily:'Inter,system-ui,sans-serif',fontSize:11},grid:{vertLines:{color:'rgba(95,120,155,.10)'},horzLines:{color:'rgba(95,120,155,.13)'}},crosshair:{vertLine:{color:'rgba(104,190,190,.45)',width:1,style:2},horzLine:{color:'rgba(104,190,190,.35)',width:1,style:2}},rightPriceScale:{borderColor:'rgba(115,145,180,.22)'},timeScale:{borderColor:'rgba(115,145,180,.22)',timeVisible:true,secondsVisible:false}};}
+function chartInit(){
+ if(!window.LightweightCharts)return;
+ const theme=terminalChartTheme(),create=(id,height)=>{const el=$(id);if(!el)return null;el.innerHTML='';return LightweightCharts.createChart(el,{...theme,width:Math.max(280,el.clientWidth),height,autoSize:true,handleScroll:true,handleScale:true,rightPriceScale:{...theme.rightPriceScale,scaleMargins:{top:.08,bottom:.24}}});};
+ if(terminalMainChart)terminalMainChart.remove();if(terminalRsiChart)terminalRsiChart.remove();if(terminalMacdChart)terminalMacdChart.remove();
+ terminalMainChart=create('chart',390);terminalRsiChart=create('osc',180);terminalMacdChart=create('macdChart',145);
+ if(!terminalMainChart||!terminalRsiChart||!terminalMacdChart)return;
+ terminalCandle=terminalMainChart.addCandlestickSeries({upColor:'#20c7a0',downColor:'#ef667c',borderUpColor:'#20c7a0',borderDownColor:'#ef667c',wickUpColor:'#20c7a0',wickDownColor:'#ef667c',priceLineVisible:true,lastValueVisible:true});
+ terminalEma20=terminalMainChart.addLineSeries({color:'#e8b45d',lineWidth:2,priceLineVisible:false,lastValueVisible:false});
+ terminalEma50=terminalMainChart.addLineSeries({color:'#7c9cff',lineWidth:2,priceLineVisible:false,lastValueVisible:false});
+ terminalVolume=terminalMainChart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'volume',lastValueVisible:false,priceLineVisible:false});
+ terminalMainChart.priceScale('volume').applyOptions({scaleMargins:{top:.82,bottom:0},borderVisible:false});
+ terminalRsi=terminalRsiChart.addLineSeries({color:'#b69cff',lineWidth:2,priceLineVisible:false,lastValueVisible:true});
+ terminalRsi70=terminalRsiChart.addLineSeries({color:'rgba(239,102,124,.65)',lineWidth:1,lineStyle:2,priceLineVisible:false,lastValueVisible:false});
+ terminalRsi30=terminalRsiChart.addLineSeries({color:'rgba(32,199,160,.65)',lineWidth:1,lineStyle:2,priceLineVisible:false,lastValueVisible:false});
+ terminalRsiChart.priceScale('right').applyOptions({autoScale:false,scaleMargins:{top:.08,bottom:.08}});
+ terminalMacd=terminalMacdChart.addHistogramSeries({base:0,priceLineVisible:false,lastValueVisible:false});
+ const sync=(source,target)=>source.timeScale().subscribeVisibleLogicalRangeChange(range=>{if(range)try{target.timeScale().setVisibleLogicalRange(range);}catch(_){}});sync(terminalMainChart,terminalRsiChart);sync(terminalMainChart,terminalMacdChart);
+ window.addEventListener('resize',()=>{[['chart',terminalMainChart],['osc',terminalRsiChart],['macdChart',terminalMacdChart]].forEach(([id,ch])=>{const el=$(id);if(ch&&el)ch.applyOptions({width:Math.max(280,el.clientWidth)});});});
+}
+function renderMarketCharts(data,ema20,ema50,rsiValues,macdHist){
+ if(!terminalMainChart||!data?.length)return;
+ const valid=data.filter(x=>Number.isFinite(x.time)&&Number.isFinite(x.open)&&Number.isFinite(x.high)&&Number.isFinite(x.low)&&Number.isFinite(x.close));
+ const line=values=>values.map((v,i)=>({time:data[i].time,value:v})).filter(x=>Number.isFinite(x.value));
+ terminalCandle.setData(valid.map(x=>({time:x.time,open:x.open,high:x.high,low:x.low,close:x.close})));
+ terminalEma20.setData(line(ema20));terminalEma50.setData(line(ema50));
+ terminalVolume.setData(valid.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?'rgba(32,199,160,.42)':'rgba(239,102,124,.42)'})));
+ terminalRsi.setData(line(rsiValues));terminalRsi70.setData(valid.map(x=>({time:x.time,value:70})));terminalRsi30.setData(valid.map(x=>({time:x.time,value:30})));
+ terminalMacd.setData(valid.map((x,i)=>({time:x.time,value:Number.isFinite(macdHist[i])?macdHist[i]:0,color:(macdHist[i]||0)>=0?'rgba(32,199,160,.78)':'rgba(239,102,124,.78)'})));
+ terminalMainChart.timeScale().fitContent();
+}
 function ema(values,period){const out=Array(values.length).fill(null),k=2/(period+1);let prev=null;for(let i=0;i<values.length;i++){const v=values[i];if(!Number.isFinite(v))continue;prev=prev===null?v:v*k+prev*(1-k);out[i]=prev;}return out;}
 function rsi(values,period=14){const out=Array(values.length).fill(null);let gain=0,loss=0;for(let i=1;i<=period&&i<values.length;i++){const d=values[i]-values[i-1];gain+=Math.max(d,0);loss+=Math.max(-d,0);}if(values.length<=period)return out;gain/=period;loss/=period;out[period]=loss===0?100:100-100/(1+gain/loss);for(let i=period+1;i<values.length;i++){const d=values[i]-values[i-1];gain=(gain*(period-1)+Math.max(d,0))/period;loss=(loss*(period-1)+Math.max(-d,0))/period;out[i]=loss===0?100:100-100/(1+gain/loss);}return out;}
 function atr(data,p=14){const tr=data.map((x,i)=>i?Math.max(x.high-x.low,Math.abs(x.high-data[i-1].close),Math.abs(x.low-data[i-1].close)):x.high-x.low);let a=tr.slice(0,p).reduce((s,x)=>s+x,0)/p;for(let i=p;i<tr.length;i++)a=(a*(p-1)+tr[i])/p;return a;}
@@ -920,6 +975,7 @@ function calc(){
 const data=candles.filter(x=>x.closed);if(data.length<210)return;
 const closes=data.map(x=>x.close),e20=ema(closes,20),e50=ema(closes,50),e200=ema(closes,200),rvArr=rsi(closes),fast=ema(closes,12),slow=ema(closes,26),m=fast.map((v,i)=>v===null||slow[i]===null?null:v-slow[i]),sig=ema(m.map(v=>v??NaN),9),hist=m.map((v,i)=>v===null||sig[i]===null?null:v-sig[i]);
 const n=data.length-1,c=data[n],prev=data[n-1],p=c.close,rv=rvArr[n],rPrev=rvArr[n-1],mac=hist[n],macPrev=hist[n-1]??0,atrV=atr(data.slice(-30)),volAvg=data.slice(-21,-1).reduce((s,x)=>s+x.volume,0)/20,volRatio=volAvg?c.volume/volAvg:0;
+renderMarketCharts(data,e20,e50,rvArr,hist);
 const supportCtx=pivotContext(false,p,data,atrV),resistCtx=pivotContext(true,p,data,atrV),nearSupport=supportCtx&&Math.abs(p-supportCtx.price)<=atrV*1.25,nearResist=resistCtx&&Math.abs(p-resistCtx.price)<=atrV*1.25;
 const early=earlyFlowAnalysis(data,atrV);
 updateSupportResistanceTab(data,p,atrV);
