@@ -130,7 +130,7 @@ async function fetchKlineHistory(symbol, interval, limit) {
 
   // Binance erişilemiyorsa aynı spot mum geçmişini Bybit public market API'den al.
   try {
-    const bybitInterval = ({ "15m": "15", "1h": "60", "4h": "240" })[interval];
+    const bybitInterval = ({ "1m": "1", "15m": "15", "1h": "60", "4h": "240" })[interval];
     const url = "https://api.bybit.com/v5/market/kline?category=spot&symbol=" +
       encodeURIComponent(symbol) + "&interval=" + bybitInterval + "&limit=" + Math.min(limit, 1000);
     const response = await fetch(url, { signal: AbortSignal.timeout(12000), cache: "no-store" });
@@ -139,7 +139,7 @@ async function fetchKlineHistory(symbol, interval, limit) {
     if (body.retCode !== 0 || !Array.isArray(body.result?.list)) {
       throw new Error("Bybit kline error: " + (body.retMsg || "invalid response"));
     }
-    const duration = ({ "15m": 900000, "1h": 3600000, "4h": 14400000 })[interval];
+    const duration = ({ "1m": 60000, "15m": 900000, "1h": 3600000, "4h": 14400000 })[interval];
     const candles = body.result.list.map(row => ({
       interval, openTime: Number(row[0]), open: Number(row[1]), high: Number(row[2]), low: Number(row[3]),
       close: Number(row[4]), volume: Number(row[5]), quoteVolume: Number(row[6]),
@@ -158,10 +158,10 @@ async function fetchKlineHistory(symbol, interval, limit) {
 async function loadCandleHistory() {
   if (historyLoading) return;
   historyLoading = true;
-  const intervals = ["15m", "1h", "4h"];
+  const intervals = ["1m", "15m", "1h", "4h"];
   const results = await Promise.allSettled(SYMBOLS.map(async symbol => {
     const loaded = await Promise.all(intervals.map(async interval => {
-      try { return [interval, await fetchKlineHistory(symbol, interval, 300), null]; }
+      try { return [interval, await fetchKlineHistory(symbol, interval, interval === "1m" ? 500 : 300), null]; }
       catch (error) {
         log("warn", "Historical candle source failed", { symbol, interval, error: error.message });
         return [interval, [], error.message];
@@ -179,7 +179,7 @@ async function loadCandleHistory() {
       symbol, counts, sources: Object.fromEntries(loaded.map(([i, rows]) => [i, rows[0]?.source || "LIVE_ONLY"])),
       errors: Object.fromEntries(loaded.filter(([,rows,error]) => error).map(([i,,error]) => [i,error]))
     });
-    publish("history", { symbol, counts, candles15m: state.markets[symbol].candles15m, candles1h: state.markets[symbol].candles1h, candles4h: state.markets[symbol].candles4h });
+    publish("history", { symbol, counts, candles1m: state.markets[symbol].candles1m, candles15m: state.markets[symbol].candles15m, candles1h: state.markets[symbol].candles1h, candles4h: state.markets[symbol].candles4h });
     return { symbol, counts };
   }));
   for (const result of results) {
@@ -686,14 +686,14 @@ const server = http.createServer(async (req, res) => {
     }
     const market = state.markets[key];
     const candles = {
-      candles15m: market.candles15m || [],
+      candles1m: market.candles1m || [], candles15m: market.candles15m || [],
       candles1h: market.candles1h || [],
       candles4h: market.candles4h || []
     };
     res.writeHead(200);
     return res.end(JSON.stringify({
       symbol: key, counts: {
-        "15m": candles.candles15m.length,
+        "1m": candles.candles1m.length, "15m": candles.candles15m.length,
         "1h": candles.candles1h.length,
         "4h": candles.candles4h.length
       }, ...candles, time: now()
@@ -703,7 +703,7 @@ const server = http.createServer(async (req, res) => {
   if (url.pathname === "/api/v1/history-status") {
     const symbols = Object.fromEntries(SYMBOLS.map(symbol => {
       const market = state.markets[symbol] || {};
-      const counts = Object.fromEntries(["15m","1h","4h"].map(interval => [
+      const counts = Object.fromEntries(["1m","15m","1h","4h"].map(interval => [
         interval, Array.isArray(market["candles" + interval]) ? market["candles" + interval].length : 0
       ]));
       return [symbol, { counts, ready: Object.values(counts).every(count => count >= 30) }];
