@@ -13,7 +13,7 @@
 <section class="card"><div class="section">COIN FIRSAT TARAMASI</div><div class="muted" style="margin-bottom:8px">Yalnızca yeterli verisi bulunan pariteler sıralanır.</div><div id="scanner"><div class="empty">Tarama için veri bekleniyor</div></div></section>
 <div class="foot">Karar motoru: 4 saat ana yön · 1 saat fırsat bölgesi · 15 dakika giriş teyidi. Eksik veri pozitif veya negatif sinyal sayılmaz. Puan tek başına işlem emri değildir; risk/getiri filtresi ve mum kapanışı teyidi zorunludur. Canlı fiyat, borsa WebSocket akışından iletilir; ağ ve borsa kaynaklı gecikmeler tamamen sıfırlanamaz.</div>
 <script>
-const $=id=>document.getElementById(id), symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT"], state={markets:{},trades:[],signals:[],selected:"BTCUSDT",socket:null,chart:null,candleSeries:null,lastPrice:null};
+const $=id=>document.getElementById(id), symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT"], state={markets:{},trades:[],signals:[],selected:"BTCUSDT",socket:null,chart:null,candleSeries:null,lastPrice:null,historyFetchAt:{}};
 const fmt=n=>Number.isFinite(n)?(n>=1000?n.toLocaleString("en-US",{maximumFractionDigits:2}):n>=1?n.toFixed(4):n.toFixed(7)):"—";
 const pct=n=>Number.isFinite(n)?(n>=0?"+":"")+n.toFixed(2)+"%":"—";
 function initChart(){if(!window.LightweightCharts)return;state.chart=LightweightCharts.createChart($("chart"),{layout:{background:{color:"#0d1725"},textColor:"#9db0c7"},grid:{vertLines:{color:"#1d2b3d"},horzLines:{color:"#1d2b3d"}},rightPriceScale:{borderColor:"#34465e"},timeScale:{borderColor:"#34465e",timeVisible:true},crosshair:{mode:0},width:$("chart").clientWidth,height:$("chart").clientHeight});state.candleSeries=state.chart.addCandlestickSeries({upColor:"#35dfa4",downColor:"#ff647d",borderUpColor:"#35dfa4",borderDownColor:"#ff647d",wickUpColor:"#35dfa4",wickDownColor:"#ff647d"});new ResizeObserver(()=>state.chart.applyOptions({width:$("chart").clientWidth,height:$("chart").clientHeight})).observe($("chart"))}
@@ -51,7 +51,20 @@ const m=state.markets[r.symbol]||{},spot=m.binanceSpot||{},fut=m.binanceFutures|
 const candles=m.candles15m||[];if(state.candleSeries&&candles.length){state.candleSeries.setData(candles.map(c=>({time:Math.floor(c.openTime/1000),open:+c.open,high:+c.high,low:+c.low,close:+c.close})));$("chartNote").textContent=candles.length+" kapanmış 15 dakikalık mum · Destek: "+fmt(r.support)+" · Direnç: "+fmt(r.resistance)}
 }
 function scan(){const rows=symbols.map(analyze).filter(x=>x.score!==null).sort((a,b)=>b.score-a.score);$("scanner").innerHTML=rows.map(r=>'<div class="scanrow" data-symbol="'+r.symbol+'"><b>'+r.symbol.replace("USDT","")+'</b><div><div class="scanbar"><i style="width:'+r.score+'%"></i></div><div class="muted" style="margin-top:4px">'+r.verdict+'</div></div><b style="text-align:right">'+r.score+'</b></div>').join("")||'<div class="empty">Henüz yeterli çoklu zaman dilimi verisi yok.</div>';document.querySelectorAll(".scanrow").forEach(el=>el.onclick=()=>select(el.dataset.symbol))}
-function select(s){state.selected=s;$("symbolSelect").value=s;document.querySelectorAll(".symbolrow button").forEach(b=>b.classList.toggle("active",b.dataset.symbol===s));const r=analyze(s);paint(r)}
+function requestHistory(sym){
+ const m=state.markets[sym]||{},ready=["15m","1h","4h"].every(i=>(m["candles"+i]||[]).length>=30);
+ if(ready||Date.now()-(state.historyFetchAt[sym]||0)<12000)return;
+ state.historyFetchAt[sym]=Date.now();
+ fetch("/api/v1/history?symbol="+encodeURIComponent(sym),{cache:"no-store"})
+  .then(r=>{if(!r.ok)throw new Error("history HTTP "+r.status);return r.json()})
+  .then(d=>{
+   const market=state.markets[sym]||(state.markets[sym]={});
+   market.candles15m=d.candles15m||[];market.candles1h=d.candles1h||[];market.candles4h=d.candles4h||[];
+   if(sym===state.selected)refresh();
+  })
+  .catch(()=>{});
+}
+function select(s){state.selected=s;$("symbolSelect").value=s;document.querySelectorAll(".symbolrow button").forEach(b=>b.classList.toggle("active",b.dataset.symbol===s));requestHistory(s);const r=analyze(s);paint(r)}
 function refresh(){select(state.selected);scan();$("updated").textContent="GÜNCEL "+new Date().toLocaleTimeString("tr-TR")}
 function connect(){
  const proto=location.protocol==="https:"?"wss:":"ws:";
