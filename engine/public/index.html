@@ -289,6 +289,59 @@ body{max-width:1120px}
 .sig-visual-strip .visual-tile{padding:9px}.sig-visual-strip .visual-tile b{font-size:13px}
 @media(max-width:520px){.visual-strip{grid-template-columns:1fr 1fr}.visual-strip .visual-tile:first-child{grid-column:1/-1}.sr-quick-visual{grid-template-columns:1fr 1fr}.sig-visual-strip{grid-template-columns:1fr 1fr}.sig-visual-strip .visual-tile:first-child{grid-column:1/-1}}
 
+
+/* VISUAL-FIRST INVESTOR TERMINAL */
+.visual-strip,.sr-quick-visual{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0}
+.sr-quick-visual{grid-template-columns:repeat(2,minmax(0,1fr))}
+.visual-tile,.mi-panel,.mi-scenario,.academy-stat,.metric{background:linear-gradient(155deg,#14243a,#0c1525)!important;border:1px solid rgba(111,160,220,.28)!important;border-radius:13px!important;min-width:0}
+.visual-tile{padding:13px!important;min-height:112px;display:flex;flex-direction:column;justify-content:space-between}
+.visual-tile>span,.mi-label,.academy-stat>span,.metric>span{font-size:9px!important;letter-spacing:.65px;font-weight:800}
+.visual-tile>b{font-size:22px!important;font-variant-numeric:tabular-nums}
+.visual-track{height:10px!important;border-radius:20px!important;background:#26364e!important;overflow:hidden}
+.visual-track i{height:100%;border-radius:20px;box-shadow:0 0 12px currentColor}
+.visual-scale{font-size:8px!important;font-weight:800;letter-spacing:.3px}
+.mi-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+.mi-main{grid-column:span 2}
+.mi-panel{padding:12px!important;min-height:100px}
+.mi-panel b{font-size:20px!important;display:block;margin:8px 0 3px}
+.mi-panel small{font-size:9px!important;line-height:1.3}
+.mi-balance{height:11px!important;border-radius:20px;overflow:hidden;background:#26364e}
+.mi-scenarios{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mi-scenario{padding:11px!important}
+.mi-scenario>span{font-size:9px!important;letter-spacing:.5px}
+.mi-scenario>b{display:block;font-size:13px;margin-top:6px}
+#chart{height:370px!important;min-height:300px}
+#osc{height:190px!important;min-height:160px}
+.sr-price-map{min-height:250px!important}
+.sr-mtf-list,.sr-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px!important}
+.sr-list>*{margin:0!important;min-width:0}
+.academy-summary-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+.academy-stat{padding:12px!important;min-width:0}
+.academy-stat b{font-size:19px!important;display:block;margin:7px 0}
+.ai-meters{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}
+.pro-context{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px}
+.pro-context>div{padding:10px!important;background:#111f33;border-radius:11px;border:1px solid #2b3d58}
+.pro-decision-layout{gap:9px!important}
+.pro-score-ring{transform:scale(1.08)}
+.investor-brief-head p,.sr-visual-head p,.academy-sub,.mi-scenario small,.mi-foot,.foot,.academy-foot,.pro-confidence small{display:none!important}
+.explain{font-size:10px!important;line-height:1.35!important}
+.muted{font-size:9px!important}
+.section{margin-top:18px!important;padding-bottom:5px;border-bottom:1px solid rgba(100,145,200,.18)}
+@media(max-width:600px){
+ body{padding:9px 8px 22px}
+ .visual-strip{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .visual-tile:last-child{grid-column:1/-1}
+ .mi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .mi-main{grid-column:1/-1}
+ .mi-scenarios{grid-template-columns:1fr 1fr}
+ .academy-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .pro-context{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .sr-mtf-list,.sr-list{grid-template-columns:1fr!important}
+ #chart{height:310px!important}
+ #osc{height:165px!important}
+ .sr-price-map{min-height:220px!important}
+}
+
 </style></head><body>
 <header class="head"><div><div class="brand">KRİPTO · İNDİKATÖR TERMİNALİ</div><div class="conn"><span class="dot" id="dot"></span><span id="connection">Binance canlı fiyat bağlantısı bekleniyor</span></div></div><div class="pill">REALTIME</div></header>
 <div class="row" id="coins"></div><div class="row" id="frames"></div><div class="row" id="mainTabs"><button id="tabMarket" class="active" type="button">PİYASA ANALİZİ</button><button id="tabLevels" type="button">DESTEK / DİRENÇ</button><button id="tabAcademy" type="button">ANALİZ ARAÇLARI</button><button id="tabSignal" type="button">SİNYAL MOTORU</button></div>
