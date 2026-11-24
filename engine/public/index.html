@@ -504,7 +504,7 @@ const setText=(id,v)=>$(id).textContent=v;
 function controls(){ $('coins').innerHTML=coins.map(c=>'<button data-c="'+c+'" class="'+(coin===c?'active':'')+'">'+c+'</button>').join('');$('frames').innerHTML=frames.map(([v,l])=>'<button data-t="'+v+'" class="'+(tf===v?'active':'')+'">'+l+'</button>').join('');}
 $('coins').onclick=e=>{const b=e.target.closest('[data-c]');if(b){coin=b.dataset.c;switchMarket();}};
 $('frames').onclick=e=>{const b=e.target.closest('[data-t]');if(b){tf=b.dataset.t;switchMarket();}};
-let terminalMainChart=null,terminalCandle=null,terminalEma20=null,terminalEma50=null,terminalVolume=null,terminalRsiChart=null,terminalRsi=null,terminalRsi70=null,terminalRsi30=null,terminalMacdChart=null,terminalMacd=null;
+let terminalMainChart=null,terminalCandle=null,terminalEma20=null,terminalEma50=null,terminalVolume=null,terminalRsiChart=null,terminalRsi=null,terminalRsi70=null,terminalRsi30=null,terminalMacdChart=null,terminalMacd=null,terminalBbUpper=null,terminalBbLower=null,terminalVwap=null;
 function terminalChartTheme(){return{layout:{background:{type:'solid',color:'#0b1220'},textColor:'#aab8ca',fontFamily:'Inter,system-ui,sans-serif',fontSize:11},grid:{vertLines:{color:'rgba(95,120,155,.10)'},horzLines:{color:'rgba(95,120,155,.13)'}},crosshair:{vertLine:{color:'rgba(104,190,190,.45)',width:1,style:2},horzLine:{color:'rgba(104,190,190,.35)',width:1,style:2}},rightPriceScale:{borderColor:'rgba(115,145,180,.22)'},timeScale:{borderColor:'rgba(115,145,180,.22)',timeVisible:true,secondsVisible:false}};}
 function chartInit(){
  if(!window.LightweightCharts)return;
