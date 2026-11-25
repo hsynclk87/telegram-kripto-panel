@@ -1,0 +1,29 @@
+name: Project 7 Spot Scanner CI
+
+on:
+  push:
+    branches: [feature/project-7-spot-scanner]
+    paths:
+      - "spot-scanner/**"
+      - ".github/workflows/project-7-ci.yml"
+  pull_request:
+    paths:
+      - "spot-scanner/**"
+      - ".github/workflows/project-7-ci.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: spot-scanner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run check
+      - run: npm test
+      - name: Docker build
+        run: docker build -t project-7-spot-scanner .
