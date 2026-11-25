@@ -9,18 +9,35 @@
 <style>
 :root{color-scheme:dark;font-family:Arial,system-ui,sans-serif;background:#050a08;color:#edf3fa}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:#050a08;overflow:hidden}#matrix{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.58}main{position:relative;z-index:1;text-shadow:0 2px 18px #000}
-main{width:min(100%,680px);text-align:center}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:#050a08;overflow:hidden}
+#matrix{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.58}
+main{position:relative;z-index:1;text-shadow:0 2px 18px #000;width:min(100%,680px);text-align:center}
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:clamp(65px,17vh,145px)}
 .brand{font-size:12px;font-weight:800;letter-spacing:.2em;color:#91a6bd}
 .status{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.1em;color:#8498ae}
-.dot{width:7px;height:7px;border-radius:50%;background:#d69a42}
-.dot.on{background:#20d99b;box-shadow:0 0 10px #20d99b}
+.dot{width:7px;height:7px;border-radius:50%;background:#d69a42}.dot.on{background:#20d99b;box-shadow:0 0 10px #20d99b}
 select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057;border-radius:10px;padding:12px 42px 12px 16px;font-size:14px;font-weight:700;text-align:center;outline:none}
 .pair{margin-top:30px;font-size:13px;letter-spacing:.16em;color:#8da3ba;font-weight:700}
 .price{margin:18px 0 10px;font-size:clamp(48px,12vw,100px);line-height:1.05;font-weight:750;letter-spacing:-.055em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .unit{font-size:13px;color:#8298b0;letter-spacing:.18em}
-@media(max-width:480px){.top{margin-bottom:20vh}.price{font-size:clamp(42px,12vw,68px)}}
+#oscLabBtn{margin-top:28px;background:#10251f;border:1px solid #1e7658;color:#a8f5d6;border-radius:12px;padding:12px 18px;font-weight:700;letter-spacing:.04em}
+#oscLab{display:none;position:fixed;inset:0;z-index:5;background:#071018;color:#eaf2fc;text-shadow:none;overflow:auto;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
+#oscLab.show{display:block}.osc-head{position:sticky;top:0;background:#071018;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #203447}
+.osc-head strong{font-size:15px;letter-spacing:.08em}.osc-head button,.osc-actions button{background:#142333;border:1px solid #2b4057;color:#eaf2fc;border-radius:9px;padding:9px 12px}
+.osc-controls{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0}.osc-controls select{padding:9px 12px;font-size:12px}
+.osc-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.osc-card{background:#0c1925;border:1px solid #203447;border-radius:13px;padding:12px;min-width:0}
+.osc-title{display:flex;justify-content:space-between;align-items:center;gap:8px}.osc-title h2{font-size:17px;margin:0}.osc-chip{font-size:10px;color:#91b9d0;background:#142b3b;padding:5px 8px;border-radius:20px}
+#oscCanvas{display:block;width:100%;height:280px;margin-top:10px;background:#091521;border-radius:8px}
+#oscExplain{font-size:13px;line-height:1.5;color:#b7c8d8;margin-top:9px}
+#oscLoading{font-size:11px;color:#7f9bb0;margin-top:8px}
+.osc-signals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+.osc-signal{border-radius:8px;padding:9px;background:#102b25;border-left:3px solid #20d99b;min-width:0}.osc-signal.bear{background:#301820;border-color:#ff5268}.osc-signal b{display:block;font-size:12px}.osc-signal small{display:block;font-size:10px;color:#a9bdcd;margin-top:4px}
+.osc-empty{grid-column:1/-1;color:#8da3ba;font-size:12px;padding:12px}
+#oscList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.osc-item{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;background:#0c1925;border:1px solid #203447;border-radius:9px;color:#dce8f3;padding:9px;min-width:0}
+.osc-item.active{border-color:#20d99b;background:#10251f}.osc-item b{font-size:12px}.osc-item small{font-size:10px;color:#8da3ba}
+@media(min-width:760px){#oscLab{padding-left:max(20px,calc((100vw - 1100px)/2));padding-right:max(20px,calc((100vw - 1100px)/2))}.osc-layout{grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr)}#oscList{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:480px){.top{margin-bottom:20vh}.price{font-size:clamp(42px,12vw,68px)}#oscCanvas{height:245px}}
 </style>
 </head>
 <body>
@@ -31,41 +48,142 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 <option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option><option value="LINKUSDT">LINK / USDT</option><option value="AVAXUSDT">AVAX / USDT</option><option value="HBARUSDT">HBAR / USDT</option>
 </select>
 <div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>
+<button id="oscLabBtn">GÖSTERGE LABORATUVARI</button>
 </main>
+<section id="oscLab" aria-label="Gösterge ve uyumsuzluk laboratuvarı">
+<div class="osc-head"><strong>OSCILLATOR LAB</strong><button id="oscClose">KAPAT ✕</button></div>
+<div class="osc-controls">
+<select id="oscSymbol" aria-label="Analiz coin"><option>BTCUSDT</option><option>ETHUSDT</option><option>SOLUSDT</option><option>BNBUSDT</option><option>XRPUSDT</option><option>DOGEUSDT</option><option>LINKUSDT</option><option>AVAXUSDT</option><option>HBARUSDT</option></select>
+<select id="oscTime" aria-label="Zaman dilimi"><option>5m</option><option selected>15m</option><option>1h</option><option>4h</option><option>1d</option></select>
+<button id="oscRefresh">YENİLE</button>
+</div>
+<div class="osc-layout">
+<div class="osc-card">
+<div class="osc-title"><h2 id="oscName">RSI</h2><span class="osc-chip" id="oscGroup">Momentum</span></div>
+<canvas id="oscCanvas"></canvas>
+<div id="oscLoading">Veri bekleniyor…</div>
+<div id="oscExplain"></div>
+<div class="osc-title" style="margin-top:15px"><b>Uyumsuzluk tespitleri</b><span class="osc-chip" id="oscTF">15m</span></div>
+<div id="oscSignals" class="osc-signals"></div>
+</div>
+<div class="osc-card"><div class="osc-title"><b>Gösterge şablonları</b><span class="osc-chip">33 gösterge</span></div><div id="oscList" style="margin-top:10px"></div></div>
+</div>
+</section>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id),symbols=['btcusdt','ethusdt','solusdt','bnbusdt','xrpusdt','dogeusdt','linkusdt','avaxusdt','hbarusdt'];
-const prices=Object.create(null);let socket=null,retryTimer=null,retryDelay=500,stopped=false;
-let matrixTone='#00e676',lastSelectedPrice=null;
+const prices=Object.create(null);let socket=null,retryTimer=null,retryDelay=500,stopped=false,matrixTone='#00e676',lastSelectedPrice=null;
 const canvas=$('matrix'),ctx=canvas.getContext('2d');let drops=[],fontSize=15,columns=0;
 const glyphs='アカサタナハマヤラワ012345789ABCDEFGHIJKLMNOPQRSTUVWXYZ$+-*<>アイウエオカキクケコ';
 function resizeMatrix(){const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.floor(innerWidth*dpr);canvas.height=Math.floor(innerHeight*dpr);canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';ctx.setTransform(dpr,0,0,dpr,0,0);columns=Math.ceil(innerWidth/fontSize);drops=Array.from({length:columns},()=>Math.random()*-80);}
 function drawMatrix(){ctx.fillStyle='rgba(0,0,0,.105)';ctx.fillRect(0,0,innerWidth,innerHeight);ctx.font='bold '+fontSize+'px monospace';ctx.fillStyle=matrixTone;for(let i=0;i<drops.length;i++){const ch=glyphs[Math.floor(Math.random()*glyphs.length)];const x=i*fontSize,y=drops[i]*fontSize;ctx.fillText(ch,x,y);if(y>innerHeight&&Math.random()>.975)drops[i]=Math.random()*-30;drops[i]+=.72+Math.random()*.45;}requestAnimationFrame(drawMatrix);}
 resizeMatrix();window.addEventListener('resize',resizeMatrix);requestAnimationFrame(drawMatrix);
-const tg=window.Telegram&&window.Telegram.WebApp;
-if(tg){tg.ready();tg.expand();}
+const tg=window.Telegram&&window.Telegram.WebApp;if(tg){tg.ready();tg.expand();}
 const format=value=>{const n=Number(value);if(!Number.isFinite(n)||n<=0)return'—';const digits=n>=1000?2:n>=1?4:n>=.01?6:8;return n.toLocaleString('en-US',{minimumFractionDigits:digits,maximumFractionDigits:digits});};
 function render(){const symbol=$('symbol').value;lastSelectedPrice=prices[symbol]??null;$('pair').textContent=symbol.replace('USDT',' / USDT');$('price').textContent=format(prices[symbol]);}
 function status(connected,label){$('status').textContent=label;$('dot').classList.toggle('on',connected);}
-function connect(){
- clearTimeout(retryTimer);if(stopped)return;
- const streams=symbols.map(s=>s+'@trade').join('/');
- socket=new WebSocket('wss://stream.binance.com:9443/stream?streams='+streams);
- socket.onopen=()=>{retryDelay=500;status(true,'CANLI');};
- socket.onmessage=event=>{
-  let packet;try{packet=JSON.parse(event.data);}catch{return;}
-  const trade=packet.data;if(!trade||trade.e!=='trade')return;
-  const symbol=trade.s,price=Number(trade.p);
-  if(!Number.isFinite(price)||price<=0)return;
-  prices[symbol]=price;
-  if(symbol===$('symbol').value){if(lastSelectedPrice!==null&&price!==lastSelectedPrice)matrixTone=price>lastSelectedPrice?'#00f58a':'#ff263d';lastSelectedPrice=price;$('price').textContent=format(price);}
- };
- socket.onerror=()=>{try{socket.close();}catch{}};
- socket.onclose=()=>{status(false,'YENİDEN BAĞLANIYOR');retryTimer=setTimeout(connect,retryDelay);retryDelay=Math.min(retryDelay*2,8000);};
-}
-$('symbol').addEventListener('change',render);render();connect();
-window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);if(socket)socket.close();});
+function connect(){clearTimeout(retryTimer);if(stopped)return;const streams=symbols.map(s=>s+'@trade').join('/');socket=new WebSocket('wss://stream.binance.com:9443/stream?streams='+streams);socket.onopen=()=>{retryDelay=500;status(true,'CANLI');};socket.onmessage=event=>{let packet;try{packet=JSON.parse(event.data);}catch{return;}const trade=packet.data;if(!trade||trade.e!=='trade')return;const symbol=trade.s,price=Number(trade.p);if(!Number.isFinite(price)||price<=0)return;prices[symbol]=price;if(symbol===$('symbol').value){if(lastSelectedPrice!==null&&price!==lastSelectedPrice)matrixTone=price>lastSelectedPrice?'#00f58a':'#ff263d';lastSelectedPrice=price;$('price').textContent=format(price);}};socket.onerror=()=>{try{socket.close();}catch{}};socket.onclose=()=>{status(false,'YENİDEN BAĞLANIYOR');retryTimer=setTimeout(connect,retryDelay);retryDelay=Math.min(retryDelay*2,8000);};}
+$('symbol').addEventListener('change',render);render();connect();window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);if(socket)socket.close();});
 })();
+</script>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+if(!$('oscLabBtn'))return;
+const defs=[
+['rsi','RSI','Momentum','Fiyatın son dönemlerdeki yükseliş ve düşüş gücünü ölçer. 70 üzeri güçlü/şişmiş, 30 altı zayıf/aşırı satım bölgesidir. Uyumsuzlukta fiyat dip/tepe yaparken RSI gücünün bunu doğrulayıp doğrulamadığı izlenir.'],
+['stochrsi','Stoch RSI','Momentum','RSI değerinin kendi aralığındaki konumunu ölçer; RSI’dan daha hızlı ve hassastır. 80 üzeri yüksek, 20 altı düşük bölgedir. Tek başına değil fiyat yapısıyla birlikte değerlendirilmelidir.'],
+['mfi','MFI','Para Akışı','Hacmi de hesaba katan para akışı osilatörüdür. 80 üzeri alım baskısının, 20 altı satış baskısının aşırılaşabileceğini gösterir. Fiyatla uyumsuzluğu akışın fiyatı doğrulamadığına işaret edebilir.'],
+['cci','CCI','Momentum','Fiyatın istatistiksel ortalamasından sapmasını ölçer. +100 üzeri güçlü pozitif, -100 altı güçlü negatif momentum alanı kabul edilir. Sıfır çizgisi çevresindeki dönüşler de izlenir.'],
+['obv','OBV','Hacim','Yükseliş mumlarında hacmi ekleyip düşüş mumlarında çıkararak birikimli hacim akışı üretir. Mutlak seviyesi değil eğimi ve fiyatla göreli dip/tepe yapısı önemlidir.'],
+['williams','Williams %R','Momentum','Kapanışın seçilen dönem aralığındaki konumunu gösterir. -20 üzeri yüksek, -80 altı düşük bölgedir. Hızlı tepki verir; tek başına dönüş garantisi değildir.'],
+['macd','MACD Histogram','Momentum','MACD çizgisi ile sinyal çizgisi arasındaki farkı gösterir. Histogramın küçülmesi momentumun zayıfladığını, büyümesi güçlendiğini anlatır. Sıfır çizgisi trend bağlamı sağlar.'],
+['cmf','Chaikin Money Flow','Para Akışı','Kapanışın mum aralığındaki konumu ile hacmi birleştirir. Sıfır üzeri net alım, sıfır altı net satış baskısını gösterir. Fiyatla ayrışma akış teyidinin zayıfladığını anlatabilir.'],
+['adl','A/D Line','Para Akışı','Hacmi mum içindeki kapanış konumuna göre biriktirir. Mutlak değer yerine eğim ve fiyatla uyumsuz dip/tepe yapısı değerlendirilir.'],
+['force','Force Index','Para Akışı','Fiyat değişimini hacimle çarpar. Pozitif değerler alıcı kuvvetini, negatif değerler satıcı kuvvetini temsil eder. Sıfır çevresi ve eğim değişimleri önemlidir.'],
+['roc','ROC','Momentum','Fiyatın belirli dönem içindeki yüzde değişimini ölçer. Sıfır üzeri pozitif, sıfır altı negatif momentumdur. Fiyat yeni tepe/dip yaparken ROC’un zayıflaması uyumsuzluk oluşturabilir.'],
+['momentum','Momentum','Momentum','Mevcut fiyat ile geçmiş fiyat arasındaki farktır. Sıfır üzeri pozitif, sıfır altı negatif momentum gösterir. Kendi geçmişi ve fiyat salınımlarıyla kıyaslanır.'],
+['cmo','CMO','Momentum','Yukarı ve aşağı kapanış değişimlerini karşılaştırır; -100 ile +100 arasında salınır. Pozitif değerler yukarı, negatif değerler aşağı momentum üstünlüğünü gösterir.'],
+['tsi','TSI','Momentum','Çift yumuşatılmış fiyat momentumunu ölçer. Sıfır çizgisi yön filtresi, sinyal çizgisi kesişimleri momentum değişimi için kullanılır. Uyumsuzluklar dönüşün erken uyarısı olabilir.'],
+['trix','TRIX','Momentum','Üç kez üssel yumuşatılmış fiyatın değişim oranıdır. Sıfır çizgisi trend yönünü, eğim momentumun hızını gösterir. Gürültüyü azaltır ancak gecikmelidir.'],
+['ppo','PPO','Momentum','İki hareketli ortalama arasındaki farkı yüzde olarak ölçer. Farklı fiyat seviyelerindeki varlıkları kıyaslamayı kolaylaştırır. Sıfır çizgisi trend bağlamı sağlar.'],
+['ultimate','Ultimate Oscillator','Momentum','Kısa, orta ve uzun periyotlu alım baskısını birleştirir. 70 üzeri yüksek, 30 altı düşük bölge olarak izlenir. Tek periyotlu osilatörlere göre çoklu pencere kullanır.'],
+['aroon','Aroon Oscillator','Trend','Son dönemdeki en yüksek ve en düşük fiyatın kaç bar önce oluştuğunu ölçer. +100’e yakın değer yukarı, -100’e yakın değer aşağı trend gücünü gösterir.'],
+['adx','ADX','Trend','Trendin yönünü değil gücünü ölçer. 20 altı zayıf/yatay, 25 üzeri belirgin trend olarak sık kullanılır. +DI ve -DI yön konusunda yardımcıdır.'],
+['vortex','Vortex','Trend','VI+ ve VI- çizgileri pozitif/negatif trend yönünü karşılaştırır. Kesişimler yön değişimi uyarısı verebilir; yatay piyasada sık sinyal üretebilir.'],
+['bbp','Bollinger %B','Volatilite','Fiyatın Bollinger bantları içindeki konumunu gösterir. 1 üzeri üst bandın, 0 altı alt bandın dışını ifade eder. Bant teması tek başına dönüş sinyali değildir.'],
+['bandwidth','Bollinger Bandwidth','Volatilite','Bollinger bantlarının genişliğini ölçer. Daralma düşük volatiliteyi, genişleme artan volatiliteyi gösterir. Yön belirtmez; fiyat yönüyle birlikte okunur.'],
+['atr','ATR','Volatilite','Gerçek mum aralığının ortalamasıdır. Volatiliteyi ölçer, yön göstermez. Fiyatla uyumsuzluk yerine risk/stop mesafesi ve volatilite rejimi için kullanılır.'],
+['chop','Choppiness Index','Volatilite','Piyasanın trend mi yatay mı hareket ettiğini ölçer. Yüksek değer sıkışık/yatay, düşük değer daha yönlü hareket anlamına gelir.'],
+['eom','Ease of Movement','Hacim','Fiyatın ne kadar az hacimle hareket ettiğini ölçmeye çalışır. Pozitif değer kolay yukarı, negatif değer kolay aşağı hareketi ifade eder.'],
+['volosc','Volume Oscillator','Hacim','Kısa ve uzun dönem hacim ortalamalarının yüzde farkıdır. Pozitif değer kısa vadeli hacmin arttığını, negatif değer azaldığını gösterir.'],
+['pvt','Price Volume Trend','Hacim','Fiyatın yüzde değişimini hacimle ağırlıklandırarak biriktirir. Eğimi fiyat hareketinin hacimle desteklenip desteklenmediğini incelemek için kullanılır.'],
+['nvi','Negative Volume Index','Hacim','Önceki bara göre hacim azaldığında fiyat değişimini endekse işler. Daha sakin hacimli dönemlerdeki fiyat davranışını izler; tek başına al/sat sinyali değildir.'],
+['pvi','Positive Volume Index','Hacim','Önceki bara göre hacim arttığında fiyat değişimini endekse işler. Hacim genişlemesindeki fiyat davranışını takip eder.'],
+['vwap','VWAP Sapması','Hacim','Hacim ağırlıklı ortalama fiyata göre fiyatın yüzde sapmasını gösterir. Pozitif değer fiyatın VWAP üzerinde, negatif değer altında olduğunu belirtir. Günlük seans VWAP’ı olarak hesaplanır.'],
+['relvol','Göreceli Hacim','Hacim','Mevcut mum hacmini geçmiş mumların ortalamasıyla karşılaştırır. 1 üzeri ortalamanın, 2 üzeri iki kat hacmin oluştuğunu gösterir.'],
+['bop','Balance of Power','Hacim','Mum içindeki alıcı ve satıcı gücünü high-low aralığına göre normalize eder. Pozitif değer alıcı, negatif değer satıcı üstünlüğünü gösterir.'],
+['cvd','Taker CVD','Piyasa Akışı','Binance mum verisindeki taker alım hacmi ile toplam hacim farkını biriktirir. Spot akış için yaklaşık bir vekildir; gerçek işlem bazlı CVD değildir.'],
+];
+const state={rows:[],selected:'rsi',tf:'15m',symbol:'BTCUSDT',series:[],divs:[]};
+const ema=(a,p)=>{let out=Array(a.length).fill(null),k=2/(p+1),v=null;for(let i=0;i<a.length;i++){if(a[i]==null)continue;v=v==null?a[i]:a[i]*k+v*(1-k);out[i]=v;}return out;};
+const sma=(a,p)=>a.map((_,i)=>i+1<p?null:a.slice(i-p+1,i+1).every(v=>v!=null)?a.slice(i-p+1,i+1).reduce((x,y)=>x+y,0)/p:null);
+const calc=(id,r)=>{const c=r.map(x=>x.c),h=r.map(x=>x.h),l=r.map(x=>x.l),v=r.map(x=>x.v),n=c.length,chg=c.map((x,i)=>i?x-c[i-1]:null),tr=r.map((x,i)=>i?Math.max(x.h-x.l,Math.abs(x.h-r[i-1].c),Math.abs(x.l-r[i-1].c)):x.h-x.l),pos=chg.map(x=>x==null?null:Math.max(x,0)),neg=chg.map(x=>x==null?null:Math.max(-x,0));
+const roll=(a,p,fn)=>a.map((_,i)=>i+1<p?null:fn(a.slice(i-p+1,i+1)));
+const ratio=(a,b)=>a.map((x,i)=>x==null||b[i]==null||b[i]===0?null:x/b[i]);
+const diff=(a,b)=>a.map((x,i)=>x==null||b[i]==null?null:x-b[i]);
+const rsi=(a,p=14)=>{let out=Array(a.length).fill(null),g=0,d=0;for(let i=1;i<a.length;i++){const x=a[i]-a[i-1];if(i<=p){g+=Math.max(x,0);d+=Math.max(-x,0);if(i===p)out[i]=d===0?100:100-100/(1+g/d);}else{g=(g*(p-1)+Math.max(x,0))/p;d=(d*(p-1)+Math.max(-x,0))/p;out[i]=d===0?100:100-100/(1+g/d);}}return out;};
+const rsi14=rsi(c),typ=c.map((x,i)=>(h[i]+l[i]+x)/3),tpS=sma(typ,20),mad=typ.map((x,i)=>i<19?null:typ.slice(i-19,i+1).reduce((s,y)=>s+Math.abs(y-tpS[i]),0)/20);
+let out;
+switch(id){
+case'rsi':out=rsi14;break;
+case'stochrsi':{const lo=roll(rsi14,14,a=>Math.min(...a)),hi=roll(rsi14,14,a=>Math.max(...a));out=ratio(diff(rsi14,lo),diff(hi,lo)).map(x=>x==null?null:x*100);break;}
+case'mfi':{const mf=typ.map((x,i)=>i?x*v[i]:0),p=mf.map((x,i)=>i&&typ[i]>typ[i-1]?x:0),m=mf.map((x,i)=>i&&typ[i]<typ[i-1]?x:0),ps=roll(p,14,a=>a.reduce((s,x)=>s+x,0)),ms=roll(m,14,a=>a.reduce((s,x)=>s+x,0));out=ps.map((x,i)=>x==null?null:ms[i]===0?100:100-100/(1+x/ms[i]));break;}
+case'cci':out=typ.map((x,i)=>tpS[i]==null||mad[i]===0?null:(x-tpS[i])/(.015*mad[i]));break;
+case'obv':{out=Array(n).fill(null);out[0]=v[0];for(let i=1;i<n;i++)out[i]=out[i-1]+(c[i]>c[i-1]?v[i]:c[i]<c[i-1]?-v[i]:0);break;}
+case'williams':{const hh=roll(h,14,a=>Math.max(...a)),ll=roll(l,14,a=>Math.min(...a));out=c.map((x,i)=>hh[i]==null||hh[i]===ll[i]?null:-100*(hh[i]-x)/(hh[i]-ll[i]));break;}
+case'macd':{const m=diff(ema(c,12),ema(c,26));out=diff(m,ema(m,9));break;}
+case'cmf':{const mfv=r.map((x,i)=>x.h===x.l?0:((2*x.c-x.h-x.l)/(x.h-x.l))*x.v);const a=roll(mfv,20,x=>x.reduce((s,y)=>s+y,0)),b=roll(v,20,x=>x.reduce((s,y)=>s+y,0));out=ratio(a,b);break;}
+case'adl':{out=Array(n).fill(null);let s=0;for(let i=0;i<n;i++){s+=(h[i]===l[i]?0:((2*c[i]-h[i]-l[i])/(h[i]-l[i]))*v[i]);out[i]=s;}break;}
+case'force':out=ema(chg.map((x,i)=>x==null?null:x*v[i]),13);break;
+case'roc':out=c.map((x,i)=>i<12?null:c[i-12]===0?null:(x/c[i-12]-1)*100);break;
+case'momentum':out=c.map((x,i)=>i<10?null:x-c[i-10]);break;
+case'cmo':{const up=roll(pos,14,a=>a.reduce((s,x)=>s+(x||0),0)),dn=roll(neg,14,a=>a.reduce((s,x)=>s+(x||0),0));out=up.map((x,i)=>x==null?null:(x+dn[i]===0?0:100*(x-dn[i])/(x+dn[i])));break;}
+case'tsi':{const a=ema(ema(chg,25),13),b=ema(ema(chg.map(x=>x==null?null:Math.abs(x)),25),13);out=ratio(a,b).map(x=>x==null?null:x*100);break;}
+case'trix':{const e=ema(ema(ema(c,15),15),15);out=e.map((x,i)=>i&&e[i-1]?100*(x/e[i-1]-1):null);break;}
+case'ppo':{const a=ema(c,12),b=ema(c,26);out=a.map((x,i)=>b[i]?100*(x-b[i])/b[i]:null);break;}
+case'ultimate':{const bp=r.map((x,i)=>x.c-Math.min(x.l,i?r[i-1].c:x.l)),rr=r.map((x,i)=>x.h-Math.max(x.l,i?r[i-1].c:x.l));const av=p=>ratio(roll(bp,p,a=>a.reduce((s,x)=>s+x,0)),roll(rr,p,a=>a.reduce((s,x)=>s+x,0)));const a=av(7),b=av(14),d=av(28);out=a.map((x,i)=>x==null||b[i]==null||d[i]==null?null:100*(4*x+2*b[i]+d[i])/7);break;}
+case'aroon':{const up=roll(h,25,a=>a.lastIndexOf(Math.max(...a))),dn=roll(l,25,a=>a.lastIndexOf(Math.min(...a)));out=up.map((x,i)=>x==null?null:100*(x-dn[i])/24);break;}
+case'adx':{const plus=r.map((x,i)=>i?Math.max(x.h-r[i-1].h,0):0),minus=r.map((x,i)=>i?Math.max(r[i-1].l-x.l,0):0),trm=roll(tr,14,a=>a.reduce((s,x)=>s+x,0)),p=roll(plus,14,a=>a.reduce((s,x)=>s+x,0)),m=roll(minus,14,a=>a.reduce((s,x)=>s+x,0));const dx=p.map((x,i)=>x==null||trm[i]===0?null:100*Math.abs(x-m[i])/(x+m[i]||1));out=sma(dx,14);break;}
+case'vortex':{const vp=r.map((x,i)=>i?Math.abs(x.h-r[i-1].l):0),vm=r.map((x,i)=>i?Math.abs(x.l-r[i-1].h):0),a=roll(vp,14,x=>x.reduce((s,y)=>s+y,0)),b=roll(vm,14,x=>x.reduce((s,y)=>s+y,0)),t=roll(tr,14,x=>x.reduce((s,y)=>s+y,0));out=a.map((x,i)=>x==null?null:(x-b[i])/(t[i]||1));break;}
+case'bbp':case'bandwidth':{const mid=sma(c,20),sd=roll(c,20,a=>Math.sqrt(a.reduce((s,x)=>s+(x-a.reduce((p,q)=>p+q,0)/a.length)**2,0)/20));out=c.map((x,i)=>mid[i]==null?null:id==='bbp'?(x-(mid[i]-2*sd[i]))/(4*sd[i]||1):4*sd[i]/mid[i]*100);break;}
+case'atr':out=sma(tr,14);break;
+case'chop':{const sum=roll(tr,14,a=>a.reduce((s,x)=>s+x,0)),hh=roll(h,14,a=>Math.max(...a)),ll=roll(l,14,a=>Math.min(...a));out=sum.map((x,i)=>x==null?null:100*Math.log10(x/(hh[i]-ll[i]||1))/Math.log10(14));break;}
+case'eom':out=sma(r.map((x,i)=>i?(x.h+x.l-r[i-1].h-r[i-1].l)/2*(x.h===x.l?0:x.v/(x.h-x.l)):null),14);break;
+case'volosc':{const a=sma(v,5),b=sma(v,20);out=a.map((x,i)=>x==null||!b[i]?null:100*(x-b[i])/b[i]);break;}
+case'pvt':{out=Array(n).fill(null);out[0]=0;for(let i=1;i<n;i++)out[i]=out[i-1]+(c[i-1]?v[i]*(c[i]-c[i-1])/c[i-1]:0);break;}
+case'nvi':case'pvi':{out=Array(n).fill(null);out[0]=1000;for(let i=1;i<n;i++){const cond=id==='nvi'?v[i]<v[i-1]:v[i]>v[i-1];out[i]=out[i-1]*(cond&&c[i-1]?1+(c[i]-c[i-1])/c[i-1]:1);}break;}
+case'vwap':{out=Array(n).fill(null);let pv=0,vol=0,day=null;for(let i=0;i<n;i++){const d=new Date(r[i].t).toISOString().slice(0,10);if(d!==day){day=d;pv=0;vol=0;}pv+=typ[i]*v[i];vol+=v[i];out[i]=vol?(c[i]/(pv/vol)-1)*100:null;}break;}
+case'relvol':{const a=sma(v,20);out=v.map((x,i)=>a[i]?x/a[i]:null);break;}
+case'bop':out=r.map(x=>x.h===x.l?0:(x.c-x.o)/(x.h-x.l));break;
+case'cvd':{out=Array(n).fill(null);let s=0;for(let i=0;i<n;i++){s+=(2*r[i].tb-r[i].v);out[i]=s;}break;}
+default:out=rsi14;
+}
+return out;};
+function pivots(a,type){const out=[];for(let i=3;i<a.length-3;i++){if(a[i]==null)continue;let ok=true;for(let j=i-3;j<=i+3;j++){if(j===i||a[j]==null)continue;if(type==='low'?a[j]<a[i]:a[j]>a[i]){ok=false;break;}}if(ok)out.push({i,v:a[i]});}return out;}
+function divergences(price,osc){const pl=pivots(price,'low'),ph=pivots(price,'high'),ol=pivots(osc,'low'),oh=pivots(osc,'high'),out=[];function pair(pp,oo,low){for(let k=1;k<pp.length;k++){const a=pp[k-1],b=pp[k];if(b.i-a.i<5||b.i-a.i>80)continue;const x=oo.filter(z=>Math.abs(z.i-a.i)<=3).sort((m,n)=>Math.abs(m.i-a.i)-Math.abs(n.i-a.i))[0],y=oo.filter(z=>Math.abs(z.i-b.i)<=3).sort((m,n)=>Math.abs(m.i-b.i)-Math.abs(n.i-b.i))[0];if(!x||!y||x.i===y.i)continue;const regular=low?(b.v<a.v&&y.v>x.v):(b.v>a.v&&y.v<x.v),hidden=low?(b.v>a.v&&y.v<x.v):(b.v<a.v&&y.v>x.v);if(regular||hidden)out.push({a,b,type:low?(regular?'Pozitif':'Gizli pozitif'):(regular?'Negatif':'Gizli negatif'),confirmed:true});}}
+pair(pl,pivots(osc,'low'),true);pair(ph,pivots(osc,'high'),false);return out.sort((a,b)=>b.b.i-a.b.i);}
+function draw(){const canvas=$('oscCanvas'),ctx=canvas.getContext('2d'),w=canvas.clientWidth,h=canvas.clientHeight,dpr=devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);const offset=state.rows.length-Math.min(120,state.rows.length),rows=state.rows.slice(-120),vals=state.series.slice(-120),valid=vals.filter(x=>x!=null&&Number.isFinite(x));if(!rows.length||!valid.length){ctx.fillStyle='#8da3ba';ctx.fillText('Gösterge verisi bekleniyor',20,30);return;}const pad={l:12,r:12,t:18,b:22},pw=w-pad.l-pad.r,ph=(h-pad.t-pad.b)*.43,oh=(h-pad.t-pad.b)*.39,top=pad.t,bottom=top+ph+30;const pmin=Math.min(...rows.map(x=>x.l)),pmax=Math.max(...rows.map(x=>x.h)),vmin=Math.min(...valid),vmax=Math.max(...valid),px=i=>pad.l+i/(rows.length-1)*pw,py=v=>top+(pmax-v)/(pmax-pmin||1)*ph,oy=v=>bottom+(vmax-v)/(vmax-vmin||1)*oh;ctx.strokeStyle='#203447';ctx.lineWidth=1;for(let k=0;k<4;k++){const y=top+k*ph/3;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();}const cw=Math.max(2,pw/rows.length*.62);rows.forEach((x,i)=>{const xx=px(i),up=x.c>=x.o,col=up?'#20d99b':'#ff5268';ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xx,py(x.h));ctx.lineTo(xx,py(x.l));ctx.stroke();const y=Math.min(py(x.o),py(x.c)),bh=Math.max(1,Math.abs(py(x.o)-py(x.c)));ctx.fillRect(xx-cw/2,y,cw,bh);});ctx.fillStyle='#8da3ba';ctx.font='10px Arial';ctx.fillText('FİYAT · MUM',pad.l,11);ctx.fillText('GÖSTERGE · '+(defs.find(x=>x[0]===state.selected)?.[1]||''),pad.l,bottom-7);ctx.beginPath();vals.forEach((v,i)=>{if(v==null)return;const y=oy(v);if(i===0)ctx.moveTo(px(i),y);else ctx.lineTo(px(i),y);});ctx.strokeStyle='#42b9ff';ctx.lineWidth=2;ctx.stroke();state.divs.slice(0,8).forEach(d=>{const i=d.b.i-offset,j=d.a.i-offset;if(i<0||j<0||i>=rows.length||j>=rows.length)return;const bullish=d.type.toLowerCase().includes('pozitif'),col=bullish?'#20d99b':'#ff5268';ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px(j),py(state.rows[d.a.i].c));ctx.lineTo(px(i),py(state.rows[d.b.i].c));ctx.stroke();ctx.beginPath();ctx.moveTo(px(j),oy(state.series[d.a.i]));ctx.lineTo(px(i),oy(state.series[d.b.i]));ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.arc(px(i),oy(state.series[d.b.i]),4,0,Math.PI*2);ctx.fill();});ctx.fillStyle='#8da3ba';ctx.fillText(new Date(rows[0].t).toLocaleString('tr-TR'),pad.l,h-4);ctx.fillText(new Date(rows[rows.length-1].t).toLocaleString('tr-TR'),w-125,h-4);}
+function render(){const d=defs.find(x=>x[0]===state.selected);$('oscName').textContent=d[1];$('oscGroup').textContent=d[2];$('oscExplain').textContent=d[3];$('oscSymbol').value=state.symbol;$('oscTF').textContent=state.tf;$('oscList').innerHTML=defs.map(x=>'<button class="osc-item '+(x[0]===state.selected?'active':'')+'" data-id="'+x[0]+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('');$('oscList').querySelectorAll('button').forEach(b=>b.onclick=()=>{state.selected=b.dataset.id;calculate();});$('oscSignals').innerHTML=state.divs.length?state.divs.slice(0,8).map(x=>'<div class="osc-signal '+(x.type.includes('pozitif')?'bull':'bear')+'"><b>'+x.type+'</b><small>'+new Date(state.rows[x.b.i].t).toLocaleString('tr-TR')+' · Onaylandı</small></div>').join(''):'<div class="osc-empty">Seçili periyotta doğrulanmış uyumsuzluk bulunamadı.</div>';draw();}
+async function calculate(){const d=defs.find(x=>x[0]===state.selected);$('oscLoading').textContent='Binance geçmiş mumları yükleniyor…';try{const url='https://api.binance.com/api/v3/klines?symbol='+state.symbol+'&interval='+state.tf+'&limit=500';const res=await fetch(url);if(!res.ok)throw Error('Binance veri yanıtı: '+res.status);const raw=await res.json();state.rows=raw.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],tb:+x[9]}));state.series=calc(state.selected,state.rows);state.divs=divergences(state.rows.map(x=>x.c),state.series);$('oscLoading').textContent='500 mum · Binance Spot · Son güncelleme '+new Date().toLocaleTimeString('tr-TR');render();}catch(e){$('oscLoading').textContent='Veri alınamadı: '+e.message;}}
+function openLab(){ $('oscLab').classList.add('show');calculate();}
+$('oscLabBtn').onclick=openLab;$('oscClose').onclick=()=>$('oscLab').classList.remove('show');
+$('oscSymbol').addEventListener('change',e=>{state.symbol=e.target.value;calculate();});
+$('oscTime').addEventListener('change',e=>{state.tf=e.target.value;calculate();});
+$('oscRefresh').onclick=calculate;
+const list=$('oscList');list.innerHTML=defs.map(x=>'<button class="osc-item" data-id="'+x[0]+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('');
+})();
+
 </script>
 </body>
 </html>
