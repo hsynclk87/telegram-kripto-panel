@@ -339,7 +339,6 @@ calculate();
 $('oscLabBtn').onclick=openLab;
 $('oscClose').onclick=()=>$('oscLab').classList.remove('show');
 $('oscSymbol').addEventListener('change',e=>setSymbol(e.target.value));
-$('oscSymbol').addEventListener('input',e=>{if(e.target.value.toUpperCase()!==state.symbol)setSymbol(e.target.value);});
 document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeframe(btn.dataset.tf)));
 $('symbol').addEventListener('change',()=>{if($('oscLab').classList.contains('show'))setSymbol($('symbol').value);});
 $('oscRefresh').onclick=calculate;
