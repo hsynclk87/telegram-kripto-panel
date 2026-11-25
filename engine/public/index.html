@@ -9,9 +9,9 @@
 <style>
 :root{color-scheme:dark;font-family:Arial,system-ui,sans-serif;background:#050a08;color:#edf3fa}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:#050a08;overflow:hidden}#matrix{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.58}main{position:relative;z-index:1;text-shadow:0 2px 18px #000}
-main{width:min(100%,680px);text-align:center}
-.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:clamp(65px,17vh,145px)}
+body{margin:0;min-height:100vh;display:block;padding:18px 12px 40px;background:#050a08;overflow-x:hidden;overflow-y:auto}#matrix{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.58}main{position:relative;z-index:1;text-shadow:0 2px 18px #000}
+main{width:min(100%,1280px);margin:0 auto;text-align:center}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:30px}
 .brand{font-size:12px;font-weight:800;letter-spacing:.2em;color:#91a6bd}
 .status{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.1em;color:#8498ae}
 .dot{width:7px;height:7px;border-radius:50%;background:#d69a42}
@@ -20,7 +20,7 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 .pair{margin-top:30px;font-size:13px;letter-spacing:.16em;color:#8da3ba;font-weight:700}
 .price{margin:18px 0 10px;font-size:clamp(48px,12vw,100px);line-height:1.05;font-weight:750;letter-spacing:-.055em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .unit{font-size:13px;color:#8298b0;letter-spacing:.18em}
-@media(max-width:480px){.top{margin-bottom:20vh}.price{font-size:clamp(42px,12vw,68px)}}
+#chart-section{margin:34px auto 0;width:100%;text-align:left;background:rgba(5,12,17,.94);border:1px solid rgba(74,116,133,.35);border-radius:14px;overflow:hidden;box-shadow:0 12px 45px rgba(0,0,0,.35)}\n#chart-heading{padding:14px 16px;color:#a9c2cf;font-size:12px;font-weight:800;letter-spacing:.14em;border-bottom:1px solid rgba(74,116,133,.25)}\n#chart{width:100%;height: min(76vh,780px);min-height:560px}\n#chart .tradingview-widget-container,#chart .tradingview-widget-container__widget{width:100%;height:100%}\n#chart iframe{width:100%!important}\n@media(max-width:600px){body{padding:12px 8px 28px}.price{font-size:clamp(42px,12vw,68px)}#chart-section{margin-top:26px;border-radius:10px}#chart{height:680px;min-height:620px}}
 </style>
 </head>
 <body>
@@ -30,7 +30,7 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 <select id="symbol" aria-label="Coin seç">
 <option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option><option value="LINKUSDT">LINK / USDT</option><option value="AVAXUSDT">AVAX / USDT</option><option value="HBARUSDT">HBAR / USDT</option>
 </select>
-<div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>
+<div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>\n<section id="chart-section"><div id="chart-heading">TRADINGVIEW · GELİŞMİŞ GRAFİK</div><div id="chart"></div></section>
 </main>
 <script>
 (()=>{'use strict';
@@ -45,7 +45,7 @@ resizeMatrix();window.addEventListener('resize',resizeMatrix);requestAnimationFr
 const tg=window.Telegram&&window.Telegram.WebApp;
 if(tg){tg.ready();tg.expand();}
 const format=value=>{const n=Number(value);if(!Number.isFinite(n)||n<=0)return'—';const digits=n>=1000?2:n>=1?4:n>=.01?6:8;return n.toLocaleString('en-US',{minimumFractionDigits:digits,maximumFractionDigits:digits});};
-function render(){const symbol=$('symbol').value;lastSelectedPrice=prices[symbol]??null;$('pair').textContent=symbol.replace('USDT',' / USDT');$('price').textContent=format(prices[symbol]);}
+function renderChart(){const host=$('chart');host.replaceChildren();const wrap=document.createElement('div');wrap.className='tradingview-widget-container';wrap.style.cssText='height:100%;width:100%';const widget=document.createElement('div');widget.className='tradingview-widget-container__widget';widget.style.cssText='height:100%;width:100%';wrap.appendChild(widget);const script=document.createElement('script');script.type='text/javascript';script.async=true;script.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';const base=$('symbol').value.replace('USDT','');script.textContent=JSON.stringify({autosize:true,symbol:'BINANCE:'+base+'USDT',interval:'15',timezone:'Etc/UTC',theme:'dark',style:'1',locale:'tr',withdateranges:true,hide_side_toolbar:false,hide_top_toolbar:false,hide_legend:false,hide_volume:false,allow_symbol_change:true,save_image:true,calendar:false,details:true,hotlist:false,studies:['RSI@tv-basicstudies','MACD@tv-basicstudies','BB@tv-basicstudies','StochasticRSI@tv-basicstudies','MAExp@tv-basicstudies'],support_host:'https://www.tradingview.com'});wrap.appendChild(script);host.appendChild(wrap);}\nfunction render(){const symbol=$('symbol').value;lastSelectedPrice=prices[symbol]??null;$('pair').textContent=symbol.replace('USDT',' / USDT');$('price').textContent=format(prices[symbol]);renderChart();}
 function status(connected,label){$('status').textContent=label;$('dot').classList.toggle('on',connected);}
 function connect(){
  clearTimeout(retryTimer);if(stopped)return;
