@@ -67,7 +67,7 @@ export class SpotScanner {
       st.price = price;
       const cutoff = t - 65000;
       while (st.trades.length && st.trades[0].ts < cutoff) st.trades.shift();
-    } else if (d.e === "bookTicker") {
+    } else if (d.e === "bookTicker" || (typeof d.b === "string" && typeof d.a === "string" && d.B !== undefined)) {
       const bid = n(d.b), ask = n(d.a), bidQty = n(d.B), askQty = n(d.A);
       st.book = { bid, ask, bidQty, askQty, spreadPct: bid > 0 && ask > 0 ? (ask - bid) / ((ask + bid) / 2) * 100 : 0, ts: t };
     } else if (d.e === "depthUpdate" || d.lastUpdateId) {
