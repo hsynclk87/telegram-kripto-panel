@@ -58,9 +58,14 @@ function log(level, message, extra = {}) {
 }
 
 function publish(type, payload) {
-  const message = JSON.stringify({ type, time: now(), data: payload });
+  // /stream yalnızca canlı fiyat ekranı içindir. Mum, emir defteri ve analiz
+  // paketleri fiyat akışını bloke etmesin; HTTP API'leri aynen çalışmaya devam eder.
+  if (type !== "price" && type !== "connection") return;
+  const message = JSON.stringify({ type, time: Date.now(), data: payload });
   for (const client of clients) {
-    if (client.readyState === WebSocket.OPEN) client.send(message);
+    if (client.readyState === WebSocket.OPEN && client.bufferedAmount < 65536) {
+      client.send(message);
+    }
   }
 }
 
@@ -457,7 +462,16 @@ function startBinanceSpot() {
       if (!d) return;
       const symbol = symbolFrom(d.s);
       if (d.e === "trade") {
-        updateMarket(symbol, "binanceSpot", { lastPrice: Number(d.p), priceTimestamp: Number(d.T) });
+        const price = Number(d.p);
+        if (Number.isFinite(price) && price > 0) {
+          const market = state.markets[symbol];
+          if (market) {
+            market.binanceSpot.lastPrice = price;
+            market.binanceSpot.priceTimestamp = Number(d.T);
+            market.updatedAt = now();
+          }
+          publish("price", { symbol, price, timestamp: Number(d.T) });
+        }
         addTrade({
           exchange: "Binance Spot", id: "spot:" + d.t, symbol, price: Number(d.p),
           quantity: Number(d.q), quoteValue: Number(d.p) * Number(d.q),
@@ -841,9 +855,13 @@ const server = http.createServer(async (req, res) => {
 const wss = new WebSocketServer({ server, path: "/stream" });
 wss.on("connection", (socket) => {
   clients.add(socket);
+  const prices = Object.fromEntries(SYMBOLS.map((symbol) => {
+    const market = state.markets[symbol]?.binanceSpot || {};
+    return [symbol, { price: market.lastPrice || null, timestamp: market.priceTimestamp || null }];
+  }));
   socket.send(JSON.stringify({
-    type: "snapshot", time: now(),
-    data: { markets: state.markets, exchanges: state.exchanges, analysis: getAnalysis(), marketSignals: getMarketSignals(), latestWhales: state.whales.slice(0, 50) }
+    type: "snapshot", time: Date.now(),
+    data: { prices, exchanges: { binanceSpot: state.exchanges.binanceSpot } }
   }));
   socket.on("close", () => clients.delete(socket));
   socket.on("error", () => clients.delete(socket));
