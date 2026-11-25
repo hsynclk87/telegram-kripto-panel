@@ -1,8 +1,20 @@
 import WebSocket from "ws";
 import { zScore, pctChange, clamp, weightedScore } from "./math.js";
 
-const REST = process.env.BINANCE_REST_URL || "https://api.binance.com";
-const WS = process.env.BINANCE_WS_URL || "wss://stream.binance.com:9443/stream";
+const RESTS = (process.env.BINANCE_REST_URLS || "https://data-api.binance.vision,https://api1.binance.com,https://api2.binance.com,https://api.binance.com").split(",").map(x=>x.trim()).filter(Boolean);
+const WS = process.env.BINANCE_WS_URL || "wss://data-stream.binance.vision/stream";
+async function apiFetch(path) {
+  let lastError;
+  for (const base of RESTS) {
+    try {
+      const response = await fetch(base + path, { signal: AbortSignal.timeout(12000) });
+      if (response.ok) return response;
+      lastError = new Error(base + " HTTP " + response.status + " " + (await response.text()).slice(0,180));
+      if ([418,429].includes(response.status)) break;
+    } catch (error) { lastError = error; }
+  }
+  throw new Error("Binance REST endpoints unavailable: " + (lastError?.message || "unknown error"));
+}
 const n = (v) => Number(v || 0);
 const now = () => Date.now();
 
@@ -29,9 +41,9 @@ export class SpotScanner {
   }
   async refreshUniverse() {
     const [infoRes, tickRes] = await Promise.all([
-      fetch(REST + "/api/v3/exchangeInfo"), fetch(REST + "/api/v3/ticker/24hr")
+      apiFetch("/api/v3/exchangeInfo"), apiFetch("/api/v3/ticker/24hr")
     ]);
-    if (!infoRes.ok || !tickRes.ok) throw new Error("Binance universe HTTP error");
+    
     const info = await infoRes.json(), tickers = await tickRes.json();
     const eligible = new Set(info.symbols.filter(s => s.status === "TRADING" && s.quoteAsset === "USDT" && s.isSpotTradingAllowed && !/(UP|DOWN|BULL|BEAR)USDT$/.test(s.symbol)).map(s => s.symbol));
     this.symbols = tickers.filter(t => eligible.has(t.symbol) && n(t.quoteVolume) >= this.minVolume)
@@ -180,7 +192,7 @@ export class SpotScanner {
       for (const minute of marks) {
         if (age<minute*60000 || row.outcomes.marks[minute]) continue;
         try {
-          const res=await fetch(REST+"/api/v3/ticker/price?symbol="+row.symbol);
+          const res=await apiFetch("/api/v3/ticker/price?symbol="+row.symbol);
           if(!res.ok) continue;
           const current=n((await res.json()).price);
           const mark={type:"mark",signalId:row.id,symbol:row.symbol,minute,createdAt:now(),price:current,
