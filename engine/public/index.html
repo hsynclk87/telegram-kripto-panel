@@ -29,6 +29,7 @@ body>section.card:nth-of-type(3){grid-column:1/span 8}body>section.card:nth-of-t
 const $=id=>document.getElementById(id), symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT"], state={markets:{},trades:[],signals:[],selected:"BTCUSDT",socket:null,chart:null,candleSeries:null,lastPrice:null,historyFetchAt:{},volumeSeries:null};
 const fmt=n=>Number.isFinite(n)?(n>=1000?n.toLocaleString("en-US",{maximumFractionDigits:2}):n>=1?n.toFixed(4):n.toFixed(7)):"—";
 const pct=n=>Number.isFinite(n)?(n>=0?"+":"")+n.toFixed(2)+"%":"—";
+function normalizeMarkets(raw){if(Array.isArray(raw))return Object.fromEntries(raw.filter(m=>m&&m.symbol).map(m=>[m.symbol,m]));if(raw&&typeof raw==="object")return raw;return {}}
 function initChart(){if(!window.LightweightCharts)return;state.chart=LightweightCharts.createChart($("chart"),{layout:{background:{color:"#0d1725"},textColor:"#9db0c7"},grid:{vertLines:{color:"#1d2b3d"},horzLines:{color:"#1d2b3d"}},rightPriceScale:{borderColor:"#34465e"},timeScale:{borderColor:"#34465e",timeVisible:true},crosshair:{mode:0},width:$("chart").clientWidth,height:$("chart").clientHeight});state.candleSeries=state.chart.addCandlestickSeries({upColor:"#19d6a0",downColor:"#ff5d78",borderUpColor:"#19d6a0",borderDownColor:"#ff5d78",wickUpColor:"#19d6a0",wickDownColor:"#ff5d78",priceLineVisible:true,lastValueVisible:true});state.volumeSeries=state.chart.addHistogramSeries({priceFormat:{type:"volume"},priceScaleId:"volume",scaleMargins:{top:.82,bottom:0},lastValueVisible:false,priceLineVisible:false});state.chart.priceScale("volume").applyOptions({scaleMargins:{top:.82,bottom:0},visible:false});new ResizeObserver(()=>state.chart.applyOptions({width:$("chart").clientWidth,height:$("chart").clientHeight})).observe($("chart"))}
 function ema(a,p){if(a.length<p)return null;let k=2/(p+1),v=a.slice(0,p).reduce((s,x)=>s+x,0)/p;for(let i=p;i<a.length;i++)v=a[i]*k+v*(1-k);return v}
 function rsi(a,p=14){if(a.length<=p)return null;let g=0,l=0;for(let i=a.length-p;i<a.length;i++){let d=a[i]-a[i-1];if(d>0)g+=d;else l-=d}return l===0?100:100-100/(1+g/l)}
@@ -73,7 +74,7 @@ function requestHistory(sym){
   .then(r=>{if(!r.ok)throw new Error("history HTTP "+r.status);return r.json()})
   .then(d=>{
    const market=state.markets[sym]||(state.markets[sym]={});
-   market.candles1m=d.candles1m||[];market.candles15m=d.candles15m||[];market.candles1h=d.candles1h||[];market.candles4h=d.candles4h||[];
+   for(const interval of ["1m","15m","1h","4h"]){const key="candles"+interval,incoming=Array.isArray(d[key])?d[key]:[],live=Array.isArray(market[key])?market[key]:[],merged=new Map(incoming.map(c=>[c.openTime,c]));for(const c of live)merged.set(c.openTime,c);market[key]=[...merged.values()].sort((a,b)=>a.openTime-b.openTime).slice(-1000);}
    if(sym===state.selected){refresh();$("chartNote").textContent="Binance geçmişi hazır · 1dk "+market.candles1m.length+" / 1.000 · 15dk "+market.candles15m.length+" · 1s "+market.candles1h.length+" · 4s "+market.candles4h.length;}
   })
   .catch(e=>{if(sym===state.selected)$("chartNote").textContent="Geçmiş mum verisi alınamadı: "+e.message;});
@@ -90,7 +91,7 @@ function connect(){
  ws.onmessage=e=>{
   let msg;try{msg=JSON.parse(e.data)}catch{return}
   if(msg.type==="snapshot"){
-   state.markets=msg.data.markets||{};
+   state.markets=normalizeMarkets(msg.data.markets);
    state.trades=msg.data.latestTrades||[];
    refresh();
   }else if(msg.type==="market"){
@@ -122,5 +123,5 @@ function connect(){
   }
  };
 }
-symbols.forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=s.replace("USDT","/USDT");$("symbolSelect").append(o)});$("symbolSelect").onchange=e=>select(e.target.value);$("scanBtn").onclick=scan;initChart();connect();fetch("/api/v1/snapshot",{cache:"no-store"}).then(r=>r.json()).then(d=>{state.markets=d.markets||{};state.trades=d.latestTrades||[];refresh()}).catch(()=>{});setInterval(refresh,5000);
+symbols.forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=s.replace("USDT","/USDT");$("symbolSelect").append(o)});$("symbolSelect").onchange=e=>select(e.target.value);$("scanBtn").onclick=scan;initChart();connect();fetch("/api/v1/snapshot",{cache:"no-store"}).then(r=>r.json()).then(d=>{state.markets=normalizeMarkets(d.markets);state.trades=d.latestTrades||[];refresh()}).catch(()=>{});setInterval(refresh,5000);
 </script></body></html>
