@@ -26,7 +26,7 @@ body>section.card:nth-of-type(3){grid-column:1/span 8}body>section.card:nth-of-t
 <section class="card"><div class="section">COIN FIRSAT TARAMASI</div><div class="muted" style="margin-bottom:8px">Yalnızca yeterli verisi bulunan pariteler sıralanır.</div><div class="section" style="margin-top:14px">CANLI EMİR DEFTERİ · TOP 5</div><div class="depth" id="depthVisual"><div class="empty" style="grid-column:1/-1">Derinlik verisi bekleniyor</div></div><div class="section" style="margin-top:14px">GÜÇ SIRALAMASI</div><div id="scanner"><div class="empty">Tarama için veri bekleniyor</div></div></section>
 <div class="foot">Karar motoru: 4 saat ana yön · 1 saat fırsat bölgesi · 15 dakika giriş teyidi. Eksik veri pozitif veya negatif sinyal sayılmaz. Puan tek başına işlem emri değildir; risk/getiri filtresi ve mum kapanışı teyidi zorunludur. Canlı fiyat, borsa WebSocket akışından iletilir; ağ ve borsa kaynaklı gecikmeler tamamen sıfırlanamaz.</div>
 <script>
-const $=id=>document.getElementById(id), symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT"], state={markets:{},trades:[],signals:[],selected:"BTCUSDT",socket:null,directPriceSocket:null,directPriceSymbol:null,directPrice:null,directPriceRetry:null,chart:null,candleSeries:null,lastPrice:null,historyFetchAt:{},volumeSeries:null};
+const $=id=>document.getElementById(id), symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT"], state={markets:{},trades:[],signals:[],selected:"BTCUSDT",socket:null,chart:null,candleSeries:null,lastPrice:null,historyFetchAt:{},volumeSeries:null};
 const fmt=n=>Number.isFinite(n)?(n>=1000?n.toLocaleString("en-US",{maximumFractionDigits:2}):n>=1?n.toFixed(4):n.toFixed(7)):"—";
 const pct=n=>Number.isFinite(n)?(n>=0?"+":"")+n.toFixed(2)+"%":"—";
 function initChart(){if(!window.LightweightCharts)return;state.chart=LightweightCharts.createChart($("chart"),{layout:{background:{color:"#0d1725"},textColor:"#9db0c7"},grid:{vertLines:{color:"#1d2b3d"},horzLines:{color:"#1d2b3d"}},rightPriceScale:{borderColor:"#34465e"},timeScale:{borderColor:"#34465e",timeVisible:true},crosshair:{mode:0},width:$("chart").clientWidth,height:$("chart").clientHeight});state.candleSeries=state.chart.addCandlestickSeries({upColor:"#19d6a0",downColor:"#ff5d78",borderUpColor:"#19d6a0",borderDownColor:"#ff5d78",wickUpColor:"#19d6a0",wickDownColor:"#ff5d78",priceLineVisible:true,lastValueVisible:true});state.volumeSeries=state.chart.addHistogramSeries({priceFormat:{type:"volume"},priceScaleId:"volume",scaleMargins:{top:.82,bottom:0},lastValueVisible:false,priceLineVisible:false});state.chart.priceScale("volume").applyOptions({scaleMargins:{top:.82,bottom:0},visible:false});new ResizeObserver(()=>state.chart.applyOptions({width:$("chart").clientWidth,height:$("chart").clientHeight})).observe($("chart"))}
@@ -57,7 +57,7 @@ const stopBase=valid(result.support)?Math.min(result.support,price-(atr15||price
 if(sym!=="BTCUSDT"){const bm=state.markets.BTCUSDT||{},bp=Number(bm.binanceSpot?.lastPrice||bm.binanceFutures?.lastPrice),bc=bm.candles4h||[],bclose=bc.map(x=>Number(x.close)).filter(valid),be20=ema(bclose,20),be50=ema(bclose,50);if(valid(bp)&&be20&&be50&&bp<be20&&be20<be50)result.block=true}
 result.verdict=result.block?"TETİK / RİSK FİLTRESİ BEKLENİYOR":result.score>=80?"GÜÇLÜ AL ADAYI":result.score>=70?"İZLE / TEYİT BEKLE":"İŞLEM YOK";
 return result}
-function paint(r){renderDepth(r.symbol);$("pairName").textContent=r.symbol.replace("USDT","/USDT")+" · BINANCE SPOT";const displayPrice=state.directPriceSymbol===r.symbol&&Number.isFinite(state.directPrice)?state.directPrice:r.price;$("price").textContent=displayPrice?fmt(displayPrice):"—";$("score").textContent=r.score===null?"—":r.score;$("score").style.color=r.score>=80?"var(--green)":r.score>=70?"var(--gold)":"var(--txt)";$("verdict").textContent=r.verdict||r.reason||"VERİ BEKLENİYOR";$("verdict").style.color=r.block?"var(--gold)":"var(--green)";$("scoreBar").style.width=(r.score||0)+"%";$("trend").textContent=r.trend4?"YUKARI":r.trend4===false?"ZAYIF":"—";$("zone").textContent=r.zone?"UYGUN":r.zone===false?"UZAK":"—";$("trigger").textContent=r.trigger?"ONAYLI":r.trigger===false?"BEKLENİYOR":"—";$("minuteData").textContent=((state.markets[r.symbol]?.candles1m||[]).length)+" MUM";$("volume").textContent=Number.isFinite(r.volumeRatio)?r.volumeRatio.toFixed(2)+"x":"VERİ YOK";$("flow").textContent=Number.isFinite(r.flow)?(r.flow>0?"ALICI ":"SATICI ")+Math.abs(r.flow*100).toFixed(1)+"%":"VERİ YOK";$("derivatives").textContent=Number.isFinite(r.funding)?(r.funding*100).toFixed(4)+"%":"VERİ YOK";
+function paint(r){renderDepth(r.symbol);$("pairName").textContent=r.symbol.replace("USDT","/USDT")+" · BINANCE SPOT";$("price").textContent=r.price?fmt(r.price):"—";$("score").textContent=r.score===null?"—":r.score;$("score").style.color=r.score>=80?"var(--green)":r.score>=70?"var(--gold)":"var(--txt)";$("verdict").textContent=r.verdict||r.reason||"VERİ BEKLENİYOR";$("verdict").style.color=r.block?"var(--gold)":"var(--green)";$("scoreBar").style.width=(r.score||0)+"%";$("trend").textContent=r.trend4?"YUKARI":r.trend4===false?"ZAYIF":"—";$("zone").textContent=r.zone?"UYGUN":r.zone===false?"UZAK":"—";$("trigger").textContent=r.trigger?"ONAYLI":r.trigger===false?"BEKLENİYOR":"—";$("minuteData").textContent=((state.markets[r.symbol]?.candles1m||[]).length)+" MUM";$("volume").textContent=Number.isFinite(r.volumeRatio)?r.volumeRatio.toFixed(2)+"x":"VERİ YOK";$("flow").textContent=Number.isFinite(r.flow)?(r.flow>0?"ALICI ":"SATICI ")+Math.abs(r.flow*100).toFixed(1)+"%":"VERİ YOK";$("derivatives").textContent=Number.isFinite(r.funding)?(r.funding*100).toFixed(4)+"%":"VERİ YOK";
 $("checks").innerHTML=(r.checks||[]).map(x=>'<div class="check"><span>'+x.name+'</span><b class="'+(x.ok===true?"good":x.ok===false?"bad":"warn")+'">'+(x.ok===true?"✓":x.ok===false?"×":"—")+'</b></div>').join("")||'<div class="empty">'+(r.reason||"Veri bekleniyor")+"</div>";
 $("entry").textContent=r.entry?fmt(r.entry):"—";$("stop").textContent=r.stop?fmt(r.stop):"—";$("target1").textContent=r.target1?fmt(r.target1):"—";$("target2").textContent=r.target2?fmt(r.target2):"—";$("rr").textContent=r.rr?"1 : "+r.rr.toFixed(1):"—";$("riskNote").textContent=r.block?"Zorunlu giriş koşulları tamamlanmadı. Puan yüksek olsa bile tetik yoksa işlem açılmaz.":"Giriş şartları sağlandı; işlem öncesi spread ve emir gerçekleşme fiyatını kontrol et.";
 const m=state.markets[r.symbol]||{},spot=m.binanceSpot||{},fut=m.binanceFutures||{},p=Number(spot.lastPrice||fut.lastPrice);if(Number.isFinite(p)){$("priceChange").textContent="Anlık borsa fiyatı · "+new Date().toLocaleTimeString("tr-TR");}
@@ -78,18 +78,7 @@ function requestHistory(sym){
   })
   .catch(e=>{if(sym===state.selected)$("chartNote").textContent="Geçmiş mum verisi alınamadı: "+e.message;});
 }
-function connectDirectPrice(sym){
- if(state.directPriceSymbol===sym&&state.directPriceSocket&&(state.directPriceSocket.readyState===WebSocket.OPEN||state.directPriceSocket.readyState===WebSocket.CONNECTING))return;
- if(state.directPriceRetry){clearTimeout(state.directPriceRetry);state.directPriceRetry=null}
- if(state.directPriceSocket){state.directPriceSocket.onclose=null;try{state.directPriceSocket.close()}catch{}}
- state.directPriceSymbol=sym;state.directPrice=null;
- const socket=new WebSocket("wss://stream.binance.com:9443/ws/"+sym.toLowerCase()+"@trade");
- state.directPriceSocket=socket;
- socket.onmessage=e=>{try{const d=JSON.parse(e.data);const p=Number(d.p);if(!Number.isFinite(p)||state.directPriceSymbol!==sym)return;state.directPrice=p;const m=state.markets[sym]||(state.markets[sym]={});m.binanceSpot={...(m.binanceSpot||{}),lastPrice:p,priceTimestamp:Number(d.T)||Date.now(),directReceivedAt:Date.now()};if(state.selected===sym){$("price").textContent=fmt(p);$("priceChange").textContent="BINANCE DOĞRUDAN AKIŞ · "+new Date().toLocaleTimeString("tr-TR")}}catch{}};
- socket.onclose=()=>{if(state.directPriceSymbol===sym){state.directPriceRetry=setTimeout(()=>connectDirectPrice(sym),1000)}};
- socket.onerror=()=>{try{socket.close()}catch{}};
-}
-function select(s){state.selected=s;connectDirectPrice(s);$("symbolSelect").value=s;document.querySelectorAll(".symbolrow button").forEach(b=>b.classList.toggle("active",b.dataset.symbol===s));requestHistory(s);const r=analyze(s);paint(r)}
+function select(s){state.selected=s;$("symbolSelect").value=s;document.querySelectorAll(".symbolrow button").forEach(b=>b.classList.toggle("active",b.dataset.symbol===s));requestHistory(s);const r=analyze(s);paint(r)}
 function refresh(){select(state.selected);scan();$("updated").textContent="GÜNCEL "+new Date().toLocaleTimeString("tr-TR")}
 function connect(){
  const proto=location.protocol==="https:"?"wss:":"ws:";
@@ -108,13 +97,13 @@ function connect(){
    const d=msg.data,m=state.markets[d.symbol]||(state.markets[d.symbol]={});
    m[d.exchange]={...(m[d.exchange]||{}),...d};
    if(d.symbol===state.selected&&d.lastPrice){
-    const live=state.directPriceSymbol===state.selected&&Number.isFinite(state.directPrice)?state.directPrice:Number(state.markets[state.selected]?.binanceSpot?.lastPrice||state.markets[state.selected]?.binanceFutures?.lastPrice||d.lastPrice);
+    const live=Number(state.markets[state.selected]?.binanceSpot?.lastPrice||state.markets[state.selected]?.binanceFutures?.lastPrice||d.lastPrice);
     $("price").textContent=fmt(live);$("priceChange").textContent="Canlı fiyat akışı aktif";
    }
   }else if(msg.type==="trade"){
    state.trades.unshift(msg.data);if(state.trades.length>4000)state.trades.length=4000;
    if(msg.data.symbol===state.selected){
-    const live=state.directPriceSymbol===state.selected&&Number.isFinite(state.directPrice)?state.directPrice:Number(state.markets[state.selected]?.binanceSpot?.lastPrice||state.markets[state.selected]?.binanceFutures?.lastPrice||msg.data.price);
+    const live=Number(state.markets[state.selected]?.binanceSpot?.lastPrice||state.markets[state.selected]?.binanceFutures?.lastPrice||msg.data.price);
     $("price").textContent=fmt(live);
    }
   }else if(msg.type==="candle"){
