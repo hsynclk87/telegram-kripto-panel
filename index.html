@@ -86,6 +86,6 @@ function connect(){clearTimeout(retryTimer);if(stopped)return;const streams=symb
 $('symbol').addEventListener('change',render);render();connect();window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);if(socket)socket.close();});
 })();
 </script>
-<script src="./oscillator-lab.js"></script>
+<script src="./oscillator-lab.js?v=12c6987"></script>
 </body>
 </html>
