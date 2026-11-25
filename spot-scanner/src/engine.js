@@ -146,18 +146,31 @@ export class SpotScanner {
     return results;
   }
   async updateOutcomes() {
+    const marks=[5,15,30,60];
     for (const row of this.journal.rows) {
-      if (row.type!=="signal" || row.outcomes?.maturedAt) continue;
-      const age=now()-row.createdAt, mins=[5,15,30,60];
-      if (age<3600000) continue;
-      try {
-        const res=await fetch(REST+"/api/v3/ticker/price?symbol="+row.symbol);
-        if (!res.ok) continue;
-        const current=n((await res.json()).price);
-        row.outcomes={maturedAt:now(),currentPrice:current,return60mPct:pctChange(row.price,current)};
-        // Append an outcome event; the original signal remains immutable in the journal.
-        await this.journal.add({type:"outcome",signalId:row.id,symbol:row.symbol,createdAt:row.createdAt,...row.outcomes});
-      } catch {}
+      if (row.type!=="signal") continue;
+      const st=this.state(row.symbol), age=now()-row.createdAt;
+      row.outcomes ??= { marks:{}, highPrice:row.price, lowPrice:row.price, mfePct:0, maePct:0 };
+      row.outcomes.marks ??= {};
+      if (st.price>0) {
+        row.outcomes.highPrice=Math.max(row.outcomes.highPrice||row.price,st.price);
+        row.outcomes.lowPrice=Math.min(row.outcomes.lowPrice||row.price,st.price);
+        row.outcomes.mfePct=Math.max(0,pctChange(row.price,row.outcomes.highPrice));
+        row.outcomes.maePct=Math.min(0,pctChange(row.price,row.outcomes.lowPrice));
+      }
+      for (const minute of marks) {
+        if (age<minute*60000 || row.outcomes.marks[minute]) continue;
+        try {
+          const res=await fetch(REST+"/api/v3/ticker/price?symbol="+row.symbol);
+          if(!res.ok) continue;
+          const current=n((await res.json()).price);
+          const mark={type:"mark",signalId:row.id,symbol:row.symbol,minute,createdAt:now(),price:current,
+            returnPct:pctChange(row.price,current),highPrice:Math.max(row.outcomes.highPrice||row.price,current),
+            lowPrice:Math.min(row.outcomes.lowPrice||row.price,current),mfePct:Math.max(row.outcomes.mfePct||0,pctChange(row.price,current)),
+            maePct:Math.min(row.outcomes.maePct||0,pctChange(row.price,current))};
+          await this.journal.add(mark);
+        } catch(e) { console.error("outcome",row.symbol,e.message); }
+      }
     }
   }
   async start() {
