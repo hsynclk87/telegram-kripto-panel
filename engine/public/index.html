@@ -118,6 +118,99 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 @media(max-width:760px){#oscLab .osc-toolbar{grid-template-columns:minmax(0,1fr);gap:11px;padding-top:13px}#oscLab .osc-toolbar label,#oscLab .osc-time-control{width:100%}#oscLab .osc-toolbar select{height:45px}#oscLab .osc-time-switch{height:45px}#oscLab #oscRefresh{width:100%;height:42px}#oscLab #oscScanStatus{grid-column:auto}#oscLab .osc-market-line{margin-bottom:12px;padding:11px 13px}#oscLab .osc-summary{margin-top:10px}#oscLab .osc-stat{min-height:84px}#oscLab .osc-aggregate{padding:13px}#oscLab .osc-layout{grid-template-columns:minmax(0,1fr)}#oscLab .osc-card{padding:13px}#oscLab #oscCanvas{height:290px}}
 @media(min-width:761px) and (max-width:1000px){#oscLab .osc-toolbar{grid-template-columns:180px minmax(220px,1fr) auto}#oscLab .osc-layout{grid-template-columns:minmax(0,1.3fr) minmax(260px,.9fr)}}
 
+/* Professional terminal skin */
+#oscLab{--bg:#080d14;--panel:#0e1722;--line:#263748;--muted:#8292a5;--text:#e8eef5;background:#080d14!important;color:var(--text)!important;padding:0 16px max(32px,env(safe-area-inset-bottom))!important;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;background-image:radial-gradient(ellipse at 50% -25%,rgba(41,92,113,.14),transparent 55%)!important}
+#oscLab *{box-sizing:border-box}
+#oscLab .osc-head{position:sticky;top:0;z-index:20;margin:0 -16px!important;padding:0 20px!important;height:62px;display:flex;align-items:center;background:rgba(8,13,20,.97)!important;border-bottom:1px solid #1e2b39!important;backdrop-filter:blur(18px)}
+#oscLab .osc-head strong{font-size:12px!important;letter-spacing:.19em!important;color:#dce6f0!important;font-weight:800}
+#oscLab .osc-head strong:before{width:6px;height:6px;background:#4bd4a1;box-shadow:0 0 10px #4bd4a1}
+#oscLab .osc-head button{background:#121d29!important;border:1px solid #2a394a!important;color:#b9c7d5!important;border-radius:7px!important;padding:8px 12px!important;font-size:10px;font-weight:750}
+#oscLab .osc-toolbar{max-width:1440px!important;margin:0 auto!important;padding:24px 0 16px!important;display:grid!important;grid-template-columns:minmax(210px,270px) minmax(250px,1fr) 112px!important;gap:16px!important;align-items:end!important;position:relative!important;top:auto!important;background:transparent!important;border:0!important;backdrop-filter:none!important}
+#oscLab .osc-toolbar label,#oscLab .osc-time-control{display:flex!important;flex-direction:column!important;gap:9px!important;color:#8292a5!important;font-size:9px!important;font-weight:800!important;letter-spacing:.13em!important;min-width:0!important}
+#oscLab .osc-toolbar select{width:100%!important;height:48px!important;min-width:0!important;background:#101a26!important;border:1px solid #2b3b4d!important;border-radius:8px!important;color:#edf3f9!important;padding:0 14px!important;font-size:14px!important;font-weight:700!important}
+#oscLab .osc-time-switch{height:48px!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:4px!important;padding:4px!important;background:#0d1620!important;border:1px solid #263647!important;border-radius:8px!important}
+#oscLab .osc-tf-btn{border:1px solid transparent!important;border-radius:5px!important;background:transparent!important;color:#8798aa!important;font-size:12px!important;font-weight:750!important;min-width:0!important}
+#oscLab .osc-tf-btn.active{background:#1a3440!important;border-color:#315766!important;color:#a9e5d5!important;box-shadow:none!important}
+#oscLab #oscRefresh{height:48px!important;padding:0 12px!important;border-radius:8px!important;background:#162a2a!important;border:1px solid #31584f!important;color:#a7dfcb!important;font-size:10px!important;font-weight:800!important}
+#oscLab #oscScanStatus{grid-column:1/-1!important;padding:0 2px!important;color:#728499!important;font-size:10px!important;white-space:normal!important}
+#oscLab .osc-market-line{max-width:1440px!important;margin:0 auto 18px!important;padding:16px 18px!important;min-height:72px;display:flex!important;align-items:center!important;justify-content:space-between!important;background:#0e1823!important;border:1px solid #263748!important;border-radius:9px!important}
+#oscLab .osc-market-line div{display:flex;flex-direction:column;gap:6px}
+#oscLab .osc-market-line small{font-size:8px!important;letter-spacing:.16em!important;color:#74869a!important;font-weight:800}
+#oscLab .osc-market-line strong{font-size:17px!important;color:#f0f4f8!important;font-weight:750}
+#oscLab .osc-market-line>span{font-size:10px!important;font-weight:800!important;color:#9bd7c7!important;background:#142b2b!important;border:1px solid #294b46;padding:8px 11px!important;border-radius:6px!important}
+#oscLab .osc-summary,#oscLab .osc-aggregate,#oscLab .osc-layout{max-width:1440px!important;margin-left:auto!important;margin-right:auto!important}
+#oscLab .osc-summary{gap:12px!important;margin-top:0!important;margin-bottom:14px!important}
+#oscLab .osc-stat{min-height:94px!important;padding:16px 18px!important;gap:8px!important;background:#0e1823!important;border:1px solid #263748!important;border-radius:9px!important;box-shadow:none!important}
+#oscLab .osc-stat small{font-size:9px!important;letter-spacing:.1em!important;color:#8191a3!important}
+#oscLab .osc-stat strong{font-size:29px!important;line-height:1!important;font-weight:720!important;color:#edf3f8!important}
+#oscLab .osc-stat:first-child strong{color:#58c99e!important}#oscLab .osc-stat:nth-child(2) strong{color:#e87983!important}
+#oscLab .osc-stat span{font-size:10px!important;color:#718398!important}
+#oscLab .osc-aggregate{margin-bottom:14px!important;padding:18px!important;background:#0e1823!important;border:1px solid #263748!important;border-radius:9px!important}
+#oscLab .osc-aggregate-head{margin-bottom:15px!important}
+#oscLab .osc-aggregate-head b{font-size:10px!important;letter-spacing:.12em!important;color:#dce5ee!important}
+#oscLab .osc-aggregate-head small{font-size:10px!important;color:#78899c!important}
+#oscLab .osc-chip{background:#152433!important;border:1px solid #2b4052!important;color:#9fb4c7!important;border-radius:5px!important;font-size:9px!important;padding:6px 9px!important}
+#oscLab .osc-aggregate-grid{gap:12px!important}
+#oscLab .osc-side{padding:14px!important;background:#0a131d!important;border:1px solid #233444!important;border-radius:7px!important}
+#oscLab .osc-side.bull-side{border-top:2px solid #4dbd91!important}#oscLab .osc-side.bear-side{border-top:2px solid #d96c79!important}
+#oscLab .osc-side-title{margin-bottom:12px!important}
+#oscLab .bull-side .osc-side-title b{color:#69cda6!important}#oscLab .bear-side .osc-side-title b{color:#e58b94!important}
+#oscLab .osc-side-title b{font-size:9px!important;letter-spacing:.15em!important}#oscLab .osc-side-title span{font-size:9px!important;color:#74869a!important}
+#oscLab .osc-signal-list{gap:6px!important;max-height:390px!important}
+#oscLab .osc-tf-group{padding:7px 0 9px!important;border-bottom:1px solid #1b2a38!important}
+#oscLab .osc-tf-heading{display:flex;justify-content:space-between;align-items:center;margin:2px 2px 7px!important;color:#9eafc0!important;font-size:9px!important;font-weight:800!important;letter-spacing:.1em!important;text-transform:uppercase}
+#oscLab .osc-tf-heading span{color:#65798d!important}
+#oscLab .osc-aggregate-item{padding:10px 11px!important;background:#101c28!important;border:1px solid #213344!important;border-radius:6px!important;color:#dce6ef!important}
+#oscLab .osc-aggregate-item:hover{background:#142432!important;border-color:#395268!important}
+#oscLab .osc-aggregate-item b{font-size:11px!important;font-weight:700!important}#oscLab .osc-aggregate-item small{font-size:9px!important;color:#8293a6!important}
+#oscLab .osc-aggregate-item .kind{font-size:8px!important;letter-spacing:.06em!important;border-radius:4px!important;padding:5px 7px!important}
+#oscLab .bull-side .kind{background:#15352c!important;color:#83d5b5!important}#oscLab .bear-side .kind{background:#38232a!important;color:#e89ba2!important}
+#oscLab .osc-no-signal{padding:12px 8px!important;color:#75879a!important;font-size:10px!important;text-align:left!important}
+#oscLab .osc-layout{grid-template-columns:minmax(0,1.65fr) minmax(300px,.85fr)!important;gap:14px!important;align-items:start}
+#oscLab .osc-card{padding:18px!important;background:#0e1823!important;border:1px solid #263748!important;border-radius:9px!important;box-shadow:none!important;min-width:0}
+#oscLab .osc-title h2{font-size:19px!important;letter-spacing:-.02em!important;color:#eff4f8!important;font-weight:700!important}
+#oscLab .osc-title>b{font-size:10px!important;letter-spacing:.1em!important;color:#c4d0dc!important}
+#oscLab #oscCanvas{height:370px!important;margin-top:16px!important;background:#09121c!important;border:1px solid #1f3040!important;border-radius:7px!important}
+#oscLab #oscLoading{font-size:10px!important;color:#8092a5!important;margin-top:11px!important;min-height:15px}
+#oscLab #oscExplain{font-size:11px!important;line-height:1.65!important;color:#aab8c6!important;margin-top:12px!important;padding:13px!important;background:#0a141e!important;border:1px solid #1f3040!important;border-radius:7px!important}
+#oscLab .osc-signal{padding:10px 12px!important;border-radius:6px!important}#oscLab .osc-signal b{font-size:11px!important}#oscLab .osc-signal small{font-size:9px!important}
+#oscLab .osc-library-head{margin-bottom:13px!important}#oscLab .osc-library-head>b{font-size:10px!important;letter-spacing:.12em!important;color:#d9e3ed!important}#oscLab .osc-library-count{font-size:9px!important;color:#7f91a4!important}
+#oscLab .osc-library-tools{gap:7px!important;margin:0 0 11px!important}
+#oscLab .osc-library-tools input,#oscLab .osc-library-tools select{background:#09131d!important;border:1px solid #293b4c!important;border-radius:6px!important;color:#dce5ee!important;padding:10px!important;font-size:10px!important}
+#oscLab #oscList{gap:5px!important;max-height:660px!important;padding-right:2px}
+#oscLab .osc-item{grid-template-columns:25px minmax(0,1fr) auto!important;gap:8px!important;padding:9px!important;min-height:43px!important;background:#0a141e!important;border:1px solid #1f3040!important;border-radius:6px!important}
+#oscLab .osc-item:before{width:23px!important;height:23px!important;background:#172536!important;color:#90a6bb!important;border-radius:5px!important}
+#oscLab .osc-item b{font-size:10px!important;color:#dce6ef!important}#oscLab .osc-item small{font-size:8px!important;color:#8193a7!important}
+#oscLab .osc-item.active{background:#122b2b!important;border-color:#3b7566!important;box-shadow:inset 2px 0 #58c99e!important}
+#oscLab .osc-item.active:before{background:#1b4439!important;color:#9ae1c5!important}
+#oscLab button,#oscLab select,#oscLab input{font-family:inherit}#oscLab button{cursor:pointer}
+@media(max-width:760px){
+#oscLab{padding-left:12px!important;padding-right:12px!important}
+#oscLab .osc-head{margin-left:-12px!important;margin-right:-12px!important;padding-left:14px!important;padding-right:14px!important;height:56px}
+#oscLab .osc-toolbar{grid-template-columns:minmax(0,1fr)!important;gap:12px!important;padding:16px 0 10px!important}
+#oscLab .osc-toolbar label,#oscLab .osc-time-control{width:100%!important}
+#oscLab .osc-toolbar select,#oscLab .osc-time-switch,#oscLab #oscRefresh{height:46px!important}
+#oscLab #oscRefresh{width:100%!important}#oscLab #oscScanStatus{grid-column:auto!important;padding-bottom:2px!important}
+#oscLab .osc-market-line{min-height:64px;margin-bottom:12px!important;padding:12px 13px!important}
+#oscLab .osc-market-line strong{font-size:15px!important}
+#oscLab .osc-summary{gap:7px!important;margin-bottom:10px!important}
+#oscLab .osc-stat{min-height:82px!important;padding:11px 9px!important;gap:6px!important}
+#oscLab .osc-stat small{font-size:7px!important;min-height:20px;letter-spacing:.06em!important}
+#oscLab .osc-stat strong{font-size:23px!important}#oscLab .osc-stat span{font-size:8px!important}
+#oscLab .osc-aggregate{padding:12px!important;margin-bottom:10px!important}
+#oscLab .osc-aggregate-grid{grid-template-columns:1fr!important;gap:8px!important}
+#oscLab .osc-side{padding:11px!important}#oscLab .osc-signal-list{max-height:230px!important}
+#oscLab .osc-layout{grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+#oscLab .osc-card{padding:13px!important}#oscLab .osc-title h2{font-size:17px!important}
+#oscLab #oscCanvas{height:280px!important}
+#oscLab #oscList{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-height:none!important}
+#oscLab .osc-item{grid-template-columns:22px minmax(0,1fr)!important;gap:6px!important;padding:8px!important}
+#oscLab .osc-item:before{width:21px!important;height:21px!important}
+#oscLab .osc-item small{grid-column:2!important;white-space:normal!important}
+#oscLab .osc-library-tools{grid-template-columns:1fr 1fr!important}
+}
+@media(min-width:761px) and (max-width:1050px){#oscLab .osc-layout{grid-template-columns:minmax(0,1.2fr) minmax(270px,.8fr)!important}#oscLab .osc-toolbar{grid-template-columns:190px minmax(220px,1fr) 100px!important}}
+
 </style>
 </head>
 <body>
