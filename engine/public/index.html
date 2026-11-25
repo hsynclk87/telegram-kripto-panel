@@ -237,7 +237,7 @@ function renderAggregate(){
 const bulls=state.aggregate.filter(x=>x.side==='bull'),bears=state.aggregate.filter(x=>x.side==='bear');
 $('oscBullCount').textContent=bulls.length;$('oscBearCount').textContent=bears.length;$('oscTotalCount').textContent=state.aggregate.length;
 $('oscBullLabel').textContent=bulls.length+' tespit';$('oscBearLabel').textContent=bears.length+' tespit';
-$('oscAggregateTF').textContent='5 ZAMAN DİLİMİ';
+$('oscAggregateTF').textContent='5 ZAMAN DİLİMİ';$('oscTF').textContent=tfNames[state.tf];
 const grouped=(items)=>timeframes.map(tf=>{const arr=items.filter(x=>x.tf===tf);return '<div class="osc-tf-group"><div class="osc-tf-heading">'+tfNames[tf]+' <span>'+arr.length+'</span></div>'+(arr.length?arr.map(x=>'<button class="osc-aggregate-item" data-indicator="'+x.id+'" data-tf="'+x.tf+'"><span class="main"><b>'+x.name+'</b><small>'+x.type+' · '+new Date(x.time).toLocaleString('tr-TR')+'</small></span><span class="kind">'+(x.side==='bull'?'POZİTİF':'NEGATİF')+'</span></button>').join(''):'<div class="osc-no-signal">Güncel uyumsuzluk yok</div>')+'</div>';}).join('');
 $('oscBullList').innerHTML=grouped(bulls);$('oscBearList').innerHTML=grouped(bears);
 document.querySelectorAll('.osc-aggregate-item[data-indicator]').forEach(btn=>btn.onclick=()=>{state.selected=btn.dataset.indicator;state.tf=btn.dataset.tf;state.rows=state.rowsByTf[state.tf]||[];$('oscTime').value=state.tf;state.series=calc(state.selected,state.rows);state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);renderSelected();document.querySelector('.osc-layout')?.scrollIntoView({behavior:'smooth',block:'start'});});
@@ -270,7 +270,19 @@ finally{if(version===requestVersion)$('oscRefresh').disabled=false;}
 function openLab(){ $('oscLab').classList.add('show');calculate();}
 $('oscLabBtn').onclick=openLab;$('oscClose').onclick=()=>$('oscLab').classList.remove('show');
 $('oscSymbol').onchange=()=>{state.symbol=$('oscSymbol').value;calculate();};
-$('oscTime').onchange=()=>{state.tf=$('oscTime').value;state.rows=state.rowsByTf[state.tf]||[];state.series=calc(state.selected,state.rows);state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);renderSelected();};
+function changeTimeframe(){
+const next=$('oscTime').value;
+if(!timeframes.includes(next))return;
+state.tf=next;
+state.rows=state.rowsByTf[next]||[];
+state.series=calc(state.selected,state.rows);
+state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
+$('oscTF').textContent=tfNames[next];
+$('oscLoading').textContent=state.rows.length?'Grafik zaman dilimi: '+tfNames[next]+' · son fiyat bölgesi':'Bu zaman diliminin verisi henüz yüklenmedi.';
+renderSelected();
+}
+$('oscTime').addEventListener('change',changeTimeframe);
+$('oscTime').addEventListener('input',changeTimeframe);
 $('oscRefresh').onclick=calculate;
 renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory').addEventListener('change',renderList);
 })();
