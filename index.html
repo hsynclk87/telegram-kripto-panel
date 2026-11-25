@@ -25,13 +25,22 @@ select{max-width:100%}button{cursor:pointer}button:active{transform:translateY(1
 #chart-section{margin:34px auto 0;width:100%;text-align:left;background:rgba(5,12,17,.96);border:1px solid rgba(74,116,133,.35);border-radius:14px;overflow:hidden;box-shadow:0 12px 45px rgba(0,0,0,.35)}
 #chart-heading{padding:14px 16px;color:#a9c2cf;font-size:12px;font-weight:800;letter-spacing:.14em;border-bottom:1px solid rgba(74,116,133,.25)}
 #chart-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px;border-bottom:1px solid rgba(74,116,133,.2)}
-#chart-tools .tool-label{font-size:10px;letter-spacing:.1em;color:#91a6bd;font-weight:800;margin-right:2px}
-#chart-tools select{min-width:110px;flex:1}
-#chart-tools button{white-space:nowrap}
-#indicator-count{font-size:11px;color:#a9c2cf;padding:0 5px;font-variant-numeric:tabular-nums}
-#chart{width:100%;height:min(76vh,780px);min-height:560px;background:#080f16}
+#chart-tools .tool-label{font-size:10px;letter-spacing:.08em;color:#91a6bd;font-weight:800;margin:0 2px 0 0;white-space:nowrap}
+#chart-tools select{min-width:130px;max-width:100%;flex:1 1 180px}
+#chart-tools button{white-space:nowrap;min-height:42px}
+#chart-tools .tool-button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+#indicator-count{font-size:11px;color:#a9c2cf;padding:0 5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#chart{width:100%;height:clamp(480px,72vh,820px);min-height:480px;background:#080f16;touch-action:pan-y}
 #chart-error{display:none;padding:22px;color:#ffb7b7;font-size:13px}
-@media(max-width:600px){body{padding:12px 8px 28px}.price{font-size:clamp(42px,12vw,68px)}#chart-section{margin-top:26px;border-radius:10px}#chart{height:680px;min-height:620px}#chart-tools{gap:7px}#chart-tools select{min-width:calc(50% - 8px)}}
+#chart-section:fullscreen{width:100vw;height:100dvh;max-width:none;margin:0;border:0;border-radius:0;display:flex;flex-direction:column;background:#050a08;overflow:hidden}
+#chart-section:fullscreen #chart-heading{flex:0 0 auto}
+#chart-section:fullscreen #chart-tools{flex:0 0 auto}
+#chart-section:fullscreen #chart{height:auto;min-height:0;flex:1 1 auto}
+#chart-section.is-fullscreen{position:fixed;inset:0;z-index:9999;width:100vw;height:100dvh;max-width:none;margin:0;border:0;border-radius:0;display:flex;flex-direction:column;background:#050a08;overflow:hidden}
+#chart-section.is-fullscreen #chart{height:auto;min-height:0;flex:1 1 auto}
+body.chart-fullscreen{overflow:hidden}
+@media(max-width:700px){body{padding:10px 7px 24px}.top{margin-bottom:20px}.price{font-size:clamp(40px,12vw,68px)}#chart-section{margin-top:22px;border-radius:9px}#chart-heading{padding:12px;font-size:11px}#chart-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:9px}#chart-tools .tool-label{grid-column:1/-1;margin-top:3px}#chart-tools select{width:100%;min-width:0;max-width:none;font-size:12px;padding:10px 9px}#chart-tools button{width:100%;min-width:0;font-size:11px;padding:10px 7px}#indicator-count{grid-column:1/-1;text-align:center;padding:4px}#chart{height:68vh;height:68dvh;min-height:440px}}
+@media(max-width:380px){#chart-tools{grid-template-columns:minmax(0,1fr)}#chart-tools .tool-label,#indicator-count{grid-column:1}#chart{min-height:400px}}
 </style>
 </head>
 <body>
@@ -51,6 +60,7 @@ select{max-width:100%}button{cursor:pointer}button:active{transform:translateY(1
 <select id="indicator" aria-label="Gösterge seç"></select>
 <button id="add-indicator" type="button">+ EKLE</button>
 <button id="remove-indicator" type="button">SON GÖSTERGEYİ SİL</button>
+<button id="fullscreen-chart" class="tool-button" type="button" aria-label="Grafiği tam ekran yap">⛶ TAM EKRAN</button>
 <span id="indicator-count">0 gösterge</span>
 </div>
 <div id="chart"></div><div id="chart-error"></div>
@@ -71,10 +81,10 @@ const tg=window.Telegram&&window.Telegram.WebApp;if(tg){tg.ready();tg.expand();}
 const format=value=>{const n=Number(value);if(!Number.isFinite(n)||n<=0)return'—';const digits=n>=1000?2:n>=1?4:n>=.01?6:8;return n.toLocaleString('en-US',{minimumFractionDigits:digits,maximumFractionDigits:digits});};
 function status(connected,label){$('status').textContent=label;$('dot').classList.toggle('on',connected);}
 function connectPrice(){clearTimeout(retryTimer);if(stopped)return;socket=new WebSocket('wss://stream.binance.com:9443/stream?streams='+symbols.map(s=>s+'@trade').join('/'));socket.onopen=()=>{retryDelay=500;status(true,'CANLI');};socket.onmessage=event=>{let packet;try{packet=JSON.parse(event.data);}catch{return;}const trade=packet.data;if(!trade||trade.e!=='trade')return;const symbol=trade.s,price=Number(trade.p);if(!Number.isFinite(price)||price<=0)return;prices[symbol]=price;if(symbol===$('symbol').value){if(lastSelectedPrice!==null&&price!==lastSelectedPrice)matrixTone=price>lastSelectedPrice?'#00f58a':'#ff263d';lastSelectedPrice=price;$('price').textContent=format(price);}};socket.onerror=()=>{try{socket.close();}catch{}};socket.onclose=()=>{status(false,'YENİDEN BAĞLANIYOR');retryTimer=setTimeout(connectPrice,retryDelay);retryDelay=Math.min(retryDelay*2,8000);};}
-const indicatorNames=['MA','EMA','SMA','BBI','VOL','MACD','BOLL','KDJ','RSI','BIAS','BRAR','CCI','DMI','CR','PSY','DMA','TRIX','OBV','VR','WR','MTM','EMV','SAR','AO','ROC','PVT','AVP'];
+const indicatorNames=[['MA','Hareketli Ortalama (MA)'],['EMA','Üstel Hareketli Ortalama (EMA)'],['SMA','Basit Hareketli Ortalama (SMA)'],['BBI','Çoklu Hareketli Ortalama (BBI)'],['VOL','Hacim (VOL)'],['MACD','Hareketli Ortalama Yakınsama / Iraksama (MACD)'],['BOLL','Bollinger Bantları (BOLL)'],['KDJ','KDJ Stokastik Göstergesi'],['RSI','Göreceli Güç Endeksi (RSI)'],['BIAS','Sapma Oranı (BIAS)'],['BRAR','Duyarlılık Göstergesi (BRAR)'],['CCI','Emtia Kanal Endeksi (CCI)'],['DMI','Yönsel Hareket Endeksi (DMI)'],['CR','CR Enerji Göstergesi'],['PSY','Psikolojik Çizgi (PSY)'],['DMA','Farklı Hareketli Ortalama (DMA)'],['TRIX','Üçlü Üstel Ortalama (TRIX)'],['OBV','Hacim Dengesi (OBV)'],['VR','Hacim Oranı (VR)'],['WR','Williams %R (WR)'],['MTM','Momentum (MTM)'],['EMV','Kolay Hareket (EMV)'],['SAR','Parabolik SAR'],['AO','Harika Osilatör (AO)'],['ROC','Değişim Oranı (ROC)'],['PVT','Fiyat-Hacim Trendi (PVT)'],['AVP','Ortalama Fiyat (AVP)']];
 let chart=null,indicatorCount=0;
 const periods={ '1m':{span:1,type:'minute'},'5m':{span:5,type:'minute'},'15m':{span:15,type:'minute'},'1h':{span:1,type:'hour'},'4h':{span:4,type:'hour'},'1d':{span:1,type:'day'} };
-function fillIndicators(){const sel=$('indicator');const available=window.klinecharts&&typeof window.klinecharts.getSupportedIndicators==='function'?window.klinecharts.getSupportedIndicators():indicatorNames;for(const name of available){const op=document.createElement('option');op.value=name;op.textContent=name;sel.appendChild(op);}}
+function fillIndicators(){const sel=$('indicator');for(const [name,label] of indicatorNames){const op=document.createElement('option');op.value=name;op.textContent=label;sel.appendChild(op);}}
 function updateIndicatorCount(){indicatorCount=chart?chart.getIndicators().length:0;$('indicator-count').textContent=indicatorCount+' gösterge';}
 function addIndicator(){if(!chart)return;const name=$('indicator').value;try{const overlay=['MA','EMA','SMA','BBI','BOLL','SAR'].includes(name);chart.createIndicator(overlay?{name,paneId:'candle_pane'}:name,overlay);updateIndicatorCount();}catch(e){console.error('Indicator error',name,e);}}
 function removeIndicator(){if(!chart)return;const all=chart.getIndicators();if(!all.length)return;const last=all[all.length-1];chart.removeIndicator({id:last.id});updateIndicatorCount();}
@@ -120,6 +130,10 @@ function initializeChart(){
 }
 function changeSymbol(){const symbol=$('symbol').value;lastSelectedPrice=prices[symbol]??null;$('pair').textContent=symbol.replace('USDT',' / USDT');$('price').textContent=format(prices[symbol]);if(chart)chart.setSymbol({ticker:symbol,pricePrecision:8,volumePrecision:4});}
 function changePeriod(){if(chart)chart.setPeriod(intervalToPeriod($('period').value));}
+const chartSection=$('chart-section'),fullBtn=$('fullscreen-chart');let cssFullscreen=false;
+function syncFullscreen(){const active=document.fullscreenElement===chartSection||cssFullscreen;chartSection.classList.toggle('is-fullscreen',active);document.body.classList.toggle('chart-fullscreen',active);fullBtn.textContent=active?'⤢ TAM EKRANDAN ÇIK':'⛶ TAM EKRAN';fullBtn.setAttribute('aria-label',active?'Tam ekrandan çık':'Grafiği tam ekran yap');if(chart)requestAnimationFrame(()=>chart.resize());}
+async function toggleFullscreen(){try{if(document.fullscreenElement===chartSection){await document.exitFullscreen();cssFullscreen=false;}else if(cssFullscreen){cssFullscreen=false;}else if(chartSection.requestFullscreen){await chartSection.requestFullscreen();}else{cssFullscreen=true;}syncFullscreen();}catch(error){cssFullscreen=!cssFullscreen;syncFullscreen();}}
+document.addEventListener('fullscreenchange',()=>{if(document.fullscreenElement!==chartSection)cssFullscreen=false;syncFullscreen();});fullBtn.addEventListener('click',toggleFullscreen);
 fillIndicators();initializeChart();$('symbol').addEventListener('change',changeSymbol);$('period').addEventListener('change',changePeriod);$('add-indicator').addEventListener('click',addIndicator);$('remove-indicator').addEventListener('click',removeIndicator);connectPrice();
 window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);if(socket)socket.close();for(const ws of subscriptions.values())try{ws.close();}catch{}if(chart&&window.klinecharts.dispose)window.klinecharts.dispose('chart');});
 })();
