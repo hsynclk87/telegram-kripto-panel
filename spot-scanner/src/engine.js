@@ -41,6 +41,8 @@ export class SpotScanner {
   }
   connect() {
     if (this.stopping || !this.symbols.length) return;
+    for (const timer of this.reconnectTimers) clearTimeout(timer);
+    this.reconnectTimers.clear();
     for (const socket of this.sockets) {
       socket.removeAllListeners();
       try { socket.terminate(); } catch {}
