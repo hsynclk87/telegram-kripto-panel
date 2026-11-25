@@ -74,18 +74,19 @@ function connectPrice(){clearTimeout(retryTimer);if(stopped)return;socket=new We
 const indicatorNames=['MA','EMA','SMA','BBI','VOL','MACD','BOLL','KDJ','RSI','BIAS','BRAR','CCI','DMI','CR','PSY','DMA','TRIX','OBV','VR','WR','MTM','EMV','SAR','AO','ROC','PVT','AVP'];
 let chart=null,indicatorCount=0;
 const periods={ '1m':{span:1,type:'minute'},'5m':{span:5,type:'minute'},'15m':{span:15,type:'minute'},'1h':{span:1,type:'hour'},'4h':{span:4,type:'hour'},'1d':{span:1,type:'day'} };
-function fillIndicators(){const sel=$('indicator');for(const name of indicatorNames){const op=document.createElement('option');op.value=name;op.textContent=name;sel.appendChild(op);}}
+function fillIndicators(){const sel=$('indicator');const available=window.klinecharts&&typeof window.klinecharts.getSupportedIndicators==='function'?window.klinecharts.getSupportedIndicators():indicatorNames;for(const name of available){const op=document.createElement('option');op.value=name;op.textContent=name;sel.appendChild(op);}}
 function updateIndicatorCount(){indicatorCount=chart?chart.getIndicators().length:0;$('indicator-count').textContent=indicatorCount+' gösterge';}
 function addIndicator(){if(!chart)return;const name=$('indicator').value;try{const overlay=['MA','EMA','SMA','BBI','BOLL','SAR'].includes(name);chart.createIndicator(overlay?{name,paneId:'candle_pane'}:name,overlay);updateIndicatorCount();}catch(e){console.error('Indicator error',name,e);}}
 function removeIndicator(){if(!chart)return;const all=chart.getIndicators();if(!all.length)return;const last=all[all.length-1];chart.removeIndicator({id:last.id});updateIndicatorCount();}
 function intervalToPeriod(interval){return periods[interval]||periods['15m'];}
+function periodToInterval(period){const span=Number(period&&period.span)||15,type=period&&period.type;if(type==='minute')return span+'m';if(type==='hour')return span+'h';if(type==='day')return span+'d';return $('period').value;}
 function intervalMs(interval){return ({'1m':60000,'5m':300000,'15m':900000,'1h':3600000,'4h':14400000,'1d':86400000})[interval]||900000;}
 function normalizeKline(k){return {timestamp:Number(k[0]),open:Number(k[1]),high:Number(k[2]),low:Number(k[3]),close:Number(k[4]),volume:Number(k[5]),turnover:Number(k[7])};}
 const subscriptions=new Map();
 function makeDataLoader(){
  return {
   async getBars({type,timestamp,symbol,period,callback}){
-   const interval=$('period').value,ticker=symbol.ticker||$('symbol').value;
+   const interval=periodToInterval(period),ticker=symbol.ticker||$('symbol').value;
    const params=new URLSearchParams({symbol:ticker,interval,limit:'1000'});
    if(type==='forward'&&timestamp)params.set('endTime',String(timestamp-1));
    if(type==='backward'){callback([],{backward:false});return;}
@@ -95,14 +96,14 @@ function makeDataLoader(){
    callback(bars,{forward:raw.length===1000,backward:false});
   },
   subscribeBar({symbol,period,callback}){
-   const ticker=(symbol.ticker||$('symbol').value).toLowerCase(),interval=$('period').value,key=ticker+'_'+interval;
+   const ticker=(symbol.ticker||$('symbol').value).toLowerCase(),interval=periodToInterval(period),key=ticker+'_'+interval;
    const ws=new WebSocket('wss://stream.binance.com:9443/ws/'+ticker+'@kline_'+interval);
    ws.onmessage=event=>{let msg;try{msg=JSON.parse(event.data);}catch{return;}const k=msg.k;if(!k)return;callback({timestamp:Number(k.t),open:Number(k.o),high:Number(k.h),low:Number(k.l),close:Number(k.c),volume:Number(k.v),turnover:Number(k.q)});};
    ws.onerror=()=>{try{ws.close();}catch{}};
    subscriptions.set(key,ws);
   },
   unsubscribeBar({symbol,period}){
-   const ticker=(symbol.ticker||$('symbol').value).toLowerCase(),interval=$('period').value,key=ticker+'_'+interval,ws=subscriptions.get(key);
+   const ticker=(symbol.ticker||$('symbol').value).toLowerCase(),interval=periodToInterval(period),key=ticker+'_'+interval,ws=subscriptions.get(key);
    if(ws){try{ws.close();}catch{}subscriptions.delete(key);}
   }
  };
