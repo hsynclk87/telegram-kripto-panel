@@ -1,0 +1,22 @@
+services:
+  - type: worker
+    name: project-7-spot-scanner
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8090
+      - key: UNIVERSE_SIZE
+        value: 100
+      - key: SCAN_INTERVAL_MS
+        value: 5000
+      - key: DATA_DIR
+        value: /var/data
+    disk:
+      name: spot-scanner-data
+      mountPath: /var/data
+      sizeGB: 1
