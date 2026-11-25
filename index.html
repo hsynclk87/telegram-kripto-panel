@@ -1,61 +1,64 @@
 <!doctype html>
-<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#090e18"><title>Kripto İndikatör Terminali</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script><script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080d14">
+<title>Canlı Binance Fiyatı</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{color-scheme:dark;--bg:#090e18;--card:#111a29;--line:#223149;--muted:#8493a8;--txt:#e8eef8;--green:#2bd99a;--red:#ff647c;--blue:#65a8ff;--gold:#e8bd68}*{box-sizing:border-box}body{margin:0 auto;padding:14px 13px 28px;max-width:1000px;background:var(--bg);color:var(--txt);font:14px system-ui,-apple-system,Segoe UI,sans-serif}.head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:13px}.brand{font-weight:800;font-size:18px;letter-spacing:.2px}.conn{font-size:11px;color:var(--muted)}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px}.row{display:flex;gap:7px;overflow:auto;padding:2px 0 9px;scrollbar-width:none}.row button{white-space:nowrap;border:1px solid var(--line);background:#111a29;color:#aebbd0;padding:8px 12px;border-radius:9px;font-weight:650}.row button.active{background:#18375a;border-color:#3478bd;color:#fff}.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px;margin:8px 0}.muted{color:var(--muted);font-size:11px}.price{font-size:31px;font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums}.positive{color:var(--green)}.negative{color:var(--red)}.neutral{color:var(--gold)}.pricehead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.change{font-size:13px;font-weight:700;margin-top:5px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.stats span{display:block;color:var(--muted);font-size:10px}.stats b{display:block;font-size:13px;margin-top:3px;font-variant-numeric:tabular-nums}.signal{display:flex;justify-content:space-between;align-items:center;gap:10px}.signalword{font-size:23px;font-weight:850}.score{font-size:12px;color:var(--muted)}.pill{border-radius:20px;padding:5px 9px;font-size:10px;font-weight:800;background:#17263a}.section{font-size:11px;color:var(--muted);letter-spacing:.8px;font-weight:800;margin-bottom:10px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metric{background:#0c1421;border:1px solid #1e2c40;border-radius:10px;padding:10px;min-width:0}.metric span{font-size:10px;color:var(--muted);display:block}.metric b{font-size:16px;display:block;margin-top:5px;overflow-wrap:anywhere}.metric small{font-size:10px;color:var(--muted)}#chart{height:310px;width:100%}#osc{height:155px;width:100%}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:6px}.legend i{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:4px}.table{width:100%;border-collapse:collapse;font-size:12px}.table td{padding:8px 3px;border-bottom:1px solid #1e2a3d}.table tr:last-child td{border:0}.right{text-align:right;font-variant-numeric:tabular-nums}.levels{display:grid;grid-template-columns:1fr 1fr;gap:8px}.level{padding:10px;background:#0c1421;border:1px solid #1e2c40;border-radius:9px}.level b{display:block;margin-top:4px;font-size:15px}.foot{font-size:10px;color:var(--muted);line-height:1.5;margin:12px 3px}.bar{height:6px;background:#202d40;border-radius:5px;overflow:hidden;margin-top:7px}.bar i{display:block;height:100%;background:var(--green)}@media(min-width:700px){.layout{display:grid;grid-template-columns:1.5fr 1fr;gap:8px}.layout .card{margin:0 0 8px}.wide{grid-column:1/-1}}
-</style></head><body>
-<header class="head"><div><div class="brand">KRİPTO · İNDİKATÖR TERMİNALİ</div><div class="conn"><span class="dot" id="dot"></span><span id="connection">Binance canlı fiyat bağlantısı bekleniyor</span></div></div><div class="pill">REALTIME</div></header>
-<div class="row" id="coins"></div><div class="row" id="frames"></div>
-<section class="card"><div class="pricehead"><div><div class="muted" id="symbol">BTCUSDT · 1 SAAT</div><div class="price" id="price">Bağlanıyor…</div><div id="change" class="change">—</div></div><div class="right"><div class="muted">24 SAAT HACİM</div><b id="volume">—</b></div></div><div class="stats"><div><span>24s En Yüksek</span><b id="high">—</b></div><div><span>24s En Düşük</span><b id="low">—</b></div><div><span>Son işlem</span><b id="tick">—</b></div></div></section>
-<div class="layout"><div>
-<section class="card wide"><div class="section">FİYAT GRAFİĞİ · EMA 20 / EMA 50</div><div id="chart"></div><div class="legend"><span><i style="background:#e8bd68"></i>EMA 20</span><span><i style="background:#65a8ff"></i>EMA 50</span></div></section>
-<section class="card wide"><div class="section">MOMENTUM · RSI / MACD HISTOGRAM</div><div id="osc"></div></section>
-</div><div>
-<section class="card"><div class="section">BİRLEŞİK SİNYAL</div><div class="signal"><div><div class="muted">SİSTEM KARARI</div><div class="signalword neutral" id="signal">VERİ BEKLENİYOR</div></div><div class="pill" id="confidence">—</div></div><div class="muted" id="reason" style="margin-top:9px;line-height:1.5">Mum verisi yükleniyor.</div><div class="bar"><i id="scorebar" style="width:50%"></i></div></section>
-<section class="card"><div class="section">İNDİKATÖR DURUMU</div><div class="grid">
-<div class="metric"><span>RSI (14)</span><b id="rsi">—</b><small id="rsiState">—</small></div>
-<div class="metric"><span>MACD</span><b id="macd">—</b><small id="macdState">—</small></div>
-<div class="metric"><span>EMA TRENDİ</span><b id="trend">—</b><small>20 / 50 / 200</small></div>
-<div class="metric"><span>HACİM ORANI</span><b id="volratio">—</b><small id="volState">—</small></div>
-<div class="metric"><span>MOMENTUM</span><b id="momentum">—</b><small id="momState">—</small></div>
-<div class="metric"><span>VOLATİLİTE</span><b id="atr">—</b><small>ATR (14)</small></div>
-</div></section>
-<section class="card"><div class="section">DESTEK · DİRENÇ</div><div class="levels"><div class="level"><span class="muted">EN YAKIN DİRENÇ</span><b class="negative" id="resistance">—</b></div><div class="level"><span class="muted">EN YAKIN DESTEK</span><b class="positive" id="support">—</b></div></div><div class="muted" id="srNote" style="margin-top:8px">Pivot kümeleri hesaplanıyor.</div></section>
-</div></div>
-<section class="card"><div class="section">İŞLEM PLANI · TEKNİK SEVİYELER</div><table class="table"><tbody><tr><td>Olası giriş bölgesi</td><td class="right" id="entry">—</td></tr><tr><td>Stop / tez bozucu seviye</td><td class="right negative" id="stop">—</td></tr><tr><td>Hedef 1</td><td class="right positive" id="target1">—</td></tr><tr><td>Hedef 2</td><td class="right positive" id="target2">—</td></tr><tr><td>Risk / Getiri</td><td class="right" id="rr">—</td></tr></tbody></table><div class="muted" id="planNote" style="margin-top:8px">Sinyal oluşmadan işlem planı üretilmez.</div></section>
-<div class="foot">Fiyat: Binance Spot gerçek zamanlı WebSocket trade akışı. Grafik ve indikatörler seçilen zaman dilimindeki Binance mumlarından hesaplanır. Sinyaller mum kapanışında kesinleşir; açık mumda yalnızca gösterge değerleri değişir. Teknik analiz hata içerebilir, otomatik emir gönderilmez.</div>
+:root{color-scheme:dark;font-family:Arial,system-ui,sans-serif;background:#080d14;color:#edf3fa}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 50% 40%,#142438 0%,#080d14 68%)}
+main{width:min(100%,680px);text-align:center}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:clamp(65px,17vh,145px)}
+.brand{font-size:12px;font-weight:800;letter-spacing:.2em;color:#91a6bd}
+.status{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.1em;color:#8498ae}
+.dot{width:7px;height:7px;border-radius:50%;background:#d69a42}
+.dot.on{background:#20d99b;box-shadow:0 0 10px #20d99b}
+select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057;border-radius:10px;padding:12px 42px 12px 16px;font-size:14px;font-weight:700;text-align:center;outline:none}
+.pair{margin-top:30px;font-size:13px;letter-spacing:.16em;color:#8da3ba;font-weight:700}
+.price{margin:18px 0 10px;font-size:clamp(48px,12vw,100px);line-height:1.05;font-weight:750;letter-spacing:-.055em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.unit{font-size:13px;color:#8298b0;letter-spacing:.18em}
+@media(max-width:480px){.top{margin-bottom:20vh}.price{font-size:clamp(42px,12vw,68px)}}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><div class="brand">LIVE PRICE</div><div class="status"><i class="dot" id="dot"></i><span id="status">BINANCE BAĞLANIYOR</span></div></div>
+<select id="symbol" aria-label="Coin seç">
+<option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option><option value="LINKUSDT">LINK / USDT</option><option value="AVAXUSDT">AVAX / USDT</option><option value="HBARUSDT">HBAR / USDT</option>
+</select>
+<div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>
+</main>
 <script>
 (()=>{'use strict';
-const $=id=>document.getElementById(id), coins=['BTC','ETH','SOL','BNB','XRP','DOGE','LINK','AVAX','HBAR'], frames=[['15m','15 DK'],['1h','1 SAAT'],['4h','4 SAAT'],['1d','GÜNLÜK'],['1w','HAFTALIK']];
-let coin='BTC',tf='1h',candles=[],chart=null,candleSeries=null,ema20Series=null,ema50Series=null,oscChart=null,rsiSeries=null,macdSeries=null,priceWs=null,klineWs=null,tickerWs=null,lastPrice=null,base24=null,signalState=null;
-const fmt=n=>!Number.isFinite(n)?'—':n>=1000?n.toLocaleString('tr-TR',{maximumFractionDigits:2}):n>=1?n.toLocaleString('tr-TR',{maximumFractionDigits:4}):n.toPrecision(5);
-const compact=n=>{if(!Number.isFinite(n))return'—';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return fmt(n)};
-const setText=(id,v)=>$(id).textContent=v;
-function controls(){ $('coins').innerHTML=coins.map(c=>'<button data-c="'+c+'" class="'+(coin===c?'active':'')+'">'+c+'</button>').join('');$('frames').innerHTML=frames.map(([v,l])=>'<button data-t="'+v+'" class="'+(tf===v?'active':'')+'">'+l+'</button>').join('');}
-$('coins').onclick=e=>{const b=e.target.closest('[data-c]');if(b){coin=b.dataset.c;switchMarket();}};
-$('frames').onclick=e=>{const b=e.target.closest('[data-t]');if(b){tf=b.dataset.t;switchMarket();}};
-function chartInit(){if(!window.LightweightCharts)return;const opts={layout:{background:{color:'#111a29'},textColor:'#8493a8'},grid:{vertLines:{color:'#1c293b'},horzLines:{color:'#1c293b'}},rightPriceScale:{borderVisible:false},timeScale:{timeVisible:true,secondsVisible:false,borderColor:'#26364d'},crosshair:{mode:1}};if(!chart){chart=LightweightCharts.createChart($('chart'),{...opts,width:$('chart').clientWidth,height:310});candleSeries=chart.addCandlestickSeries({upColor:'#2bd99a',downColor:'#ff647c',borderVisible:false,wickUpColor:'#2bd99a',wickDownColor:'#ff647c'});ema20Series=chart.addLineSeries({color:'#e8bd68',lineWidth:2,priceLineVisible:false});ema50Series=chart.addLineSeries({color:'#65a8ff',lineWidth:2,priceLineVisible:false});}if(!oscChart){oscChart=LightweightCharts.createChart($('osc'),{...opts,width:$('osc').clientWidth,height:155,rightPriceScale:{borderVisible:false}});rsiSeries=oscChart.addLineSeries({color:'#c792ea',lineWidth:2,priceLineVisible:false});macdSeries=oscChart.addHistogramSeries({priceLineVisible:false,base:0});}chart.applyOptions({width:$('chart').clientWidth});oscChart.applyOptions({width:$('osc').clientWidth});}
-window.addEventListener('resize',chartInit);
-function ema(values,period){const out=Array(values.length).fill(null),k=2/(period+1);let prev=null;for(let i=0;i<values.length;i++){const v=values[i];if(!Number.isFinite(v))continue;prev=prev===null?v:v*k+prev*(1-k);out[i]=prev;}return out;}
-function rsi(values,period=14){const out=Array(values.length).fill(null);let gain=0,loss=0;for(let i=1;i<=period&&i<values.length;i++){const d=values[i]-values[i-1];gain+=Math.max(d,0);loss+=Math.max(-d,0);}if(values.length<=period)return out;gain/=period;loss/=period;out[period]=loss===0?100:100-100/(1+gain/loss);for(let i=period+1;i<values.length;i++){const d=values[i]-values[i-1];gain=(gain*(period-1)+Math.max(d,0))/period;loss=(loss*(period-1)+Math.max(-d,0))/period;out[i]=loss===0?100:100-100/(1+gain/loss);}return out;}
-function atr(data,p=14){const tr=data.map((x,i)=>i?Math.max(x.high-x.low,Math.abs(x.high-data[i-1].close),Math.abs(x.low-data[i-1].close)):x.high-x.low);let a=tr.slice(0,p).reduce((s,x)=>s+x,0)/p;for(let i=p;i<tr.length;i++)a=(a*(p-1)+tr[i])/p;return a;}
-function calc(){const confirmed=candles.filter(x=>x.closed);if(confirmed.length<60)return;const candlesForCalc=confirmed;const closes=candlesForCalc.map(x=>x.close),e20=ema(closes,20),e50=ema(closes,50),e200=ema(closes,200),r=rsi(closes),fast=ema(closes,12),slow=ema(closes,26),m=fast.map((v,i)=>v===null||slow[i]===null?null:v-slow[i]),sig=ema(m.map(v=>v??NaN),9),hist=m.map((v,i)=>v===null||sig[i]===null?null:v-sig[i]);const n=candlesForCalc.length-1,p=closes[n],rv=r[n],mac=hist[n],atrV=atr(candlesForCalc.slice(-30)),volAvg=candlesForCalc.slice(-21,-1).reduce((s,x)=>s+x.volume,0)/20,volRatio=volAvg?candlesForCalc[n].volume/volAvg:0;
-const trendUp=e20[n]>e50[n]&&p>e20[n],trendDown=e20[n]<e50[n]&&p<e20[n],momUp=mac>0&&mac>(hist[n-1]||0),momDown=mac<0&&mac<(hist[n-1]||0);
-let score=0;score+=trendUp?2:trendDown?-2:0;score+=rv<35?2:rv>70?-2:rv>55?1:rv<45?-1:0;score+=momUp?2:momDown?-2:0;score+=volRatio>1.5?(candlesForCalc[n].close>candlesForCalc[n].open?1:-1):0;score=Math.max(-7,Math.min(7,score));
-let signal=score>=4?'AL':score<=-4?'SAT':'BEKLE',confidence=Math.round(Math.abs(score)/7*100);const support=findPivot(false,p,candlesForCalc),resistance=findPivot(true,p,candlesForCalc);
-setText('rsi',rv.toFixed(1));setText('rsiState',rv<30?'Aşırı satım':rv>70?'Aşırı alım':rv<50?'Zayıf bölge':'Güçlü bölge');$('rsi').className=rv<35?'positive':rv>70?'negative':'';
-setText('macd',mac>0?'+':'');$('macd').textContent=(mac>0?'+':'')+fmt(mac);$('macd').className=mac>=0?'positive':'negative';setText('macdState',momUp?'Pozitif ivme artıyor':momDown?'Negatif ivme artıyor':'İvme zayıf');
-setText('trend',trendUp?'YUKARI':trendDown?'AŞAĞI':'YATAY');$('trend').className=trendUp?'positive':trendDown?'negative':'neutral';setText('volratio',volRatio.toFixed(2)+'x');setText('volState',volRatio>=1.5?'Hacim yüksek':'Normal hacim');setText('momentum',momUp?'POZİTİF':momDown?'NEGATİF':'NÖTR');$('momentum').className=momUp?'positive':momDown?'negative':'neutral';setText('momState',momUp?'Alıcı ivmesi':momDown?'Satıcı ivmesi':'Belirgin ivme yok');setText('atr',fmt(atrV)+' · '+(atrV/p*100).toFixed(2)+'%');
-setText('signal',signal);$('signal').className='signalword '+(signal==='AL'?'positive':signal==='SAT'?'negative':'neutral');setText('confidence','GÜÇ '+confidence+'%');$('scorebar').style.width=confidence+'%';$('scorebar').style.background=signal==='AL'?'var(--green)':signal==='SAT'?'var(--red)':'var(--gold)';
-let why=[];why.push(trendUp?'EMA trendi yukarı':trendDown?'EMA trendi aşağı':'EMA trendi yatay');why.push('RSI '+rv.toFixed(1));why.push(momUp?'MACD pozitif ivmeli':momDown?'MACD negatif ivmeli':'MACD ivmesi nötr');why.push('Hacim '+volRatio.toFixed(2)+'x');setText('reason',why.join(' · '));
-setText('support',support?fmt(support):'—');setText('resistance',resistance?fmt(resistance):'—');setText('srNote','Son 120 mumdaki onaylı pivotlardan yakın kümeler.');let entryLow=p-atrV*.2,entryHigh=p+atrV*.2,stop=signal==='AL'?Math.min(support||p-atrV*1.5,p-atrV*1.2):signal==='SAT'?Math.max(resistance||p+atrV*1.5,p+atrV*1.2):null;let risk=stop===null?null:Math.abs(p-stop);setText('entry',signal==='BEKLE'?'Sinyal bekleniyor':fmt(entryLow)+' – '+fmt(entryHigh));setText('stop',stop===null?'—':fmt(stop));setText('target1',stop===null?'—':fmt(signal==='AL'?p+risk*1.5:p-risk*1.5));setText('target2',stop===null?'—':fmt(signal==='AL'?p+risk*2.5:p-risk*2.5));setText('rr',stop===null?'—':'1 : 1.5 / 1 : 2.5');setText('planNote',signal==='BEKLE'?'Yeterli yön uyumu yok; işlem planı oluşturulmadı.':'ATR tabanlı tahmini seviyeler; destek/direnç ve mum kapanışıyla teyit gerekir.');
-ema20Series.setData(e20.map((v,i)=>v===null?null:{time:candlesForCalc[i].time,value:v}).filter(Boolean));ema50Series.setData(e50.map((v,i)=>v===null?null:{time:candlesForCalc[i].time,value:v}).filter(Boolean));rsiSeries.setData(r.map((v,i)=>v===null?null:{time:candlesForCalc[i].time,value:v}).filter(Boolean));macdSeries.setData(hist.map((v,i)=>v===null?null:{time:candlesForCalc[i].time,value:v,color:v>=0?'#2bd99a':'#ff647c'}).filter(Boolean));}
-function findPivot(above,price,data=candles){const piv=[];for(let i=Math.max(3,data.length-120);i<data.length-3;i++){let hi=true,lo=true;for(let j=i-3;j<=i+3;j++){if(j===i)continue;if(data[j].high>=data[i].high)hi=false;if(data[j].low<=data[i].low)lo=false;}if(above&&hi&&data[i].high>price)piv.push(data[i].high);if(!above&&lo&&data[i].low<price)piv.push(data[i].low);}if(!piv.length)return null;piv.sort((a,b)=>a-b);const clusters=[];for(const v of piv){let c=clusters[clusters.length-1];if(c&&Math.abs(v-c.avg)/c.avg<.004){c.values.push(v);c.avg=c.values.reduce((a,b)=>a+b,0)/c.values.length;}else clusters.push({avg:v,values:[v]});}clusters.sort((a,b)=>above?a.avg-b.avg:b.avg-a.avg);return clusters[0]?.avg||null;}
-function updatePrice(p){lastPrice=p;setText('price',fmt(p));setText('tick',new Date().toLocaleTimeString('tr-TR',{hour12:false}));if(base24){const ch=(p/base24-1)*100;setText('change',(ch>=0?'+':'')+ch.toFixed(2)+'%');$('change').className='change '+(ch>=0?'positive':'negative');}}
-function connectPrice(){if(priceWs)priceWs.close();const s=coin.toLowerCase()+'usdt';priceWs=new WebSocket('wss://stream.binance.com:9443/ws/'+s+'@trade');priceWs.onopen=()=>{setText('connection','Binance Spot WebSocket bağlı');$('dot').style.background='var(--green)';};priceWs.onmessage=e=>{const d=JSON.parse(e.data);updatePrice(+d.p);};priceWs.onclose=()=>{$('dot').style.background='var(--red)';setText('connection','Fiyat bağlantısı yenileniyor');setTimeout(()=>{if(!priceWs||priceWs.readyState===WebSocket.CLOSED)connectPrice();},1200);};priceWs.onerror=()=>{try{priceWs.close();}catch(_){}};}
-function connectKline(){if(klineWs)klineWs.close();const s=coin.toLowerCase()+'usdt';klineWs=new WebSocket('wss://stream.binance.com:9443/ws/'+s+'@kline_'+tf);klineWs.onmessage=e=>{const k=JSON.parse(e.data).k,c={time:Math.floor(k.t/1000),open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.q,closed:k.x};const ix=candles.findIndex(x=>x.time===c.time);if(ix>=0)candles[ix]=c;else candles.push(c);candles=candles.slice(-500);candleSeries.update({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close});if(c.closed)calc();};}
-async function load(){const sym=coin+'USDT';setText('symbol',sym+' · '+tf.toUpperCase());try{const [rows,ticker,stats]=await Promise.all([fetch('https://api.binance.com/api/v3/klines?symbol='+sym+'&interval='+tf+'&limit=500',{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/price?symbol='+sym,{cache:'no-store'}).then(r=>r.json()),fetch('https://api.binance.com/api/v3/ticker/24hr?symbol='+sym,{cache:'no-store'}).then(r=>r.json())]);candles=rows.map(x=>({time:Math.floor(x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[7],closed:true}));candleSeries.setData(candles.map(x=>({time:x.time,open:x.open,high:x.high,low:x.low,close:x.close})));base24=+stats.prevClosePrice;updatePrice(+ticker.price);setText('volume',compact(+stats.quoteVolume));setText('high',fmt(+stats.highPrice));setText('low',fmt(+stats.lowPrice));chart.timeScale().fitContent();oscChart.timeScale().fitContent();calc();}catch(e){setText('reason','Binance mum verisi alınamadı: '+e.message);}}
-function switchMarket(){controls();candles=[];lastPrice=null;base24=null;setText('price','Yükleniyor…');chartInit();load().then(connectKline);connectPrice();}
-if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}controls();chartInit();switchMarket();
+const $=id=>document.getElementById(id),symbols=['btcusdt','ethusdt','solusdt','bnbusdt','xrpusdt','dogeusdt','linkusdt','avaxusdt','hbarusdt'];
+const prices=Object.create(null);let socket=null,retryTimer=null,retryDelay=500,stopped=false;
+const tg=window.Telegram&&window.Telegram.WebApp;
+if(tg){tg.ready();tg.expand();}
+const format=value=>{const n=Number(value);if(!Number.isFinite(n)||n<=0)return'—';const digits=n>=1000?2:n>=1?4:n>=.01?6:8;return n.toLocaleString('en-US',{minimumFractionDigits:digits,maximumFractionDigits:digits});};
+function render(){const symbol=$('symbol').value;$('pair').textContent=symbol.replace('USDT',' / USDT');$('price').textContent=format(prices[symbol]);}
+function status(connected,label){$('status').textContent=label;$('dot').classList.toggle('on',connected);}
+function connect(){
+ clearTimeout(retryTimer);if(stopped)return;
+ const streams=symbols.map(s=>s+'@trade').join('/');
+ socket=new WebSocket('wss://stream.binance.com:9443/stream?streams='+streams);
+ socket.onopen=()=>{retryDelay=500;status(true,'CANLI');};
+ socket.onmessage=event=>{
+  let packet;try{packet=JSON.parse(event.data);}catch{return;}
+  const trade=packet.data;if(!trade||trade.e!=='trade')return;
+  const symbol=trade.s,price=Number(trade.p);
+  if(!Number.isFinite(price)||price<=0)return;
+  prices[symbol]=price;
+  if(symbol===$('symbol').value)$('price').textContent=format(price);
+ };
+ socket.onerror=()=>{try{socket.close();}catch{}};
+ socket.onclose=()=>{status(false,'YENİDEN BAĞLANIYOR');retryTimer=setTimeout(connect,retryDelay);retryDelay=Math.min(retryDelay*2,8000);};
+}
+$('symbol').addEventListener('change',render);render();connect();
+window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);if(socket)socket.close();});
 })();
-</script></body></html>
+</script>
+</body>
+</html>

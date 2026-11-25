@@ -1,55 +1,64 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080d14">
-<title>Canlı Fiyat</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080d14">
+<title>Canlı Binance Fiyatı</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{color-scheme:dark;font-family:Inter,Arial,sans-serif;background:#080d14;color:#eef4fb}*{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 38%,#142438 0%,#080d14 62%)}
-main{width:min(100%,680px);text-align:center}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(70px,17vh,150px)}
-.brand{font-size:12px;letter-spacing:.2em;font-weight:800;color:#91a6bd}.status{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.12em;color:#8498ae}
-.dot{width:7px;height:7px;border-radius:50%;background:#e5a33b;box-shadow:0 0 10px currentColor}.dot.on{background:#20d99b}
-select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057;border-radius:10px;padding:12px 42px 12px 16px;font-size:14px;font-weight:700;outline:none;text-align:center}
-.pair{margin-top:32px;font-size:13px;letter-spacing:.16em;color:#8da3ba;font-weight:700}.price{margin:18px 0 10px;font-size:clamp(48px,12vw,100px);line-height:1.05;font-weight:750;letter-spacing:-.055em;font-variant-numeric:tabular-nums;color:#f4f8fc;overflow-wrap:anywhere}
-.unit{font-size:14px;color:#8298b0;letter-spacing:.18em}@media(max-width:480px){.top{margin-bottom:20vh}.price{font-size:clamp(42px,12vw,68px)}}
-</style></head>
-<body><main>
-<div class="top"><div class="brand">LIVE MARKET</div><div class="status"><i class="dot" id="dot"></i><span id="status">BAĞLANIYOR</span></div></div>
-<select id="symbol" aria-label="Coin seç"><option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option></select>
+:root{color-scheme:dark;font-family:Arial,system-ui,sans-serif;background:#080d14;color:#edf3fa}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 50% 40%,#142438 0%,#080d14 68%)}
+main{width:min(100%,680px);text-align:center}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:clamp(65px,17vh,145px)}
+.brand{font-size:12px;font-weight:800;letter-spacing:.2em;color:#91a6bd}
+.status{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.1em;color:#8498ae}
+.dot{width:7px;height:7px;border-radius:50%;background:#d69a42}
+.dot.on{background:#20d99b;box-shadow:0 0 10px #20d99b}
+select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057;border-radius:10px;padding:12px 42px 12px 16px;font-size:14px;font-weight:700;text-align:center;outline:none}
+.pair{margin-top:30px;font-size:13px;letter-spacing:.16em;color:#8da3ba;font-weight:700}
+.price{margin:18px 0 10px;font-size:clamp(48px,12vw,100px);line-height:1.05;font-weight:750;letter-spacing:-.055em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.unit{font-size:13px;color:#8298b0;letter-spacing:.18em}
+@media(max-width:480px){.top{margin-bottom:20vh}.price{font-size:clamp(42px,12vw,68px)}}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><div class="brand">LIVE PRICE</div><div class="status"><i class="dot" id="dot"></i><span id="status">BINANCE BAĞLANIYOR</span></div></div>
+<select id="symbol" aria-label="Coin seç">
+<option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option><option value="LINKUSDT">LINK / USDT</option><option value="AVAXUSDT">AVAX / USDT</option><option value="HBARUSDT">HBAR / USDT</option>
+</select>
 <div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>
 </main>
 <script>
-(()=>{
- const $=id=>document.getElementById(id),prices=Object.create(null);
- let socket=null,retryTimer=null,retryDelay=500;
- const format=value=>{const n=Number(value);if(!Number.isFinite(n)||n<=0)return "—";const digits=n>=1000?2:n>=1?4:n>=.01?6:8;return n.toLocaleString("en-US",{minimumFractionDigits:digits,maximumFractionDigits:digits})};
- const render=()=>{$("pair").textContent=$("symbol").value.replace("USDT"," / USDT");$("price").textContent=format(prices[$("symbol").value])};
- const setStatus=(connected,label)=>{$("status").textContent=label;$("dot").classList.toggle("on",connected)};
- const connect=()=>{
-  clearTimeout(retryTimer);
-  const protocol=location.protocol==="https:"?"wss:":"ws:";
-  socket=new WebSocket(protocol+"//"+location.host+"/stream");
-  socket.onopen=()=>{retryDelay=500;setStatus(true,"CANLI")};
-  socket.onmessage=event=>{
-   let msg;try{msg=JSON.parse(event.data)}catch{return}
-   if(msg.type==="snapshot"){
-    const rows=msg.data?.prices||{};
-    for(const [symbol,item] of Object.entries(rows)){
-     const p=Number(item?.price);
-     if(Number.isFinite(p)&&p>0)prices[symbol]=p;
-    }
-    render();
-   }else if(msg.type==="price"){
-    const d=msg.data||{},p=Number(d.price);
-    if(d.symbol&&Number.isFinite(p)&&p>0){
-     prices[d.symbol]=p;
-     if(d.symbol===$("symbol").value)$("price").textContent=format(p);
-    }
-   }else if(msg.type==="connection"&&msg.data?.exchange==="binanceSpot"&&!msg.data.connected)setStatus(false,"BORSA BAĞLANTISI KESİLDİ");
-  };
-  socket.onclose=()=>{setStatus(false,"YENİDEN BAĞLANIYOR");retryTimer=setTimeout(connect,retryDelay);retryDelay=Math.min(retryDelay*2,8000)};
-  socket.onerror=()=>socket.close();
+(()=>{'use strict';
+const $=id=>document.getElementById(id),symbols=['btcusdt','ethusdt','solusdt','bnbusdt','xrpusdt','dogeusdt','linkusdt','avaxusdt','hbarusdt'];
+const prices=Object.create(null);let socket=null,retryTimer=null,retryDelay=500,stopped=false;
+const tg=window.Telegram&&window.Telegram.WebApp;
+if(tg){tg.ready();tg.expand();}
+const format=value=>{const n=Number(value);if(!Number.isFinite(n)||n<=0)return'—';const digits=n>=1000?2:n>=1?4:n>=.01?6:8;return n.toLocaleString('en-US',{minimumFractionDigits:digits,maximumFractionDigits:digits});};
+function render(){const symbol=$('symbol').value;$('pair').textContent=symbol.replace('USDT',' / USDT');$('price').textContent=format(prices[symbol]);}
+function status(connected,label){$('status').textContent=label;$('dot').classList.toggle('on',connected);}
+function connect(){
+ clearTimeout(retryTimer);if(stopped)return;
+ const streams=symbols.map(s=>s+'@trade').join('/');
+ socket=new WebSocket('wss://stream.binance.com:9443/stream?streams='+streams);
+ socket.onopen=()=>{retryDelay=500;status(true,'CANLI');};
+ socket.onmessage=event=>{
+  let packet;try{packet=JSON.parse(event.data);}catch{return;}
+  const trade=packet.data;if(!trade||trade.e!=='trade')return;
+  const symbol=trade.s,price=Number(trade.p);
+  if(!Number.isFinite(price)||price<=0)return;
+  prices[symbol]=price;
+  if(symbol===$('symbol').value)$('price').textContent=format(price);
  };
- $("symbol").addEventListener("change",render);render();connect();
+ socket.onerror=()=>{try{socket.close();}catch{}};
+ socket.onclose=()=>{status(false,'YENİDEN BAĞLANIYOR');retryTimer=setTimeout(connect,retryDelay);retryDelay=Math.min(retryDelay*2,8000);};
+}
+$('symbol').addEventListener('change',render);render();connect();
+window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);if(socket)socket.close();});
 })();
-</script></body></html>
+</script>
+</body>
+</html>
