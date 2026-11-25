@@ -1,127 +1,52 @@
 <!doctype html>
-<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080d17"><title>AL-SAT Karar Merkezi</title>
-<script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080d14">
+<title>Canlı Fiyat</title>
 <style>
-:root{color-scheme:dark;--bg:#070b13;--panel:#0d1522;--panel2:#101c2c;--line:#1d2b40;--line2:#2b3e58;--txt:#e9f0fb;--muted:#8294ad;--green:#19d6a0;--red:#ff5d78;--blue:#5baeff;--gold:#e9bd70;--cyan:#56d7e8;--shadow:0 14px 38px #0006}
-*{box-sizing:border-box}html{background:var(--bg)}body{margin:0 auto;padding:20px 22px 34px;max-width:1480px;background:radial-gradient(ellipse at 10% -8%,#173251 0,transparent 34%),radial-gradient(ellipse at 90% 5%,#182342 0,transparent 28%),var(--bg);color:var(--txt);font:13px Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:0 14px;font-variant-numeric:tabular-nums}
-.top,.toolbar,.hero,.card,.foot{min-width:0}.top{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:4px 2px 18px;border-bottom:1px solid #26364a;margin-bottom:2px}.brand{font-size:16px;font-weight:900;letter-spacing:1.5px;display:flex;align-items:center;gap:10px}.brand:before{content:"";width:26px;height:26px;border-radius:8px;background:linear-gradient(145deg,#29e0b0,#2e78b8);box-shadow:0 0 22px #27d7ad55;display:inline-block}.status{font-size:10px;color:var(--muted);letter-spacing:.6px}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:6px}.dot.on{background:var(--green);box-shadow:0 0 12px #19d6a0}
-.toolbar{grid-column:1/-1;display:flex;align-items:center;gap:9px;overflow:auto;padding:14px 0 12px}.toolbar select,.toolbar button{background:#111e2e;color:var(--txt);border:1px solid var(--line2);border-radius:9px;padding:10px 14px;font-size:11px;font-weight:800;letter-spacing:.35px}.toolbar select{min-width:125px}.toolbar button{background:linear-gradient(135deg,#164d4a,#123b43);border-color:#247b70}.toolbar button.active{box-shadow:inset 0 0 0 1px #43d7b2,0 5px 18px #1bd6a022}.pill{font-size:9px;font-weight:850;padding:7px 10px;border-radius:7px;background:#142236;border:1px solid #2a3d57;color:#9eb4ce;white-space:nowrap}
-.card{background:linear-gradient(145deg,#111d2c 0%,#0b1421 100%);border:1px solid #24364d;border-radius:13px;padding:16px;margin:7px 0;min-width:0;box-shadow:var(--shadow);position:relative;overflow:hidden}.card:before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,#54739466,transparent);pointer-events:none}.hero{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,.5fr);gap:20px;align-items:center;background:radial-gradient(ellipse at 4% 0%,#183d4a88,transparent 52%),linear-gradient(115deg,#122438,#0c1522 72%);border-color:#2b4960;padding:20px 22px}.hero>div{min-width:0}.muted{color:var(--muted);font-size:10px;letter-spacing:.45px}.price{white-space:nowrap;font-size:clamp(28px,4.3vw,48px);font-weight:850;letter-spacing:-1.5px;line-height:1.15;margin-top:6px}.delta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:19px;line-height:19px;font-size:11px;margin-top:5px;font-weight:700;color:#9bb0c8}.scorewrap{text-align:right;border-left:1px solid #31465d;padding-left:20px}.score{font-size:42px;font-weight:900;line-height:1;letter-spacing:-1.5px}.verdict{font-size:10px;font-weight:900;margin-top:8px;letter-spacing:.65px}
-body>.card:nth-of-type(2){grid-column:1/-1}.section{font-size:10px;font-weight:900;letter-spacing:1.2px;color:#9fb5ce;margin:0 0 13px;display:flex;align-items:center;gap:9px}.section:before{content:"";width:3px;height:12px;border-radius:3px;background:linear-gradient(var(--cyan),var(--green));display:inline-block}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.metric{background:linear-gradient(145deg,#101d2d,#0b1420);border:1px solid #22364c;border-radius:9px;padding:12px;min-width:0}.metric span{display:block;font-size:9px;color:#8196b0;letter-spacing:.8px;font-weight:750}.metric b{display:block;font-size:15px;margin-top:7px;overflow-wrap:anywhere;font-weight:800}.bar{height:6px;background:#24364a;border-radius:9px;overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#168f83,#21dba8);border-radius:9px;box-shadow:0 0 12px #21dba866}
-.two{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 14px}.two .card{width:100%}.check{display:flex;justify-content:space-between;gap:8px;padding:10px 2px;border-bottom:1px solid #1e2e42;font-size:11px;color:#c0cee0}.check:last-child{border:0}.good{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--gold)}.level{padding:11px;background:linear-gradient(145deg,#0b1725,#101e2d);border:1px solid #263c54;border-radius:9px}.level span{display:block;font-size:9px;color:#8296b0;letter-spacing:.65px}.level b{display:block;font-size:15px;margin-top:6px;font-weight:850}.foot{grid-column:1/-1;font-size:9px;color:#71849d;line-height:1.7;margin:13px 2px 0;border-top:1px solid #1e2b3e;padding-top:12px}
-body>section.card:nth-of-type(3){grid-column:1/span 8}body>section.card:nth-of-type(4){grid-column:9/-1}#chart{height:390px;width:100%}.level{font-variant-numeric:tabular-nums}
-.symbolrow{display:flex;gap:7px;overflow:auto;padding:2px 0 8px}.symbolrow button{background:#132238;border:1px solid #2b405b;color:#c9d7e9;border-radius:9px;padding:8px 11px;font-weight:800;white-space:nowrap}.symbolrow button.active{background:#254f57;border-color:#48d8b0;color:white}
-.scanrow{display:grid;grid-template-columns:54px 1fr 32px;gap:8px;align-items:center;padding:11px 0;border-bottom:1px solid #1e2e42;font-size:10px;cursor:pointer}.scanrow:last-child{border:0}.scanbar{height:5px;background:#25364a;border-radius:8px;overflow:hidden}.scanbar i{display:block;height:100%;background:linear-gradient(90deg,#138d85,#1adca4);border-radius:8px}.empty{padding:16px 8px;text-align:center;color:var(--muted);font-size:10px}
-.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1;min-width:120px;padding:10px;border-radius:10px;border:1px solid #3a5878;background:#1b3550;color:#eaf4ff;font-weight:800}
-.depth{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 16px}.depth-side{background:#0a1420;border:1px solid #20334a;border-radius:9px;padding:9px}.depth-title{display:flex;justify-content:space-between;font-size:9px;font-weight:900;letter-spacing:.7px;margin-bottom:7px}.depth-line{position:relative;display:flex;justify-content:space-between;gap:5px;font-size:9px;padding:4px 2px;overflow:hidden}.depth-line i{position:absolute;inset:0 auto 0 0;opacity:.12;pointer-events:none}.depth-line span,.depth-line b{position:relative}.depth-bid{color:var(--green)}.depth-ask{color:var(--red)}
-@media(max-width:900px){body{padding:14px 13px 25px}body>section.card:nth-of-type(3){grid-column:1/-1}body>section.card:nth-of-type(4){grid-column:1/-1}#chart{height:330px}}
-@media(max-width:600px){body{padding:10px 9px 22px;gap:0 8px}.top{padding-bottom:12px}.brand{font-size:13px}.hero{grid-template-columns:minmax(0,1fr) minmax(100px,.65fr);gap:8px;padding:15px 13px}.price{font-size:clamp(24px,7vw,34px)}.scorewrap{padding-left:10px}.score{font-size:31px}.verdict{font-size:8px;line-height:1.4}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.metric{padding:10px}.metric b{font-size:13px}.two{grid-template-columns:1fr;gap:0}.two .card{margin:6px 0}.toolbar{padding:11px 0}.toolbar select,.toolbar button{padding:9px 11px}#chart{height:275px}.depth{gap:5px}.depth-side{padding:7px}.depth-line{font-size:8px}.foot{font-size:8px}}
-</style></head><body>
-<header class="top"><div><div class="brand">AL-SAT KARAR MERKEZİ</div><div class="status">Canlı piyasa · Çoklu zaman dilimi · Risk kontrollü</div></div><div class="status"><i class="dot" id="liveDot"></i><span id="connection">BAĞLANIYOR</span></div></header>
-<div class="toolbar"><select id="symbolSelect" aria-label="Coin seç"></select><button id="scanBtn" class="active">FIRSATLARI TARA</button><span class="pill" id="updated">VERİ BEKLENİYOR</span></div>
-<section class="card hero"><div><div class="muted" id="pairName">BTC/USDT · BINANCE SPOT</div><div class="price" id="price">—</div><div class="delta" id="priceChange">Canlı fiyat bekleniyor</div></div><div class="scorewrap"><div class="muted">GİRİŞ KALİTESİ</div><div class="score" id="score">—</div><div class="verdict" id="verdict">VERİ BEKLENİYOR</div></div></section>
-<section class="card"><div class="section">KARAR MOTORU</div><div class="bar"><i id="scoreBar" style="width:0%"></i></div><div class="grid" style="margin-top:10px"><div class="metric"><span>4 SAAT TREND</span><b id="trend">—</b></div><div class="metric"><span>1 SAAT FIRSAT</span><b id="zone">—</b></div><div class="metric"><span>15 DK TETİK</span><b id="trigger">—</b></div><div class="metric"><span>1 DK VERİ</span><b id="minuteData">—</b></div><div class="metric"><span>HACİM</span><b id="volume">—</b></div><div class="metric"><span>PARA AKIŞI</span><b id="flow">—</b></div><div class="metric"><span>VADELİ RİSK</span><b id="derivatives">—</b></div></div></section>
-<div class="two"><section class="card"><div class="section">AL TEYİT KRİTERLERİ</div><div id="checks"><div class="empty">Piyasa verisi yükleniyor</div></div></section><section class="card"><div class="section">İŞLEM PLANI</div><div class="grid" style="grid-template-columns:1fr 1fr"><div class="level"><span>GİRİŞ</span><b id="entry">—</b></div><div class="level"><span>STOP</span><b id="stop">—</b></div><div class="level"><span>HEDEF 1</span><b id="target1">—</b></div><div class="level"><span>HEDEF 2</span><b id="target2">—</b></div><div class="level" style="grid-column:1/-1"><span>RİSK / GETİRİ</span><b id="rr">—</b></div></div><div class="muted" id="riskNote" style="margin-top:9px">Giriş teyidi bekleniyor.</div></section></div>
-<section class="card"><div class="section">FİYAT VE GİRİŞ BÖLGESİ · 1 DK</div><div id="chart"></div><div class="muted" id="chartNote">Grafik verisi bekleniyor.</div></section>
-<section class="card"><div class="section">COIN FIRSAT TARAMASI</div><div class="muted" style="margin-bottom:8px">Yalnızca yeterli verisi bulunan pariteler sıralanır.</div><div class="section" style="margin-top:14px">CANLI EMİR DEFTERİ · TOP 5</div><div class="depth" id="depthVisual"><div class="empty" style="grid-column:1/-1">Derinlik verisi bekleniyor</div></div><div class="section" style="margin-top:14px">GÜÇ SIRALAMASI</div><div id="scanner"><div class="empty">Tarama için veri bekleniyor</div></div></section>
-<div class="foot">Karar motoru: 4 saat ana yön · 1 saat fırsat bölgesi · 15 dakika giriş teyidi. Eksik veri pozitif veya negatif sinyal sayılmaz. Puan tek başına işlem emri değildir; risk/getiri filtresi ve mum kapanışı teyidi zorunludur. Canlı fiyat, borsa WebSocket akışından iletilir; ağ ve borsa kaynaklı gecikmeler tamamen sıfırlanamaz.</div>
+:root{color-scheme:dark;font-family:Inter,Arial,sans-serif;background:#080d14;color:#eef4fb}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 38%,#142438 0%,#080d14 62%)}
+main{width:min(100%,680px);text-align:center}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(70px,17vh,150px)}
+.brand{font-size:12px;letter-spacing:.2em;font-weight:800;color:#91a6bd}.status{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.12em;color:#8498ae}
+.dot{width:7px;height:7px;border-radius:50%;background:#e5a33b;box-shadow:0 0 10px currentColor}.dot.on{background:#20d99b}
+select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057;border-radius:10px;padding:12px 42px 12px 16px;font-size:14px;font-weight:700;outline:none;text-align:center}
+.pair{margin-top:32px;font-size:13px;letter-spacing:.16em;color:#8da3ba;font-weight:700}.price{margin:18px 0 10px;font-size:clamp(48px,12vw,100px);line-height:1.05;font-weight:750;letter-spacing:-.055em;font-variant-numeric:tabular-nums;color:#f4f8fc;overflow-wrap:anywhere}
+.unit{font-size:14px;color:#8298b0;letter-spacing:.18em}@media(max-width:480px){.top{margin-bottom:20vh}.price{font-size:clamp(42px,12vw,68px)}}
+</style></head>
+<body><main>
+<div class="top"><div class="brand">LIVE MARKET</div><div class="status"><i class="dot" id="dot"></i><span id="status">BAĞLANIYOR</span></div></div>
+<select id="symbol" aria-label="Coin seç"><option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option></select>
+<div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>
+</main>
 <script>
-const $=id=>document.getElementById(id), symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT"], state={markets:{},trades:[],signals:[],selected:"BTCUSDT",socket:null,chart:null,candleSeries:null,lastPrice:null,historyFetchAt:{},volumeSeries:null};
-const fmt=n=>Number.isFinite(n)?(n>=1000?n.toLocaleString("en-US",{maximumFractionDigits:2}):n>=1?n.toFixed(4):n.toFixed(7)):"—";
-const pct=n=>Number.isFinite(n)?(n>=0?"+":"")+n.toFixed(2)+"%":"—";
-function normalizeMarkets(raw){if(Array.isArray(raw))return Object.fromEntries(raw.filter(m=>m&&m.symbol).map(m=>[m.symbol,m]));if(raw&&typeof raw==="object")return raw;return {}}
-function initChart(){if(!window.LightweightCharts)return;state.chart=LightweightCharts.createChart($("chart"),{layout:{background:{color:"#0d1725"},textColor:"#9db0c7"},grid:{vertLines:{color:"#1d2b3d"},horzLines:{color:"#1d2b3d"}},rightPriceScale:{borderColor:"#34465e"},timeScale:{borderColor:"#34465e",timeVisible:true},crosshair:{mode:0},width:$("chart").clientWidth,height:$("chart").clientHeight});state.candleSeries=state.chart.addCandlestickSeries({upColor:"#19d6a0",downColor:"#ff5d78",borderUpColor:"#19d6a0",borderDownColor:"#ff5d78",wickUpColor:"#19d6a0",wickDownColor:"#ff5d78",priceLineVisible:true,lastValueVisible:true});state.volumeSeries=state.chart.addHistogramSeries({priceFormat:{type:"volume"},priceScaleId:"volume",scaleMargins:{top:.82,bottom:0},lastValueVisible:false,priceLineVisible:false});state.chart.priceScale("volume").applyOptions({scaleMargins:{top:.82,bottom:0},visible:false});new ResizeObserver(()=>state.chart.applyOptions({width:$("chart").clientWidth,height:$("chart").clientHeight})).observe($("chart"))}
-function ema(a,p){if(a.length<p)return null;let k=2/(p+1),v=a.slice(0,p).reduce((s,x)=>s+x,0)/p;for(let i=p;i<a.length;i++)v=a[i]*k+v*(1-k);return v}
-function rsi(a,p=14){if(a.length<=p)return null;let g=0,l=0;for(let i=a.length-p;i<a.length;i++){let d=a[i]-a[i-1];if(d>0)g+=d;else l-=d}return l===0?100:100-100/(1+g/l)}
-function atr(cs,p=14){if(cs.length<=p)return null;let x=[];for(let i=1;i<cs.length;i++)x.push(Math.max(cs[i].high-cs[i].low,Math.abs(cs[i].high-cs[i-1].close),Math.abs(cs[i].low-cs[i-1].close)));return x.length>=p?x.slice(-p).reduce((a,b)=>a+b,0)/p:null}
-function analyze(sym){const m=state.markets[sym]||{},spot=m.binanceSpot||{},fut=m.binanceFutures||{},by=m.bybitLinear||{};const c15=m.candles15m||[],c1=m.candles1h||[],c4=m.candles4h||[];const price=Number(spot.lastPrice||fut.lastPrice||by.lastPrice||m.lastPrice);const valid=n=>Number.isFinite(n)&&n>0;const result={symbol:sym,price:valid(price)?price:null,score:null,checks:[],ready:false};
-if(c15.length<30||c1.length<30||c4.length<30||!valid(price)){result.reason="Çoklu zaman dilimi için yeterli mum verisi yok";return result}
-const closes=a=>a.map(x=>Number(x.close)).filter(valid),a15=closes(c15),a1=closes(c1),a4=closes(c4),last15=c15.at(-1),last1=c1.at(-1),last4=c4.at(-1);
-const e20_4=ema(a4,20),e50_4=ema(a4,50),e20_1=ema(a1,20),e50_1=ema(a1,50),r=rsi(a15),volBase=c15.slice(-21,-1).map(x=>Number(x.quoteVolume||x.volume)),vNow=Number(last15.quoteVolume||last15.volume),vAvg=volBase.length?volBase.reduce((a,b)=>a+b,0)/volBase.length:0,vr=vAvg>0?vNow/vAvg:null;
-const atr15=atr(c15),support=Math.min(...c1.slice(-30).map(x=>Number(x.low))),resistance=Math.max(...c1.slice(-30).map(x=>Number(x.high)));
-const pivots=c1.slice(-60,-1),nearestSupport=Math.max(...pivots.filter(x=>Number(x.low)<price).map(x=>Number(x.low)).filter(valid).slice(-12)),nearestResistance=Math.min(...pivots.filter(x=>Number(x.high)>price).map(x=>Number(x.high)).filter(valid).slice(-12));
-const nearSupport=valid(nearestSupport)&&((price-nearestSupport)/price<.012),nearResistance=valid(nearestResistance)&&((nearestResistance-price)/price<.012);
-const trend4=price>e20_4&&e20_4>e50_4,trend1=price>e20_1&&e20_1>e50_1;
-const sweep=valid(support)&&Number(last1.low)<support*1.001&&Number(last1.close)>support;
-const retest=valid(nearestResistance)&&price>nearestResistance&&Number(last1.low)<=nearestResistance*1.004&&Number(last1.close)>nearestResistance;
-const pullback=nearSupport&&Number(last1.close)>Number(last1.open);
-const zone=nearSupport||sweep||retest||pullback;
-const trigger15=Number(last15.close)>Number(last15.open)&&Number(last15.close)>Number(c15.at(-2).high)&&Number(last15.closeTime)<Date.now();
-const momentum=r===null?null:(r>=42&&r<=68&&a15.at(-1)>ema(a15,20));
-const buyTrades=state.trades.filter(t=>t.symbol===sym&&t.side==="BUY"&&Date.now()-Number(t.timestamp)<300000).reduce((s,t)=>s+Number(t.quoteValue||0),0),sellTrades=state.trades.filter(t=>t.symbol===sym&&t.side==="SELL"&&Date.now()-Number(t.timestamp)<300000).reduce((s,t)=>s+Number(t.quoteValue||0),0),flowTotal=buyTrades+sellTrades,flow=flowTotal>0?(buyTrades-sellTrades)/flowTotal:null;
-const oi=Number(by.openInterest),fund=Number(by.fundingRate),oiOk=valid(oi),fundOk=Number.isFinite(fund),futuresOk=oiOk&&fundOk?(fund<.001):null;
-const volumeOk=vr===null?null:vr>=1.15,btc=m.binanceSpot?.lastPrice||m.binanceFutures?.lastPrice;
-const criteria=[["4s trend uyumu",trend4,20],["1s trend uyumu",trend1,0],["Destek / retest bölgesi",zone,20],["Hacim katılımı",volumeOk,15],["Momentum",momentum,15],["Vadeli piyasa",futuresOk,15],["15dk kapanış tetikleyicisi",trigger15,15]];
-let score=0,validWeight=0;for(const [name,ok,w] of criteria){if(w===0){result.checks.push({name,ok,weight:0,info:ok?"Ana trend uyumlu":"Trend zayıf"});continue}if(ok!==null&&ok!==undefined){score+=ok?w:0;validWeight+=w;result.checks.push({name,ok,weight:w})}else result.checks.push({name,ok:null,weight:w})}
-result.score=validWeight?Math.round(score/validWeight*100):null;result.ready=validWeight>=70;result.trend4=trend4;result.trend1=trend1;result.zone=zone;result.trigger=trigger15;result.volumeRatio=vr;result.flow=flow;result.rsi=r;result.support=nearSupport?nearestSupport:support;result.resistance=valid(nearestResistance)?nearestResistance:resistance;result.atr=atr15;result.funding=fundOk?fund:null;result.oi=oiOk?oi:null;result.price=price;
-const stopBase=valid(result.support)?Math.min(result.support,price-(atr15||price*.008)*1.2):price-(atr15||price*.008)*1.5;result.entry=price;result.stop=stopBase;const risk=price-stopBase;const resistanceTarget=valid(result.resistance)&&result.resistance>price?result.resistance:Infinity;result.target1=Math.min(price+risk*1.8,resistanceTarget);result.target2=price+risk*2.5;result.rr=risk>0?(result.target1-price)/risk:null;result.block=!trend4||!zone||!trigger15||!valid(stopBase)||risk<=0||!Number.isFinite(result.rr)||result.rr<1.8;
-if(sym!=="BTCUSDT"){const bm=state.markets.BTCUSDT||{},bp=Number(bm.binanceSpot?.lastPrice||bm.binanceFutures?.lastPrice),bc=bm.candles4h||[],bclose=bc.map(x=>Number(x.close)).filter(valid),be20=ema(bclose,20),be50=ema(bclose,50);if(valid(bp)&&be20&&be50&&bp<be20&&be20<be50)result.block=true}
-result.verdict=result.block?"TETİK / RİSK FİLTRESİ BEKLENİYOR":result.score>=80?"GÜÇLÜ AL ADAYI":result.score>=70?"İZLE / TEYİT BEKLE":"İŞLEM YOK";
-return result}
-function paint(r){renderDepth(r.symbol);$("pairName").textContent=r.symbol.replace("USDT","/USDT")+" · BINANCE SPOT";$("price").textContent=r.price?fmt(r.price):"—";$("score").textContent=r.score===null?"—":r.score;$("score").style.color=r.score>=80?"var(--green)":r.score>=70?"var(--gold)":"var(--txt)";$("verdict").textContent=r.verdict||r.reason||"VERİ BEKLENİYOR";$("verdict").style.color=r.block?"var(--gold)":"var(--green)";$("scoreBar").style.width=(r.score||0)+"%";$("trend").textContent=r.trend4?"YUKARI":r.trend4===false?"ZAYIF":"—";$("zone").textContent=r.zone?"UYGUN":r.zone===false?"UZAK":"—";$("trigger").textContent=r.trigger?"ONAYLI":r.trigger===false?"BEKLENİYOR":"—";$("minuteData").textContent=((state.markets[r.symbol]?.candles1m||[]).length)+" MUM";$("volume").textContent=Number.isFinite(r.volumeRatio)?r.volumeRatio.toFixed(2)+"x":"VERİ YOK";$("flow").textContent=Number.isFinite(r.flow)?(r.flow>0?"ALICI ":"SATICI ")+Math.abs(r.flow*100).toFixed(1)+"%":"VERİ YOK";$("derivatives").textContent=Number.isFinite(r.funding)?(r.funding*100).toFixed(4)+"%":"VERİ YOK";
-$("checks").innerHTML=(r.checks||[]).map(x=>'<div class="check"><span>'+x.name+'</span><b class="'+(x.ok===true?"good":x.ok===false?"bad":"warn")+'">'+(x.ok===true?"✓":x.ok===false?"×":"—")+'</b></div>').join("")||'<div class="empty">'+(r.reason||"Veri bekleniyor")+"</div>";
-$("entry").textContent=r.entry?fmt(r.entry):"—";$("stop").textContent=r.stop?fmt(r.stop):"—";$("target1").textContent=r.target1?fmt(r.target1):"—";$("target2").textContent=r.target2?fmt(r.target2):"—";$("rr").textContent=r.rr?"1 : "+r.rr.toFixed(1):"—";$("riskNote").textContent=r.block?"Zorunlu giriş koşulları tamamlanmadı. Puan yüksek olsa bile tetik yoksa işlem açılmaz.":"Giriş şartları sağlandı; işlem öncesi spread ve emir gerçekleşme fiyatını kontrol et.";
-const m=state.markets[r.symbol]||{},spot=m.binanceSpot||{},fut=m.binanceFutures||{},p=Number(spot.lastPrice||fut.lastPrice);if(Number.isFinite(p)){$("priceChange").textContent="Anlık borsa fiyatı · "+new Date().toLocaleTimeString("tr-TR");}
-const candles=m.candles1m||[];if(state.candleSeries&&candles.length){state.candleSeries.setData(candles.map(c=>({time:Math.floor(c.openTime/1000),open:+c.open,high:+c.high,low:+c.low,close:+c.close})));if(state.volumeSeries)state.volumeSeries.setData(candles.map(c=>({time:Math.floor(c.openTime/1000),value:Number(c.volume||0),color:Number(c.close)>=Number(c.open)?"#19d6a055":"#ff5d7855"})));$("chartNote").textContent=candles.length+" / 1.000 kapanmış 1 dakikalık mum · İşlem kararı için 15 dk teyidi korunur."}
-}
-function renderDepth(sym){const m=state.markets[sym]||{},book=m.binanceSpot||{},bids=(book.bids||[]).slice(0,5),asks=(book.asks||[]).slice(0,5);const max=Math.max(1,...bids.map(x=>Number(x[1])||0),...asks.map(x=>Number(x[1])||0));const side=(rows,cls,label)=>'<div class="depth-side"><div class="depth-title '+cls+'"><span>'+label+'</span><span>FİYAT / MİKTAR</span></div>'+(rows.length?rows.map(x=>'<div class="depth-line '+cls+'"><i style="width:'+Math.min(100,(Number(x[1])/max)*100)+'%;background:currentColor"></i><span>'+fmt(Number(x[0]))+'</span><b>'+Number(x[1]).toFixed(3)+'</b></div>').join(""):'<div class="empty">Derinlik verisi yok</div>')+'</div>'; $("depthVisual").innerHTML=side(bids,"depth-bid","ALICI EMİRLERİ")+side(asks,"depth-ask","SATICI EMİRLERİ")}
-function scan(){const rows=symbols.map(analyze).filter(x=>x.score!==null).sort((a,b)=>b.score-a.score);$("scanner").innerHTML=rows.map(r=>'<div class="scanrow" data-symbol="'+r.symbol+'"><b>'+r.symbol.replace("USDT","")+'</b><div><div class="scanbar"><i style="width:'+r.score+'%"></i></div><div class="muted" style="margin-top:4px">'+r.verdict+'</div></div><b style="text-align:right">'+r.score+'</b></div>').join("")||'<div class="empty">Henüz yeterli çoklu zaman dilimi verisi yok.</div>';document.querySelectorAll(".scanrow").forEach(el=>el.onclick=()=>select(el.dataset.symbol))}
-function requestHistory(sym){
- const m=state.markets[sym]||{},ready=["1m","15m","1h","4h"].every(i=>(m["candles"+i]||[]).length>=1000);
- if(ready||Date.now()-(state.historyFetchAt[sym]||0)<12000)return;
- state.historyFetchAt[sym]=Date.now();$("chartNote").textContent="Binance API: 1.000 mum yükleniyor…";
- fetch("/api/v1/history?symbol="+encodeURIComponent(sym),{cache:"no-store"})
-  .then(r=>{if(!r.ok)throw new Error("history HTTP "+r.status);return r.json()})
-  .then(d=>{
-   const market=state.markets[sym]||(state.markets[sym]={});
-   for(const interval of ["1m","15m","1h","4h"]){const key="candles"+interval,incoming=Array.isArray(d[key])?d[key]:[],live=Array.isArray(market[key])?market[key]:[],merged=new Map(incoming.map(c=>[c.openTime,c]));for(const c of live)merged.set(c.openTime,c);market[key]=[...merged.values()].sort((a,b)=>a.openTime-b.openTime).slice(-1000);}
-   if(sym===state.selected){refresh();$("chartNote").textContent="Binance geçmişi hazır · 1dk "+market.candles1m.length+" / 1.000 · 15dk "+market.candles15m.length+" · 1s "+market.candles1h.length+" · 4s "+market.candles4h.length;}
-  })
-  .catch(e=>{if(sym===state.selected)$("chartNote").textContent="Geçmiş mum verisi alınamadı: "+e.message;});
-}
-function select(s){state.selected=s;$("symbolSelect").value=s;document.querySelectorAll(".symbolrow button").forEach(b=>b.classList.toggle("active",b.dataset.symbol===s));requestHistory(s);const r=analyze(s);paint(r)}
-function refresh(){select(state.selected);scan();$("updated").textContent="GÜNCEL "+new Date().toLocaleTimeString("tr-TR")}
-function connect(){
- const proto=location.protocol==="https:"?"wss:":"ws:";
- const ws=new WebSocket(proto+"//"+location.host+"/stream");
- state.socket=ws;
- ws.onopen=()=>{$("connection").textContent="CANLI";$("liveDot").classList.add("on")};
- ws.onclose=()=>{$("connection").textContent="YENİDEN BAĞLANIYOR";$("liveDot").classList.remove("on");setTimeout(connect,1500)};
- ws.onerror=()=>ws.close();
- ws.onmessage=e=>{
-  let msg;try{msg=JSON.parse(e.data)}catch{return}
-  if(msg.type==="snapshot"){
-   state.markets=normalizeMarkets(msg.data.markets);
-   state.trades=msg.data.latestTrades||[];
-   refresh();
-  }else if(msg.type==="market"){
-   const d=msg.data,m=state.markets[d.symbol]||(state.markets[d.symbol]={});
-   m[d.exchange]={...(m[d.exchange]||{}),...d};
-   if(d.symbol===state.selected&&d.lastPrice){
-    const live=Number(state.markets[state.selected]?.binanceSpot?.lastPrice||state.markets[state.selected]?.binanceFutures?.lastPrice||d.lastPrice);
-    $("price").textContent=fmt(live);$("priceChange").textContent="Canlı fiyat akışı aktif";
-   }
-  }else if(msg.type==="trade"){
-   state.trades.unshift(msg.data);if(state.trades.length>4000)state.trades.length=4000;
-   if(msg.data.symbol===state.selected){
-    const live=Number(state.markets[state.selected]?.binanceSpot?.lastPrice||state.markets[state.selected]?.binanceFutures?.lastPrice||msg.data.price);
-    $("price").textContent=fmt(live);
-   }
-  }else if(msg.type==="candle"){
-   const {symbol,candle}=msg.data,m=state.markets[symbol]||(state.markets[symbol]={}),key="candles"+candle.interval,arr=m[key]||(m[key]=[]);
-   const i=arr.findIndex(x=>x.openTime===candle.openTime);if(i>=0)arr[i]=candle;else arr.push(candle);
-   arr.sort((a,b)=>a.openTime-b.openTime);if(arr.length>1000)arr.splice(0,arr.length-1000);
-   if(symbol===state.selected)refresh();
-  }else if(msg.type==="history"){
-   const d=msg.data,m=state.markets[d.symbol]||(state.markets[d.symbol]={});
-   m.candles1m=d.candles1m||m.candles1m||[];m.candles15m=d.candles15m||m.candles15m||[];
-   m.candles1h=d.candles1h||m.candles1h||[];
-   m.candles4h=d.candles4h||m.candles4h||[];
-   if(d.symbol===state.selected)refresh();
-  }else if(msg.type==="connection"){
-   if(msg.data.exchange==="binanceSpot")$("connection").textContent=msg.data.connected?"CANLI":"BAĞLANTI KESİLDİ";
-  }
+(()=>{
+ const $=id=>document.getElementById(id),prices=Object.create(null);
+ let socket=null,retryTimer=null,retryDelay=500;
+ const format=value=>{const n=Number(value);if(!Number.isFinite(n)||n<=0)return "—";const digits=n>=1000?2:n>=1?4:n>=.01?6:8;return n.toLocaleString("en-US",{minimumFractionDigits:digits,maximumFractionDigits:digits})};
+ const render=()=>{$("pair").textContent=$("symbol").value.replace("USDT"," / USDT");$("price").textContent=format(prices[$("symbol").value])};
+ const setStatus=(connected,label)=>{$("status").textContent=label;$("dot").classList.toggle("on",connected)};
+ const connect=()=>{
+  clearTimeout(retryTimer);
+  const protocol=location.protocol==="https:"?"wss:":"ws:";
+  socket=new WebSocket(protocol+"//"+location.host+"/stream");
+  socket.onopen=()=>{retryDelay=500;setStatus(true,"CANLI")};
+  socket.onmessage=event=>{
+   let msg;try{msg=JSON.parse(event.data)}catch{return}
+   if(msg.type==="snapshot"){
+    const markets=msg.data?.markets,rows=Array.isArray(markets)?markets:Object.values(markets||{});
+    for(const market of rows){const p=Number(market?.binanceSpot?.lastPrice);if(market?.symbol&&Number.isFinite(p)&&p>0)prices[market.symbol]=p}
+    render();
+   }else if(msg.type==="market"){
+    const d=msg.data||{};
+    if(d.exchange==="binanceSpot"&&d.symbol&&Number.isFinite(Number(d.lastPrice))&&Number(d.lastPrice)>0){prices[d.symbol]=Number(d.lastPrice);if(d.symbol===$("symbol").value)$("price").textContent=format(prices[d.symbol])}
+   }else if(msg.type==="trade"){
+    const d=msg.data||{};
+    if(d.exchange==="Binance Spot"&&d.symbol&&Number.isFinite(Number(d.price))&&Number(d.price)>0){prices[d.symbol]=Number(d.price);if(d.symbol===$("symbol").value)$("price").textContent=format(prices[d.symbol])}
+   }else if(msg.type==="connection"&&msg.data?.exchange==="binanceSpot"&&!msg.data.connected)setStatus(false,"BORSA BAĞLANTISI KESİLDİ");
+  };
+  socket.onclose=()=>{setStatus(false,"YENİDEN BAĞLANIYOR");retryTimer=setTimeout(connect,retryDelay);retryDelay=Math.min(retryDelay*2,8000)};
+  socket.onerror=()=>socket.close();
  };
-}
-symbols.forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=s.replace("USDT","/USDT");$("symbolSelect").append(o)});$("symbolSelect").onchange=e=>select(e.target.value);$("scanBtn").onclick=scan;initChart();connect();fetch("/api/v1/snapshot",{cache:"no-store"}).then(r=>r.json()).then(d=>{state.markets=normalizeMarkets(d.markets);state.trades=d.latestTrades||[];refresh()}).catch(()=>{});setInterval(refresh,5000);
+ $("symbol").addEventListener("change",render);render();connect();
+})();
 </script></body></html>
