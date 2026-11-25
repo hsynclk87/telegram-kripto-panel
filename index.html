@@ -39,8 +39,45 @@ select{max-width:100%}button{cursor:pointer}button:active{transform:translateY(1
 #chart-section.is-fullscreen{position:fixed;inset:0;z-index:9999;width:100vw;height:100dvh;max-width:none;margin:0;border:0;border-radius:0;display:flex;flex-direction:column;background:#050a08;overflow:hidden}
 #chart-section.is-fullscreen #chart{height:auto;min-height:0;flex:1 1 auto}
 body.chart-fullscreen{overflow:hidden}
-@media(max-width:700px){body{padding:10px 7px 24px}.top{margin-bottom:20px}.price{font-size:clamp(40px,12vw,68px)}#chart-section{margin-top:22px;border-radius:9px}#chart-heading{padding:12px;font-size:11px}#chart-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:9px}#chart-tools .tool-label{grid-column:1/-1;margin-top:3px}#chart-tools select{width:100%;min-width:0;max-width:none;font-size:12px;padding:10px 9px}#chart-tools button{width:100%;min-width:0;font-size:11px;padding:10px 7px}#indicator-count{grid-column:1/-1;text-align:center;padding:4px}#chart{height:68vh;height:68dvh;min-height:440px}}
+@media(max-width:700px){body{padding:10px 7px 24px}.top{margin-bottom:20px}.price{font-size:clamp(40px,12vw,68px)}#chart-section{margin-top:22px;border-radius:9px}#chart-heading{padding:12px;font-size:11px}#chart-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:9px}#chart-tools .tool-label{grid-column:1/-1;margin-top:3px}#chart-tools select{width:100%;min-width:0;max-width:none;font-size:12px;padding:10px 9px}#chart-tools button{width:100%;min-width:0;font-size:11px;padding:10px 7px}#indicator-count{grid-column:1/-1;text-align:center;padding:4px}#chart{height:48vh;height:48dvh;min-height:320px}}
 @media(max-width:380px){#chart-tools{grid-template-columns:minmax(0,1fr)}#chart-tools .tool-label,#indicator-count{grid-column:1}#chart{min-height:400px}}
+
+/* Mobil TradingView benzeri tam ekran grafik */
+@media(max-width:700px){
+body.chart-fullscreen{padding:0!important;margin:0!important;width:100%;height:100%;overflow:hidden!important}
+body.chart-fullscreen #matrix{display:none}
+body.chart-fullscreen main{width:100%;height:100%;margin:0;padding:0}
+body.chart-fullscreen main>.top,
+body.chart-fullscreen main>#symbol,
+body.chart-fullscreen main>.pair,
+body.chart-fullscreen main>.price,
+body.chart-fullscreen main>.unit{display:none!important}
+body.chart-fullscreen #chart-section,
+#chart-section.is-fullscreen{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;margin:0!important;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)!important;border:0!important;border-radius:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;z-index:99999!important;background:#080f16!important}
+body.chart-fullscreen #chart-heading{display:none!important}
+body.chart-fullscreen #chart-tools{display:flex!important;flex:0 0 auto!important;flex-wrap:nowrap!important;align-items:center!important;gap:6px!important;width:100%!important;min-height:48px!important;padding:6px 8px!important;overflow-x:auto!important;overflow-y:hidden!important;border-bottom:1px solid #263746!important;scrollbar-width:none!important}
+body.chart-fullscreen #chart-tools::-webkit-scrollbar{display:none}
+body.chart-fullscreen #chart-tools .tool-label{display:none!important}
+body.chart-fullscreen #chart-tools select{display:block!important;flex:0 0 auto!important;width:auto!important;min-width:94px!important;max-width:145px!important;height:36px!important;padding:7px 8px!important;font-size:11px!important}
+body.chart-fullscreen #chart-tools #indicator{min-width:145px!important;max-width:170px!important}
+body.chart-fullscreen #chart-tools button{display:inline-flex!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;height:36px!important;min-height:36px!important;padding:7px 10px!important;font-size:10px!important}
+body.chart-fullscreen #chart-tools #remove-indicator{max-width:112px!important;white-space:normal!important;line-height:1.1!important}
+body.chart-fullscreen #indicator-count{display:none!important}
+body.chart-fullscreen #chart{display:block!important;flex:1 1 0!important;width:100%!important;height:0!important;min-height:0!important;max-height:none!important;touch-action:pan-y}
+body.chart-fullscreen #chart-error{flex:0 0 auto}
+}
+@media(min-width:701px){
+body.chart-fullscreen{padding:0!important;overflow:hidden!important}
+body.chart-fullscreen main>.top,
+body.chart-fullscreen main>#symbol,
+body.chart-fullscreen main>.pair,
+body.chart-fullscreen main>.price,
+body.chart-fullscreen main>.unit{display:none!important}
+body.chart-fullscreen #matrix{display:none}
+body.chart-fullscreen #chart-section{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;margin:0!important;max-width:none!important;border:0!important;border-radius:0!important;z-index:99999!important}
+body.chart-fullscreen #chart-heading{display:none!important}
+body.chart-fullscreen #chart{height:0!important;min-height:0!important;flex:1 1 0!important}
+}
 </style>
 </head>
 <body>
@@ -131,9 +168,13 @@ function initializeChart(){
 function changeSymbol(){const symbol=$('symbol').value;lastSelectedPrice=prices[symbol]??null;$('pair').textContent=symbol.replace('USDT',' / USDT');$('price').textContent=format(prices[symbol]);if(chart)chart.setSymbol({ticker:symbol,pricePrecision:8,volumePrecision:4});}
 function changePeriod(){if(chart)chart.setPeriod(intervalToPeriod($('period').value));}
 const chartSection=$('chart-section'),fullBtn=$('fullscreen-chart');let cssFullscreen=false;
-function syncFullscreen(){const active=document.fullscreenElement===chartSection||cssFullscreen;chartSection.classList.toggle('is-fullscreen',active);document.body.classList.toggle('chart-fullscreen',active);fullBtn.textContent=active?'⤢ TAM EKRANDAN ÇIK':'⛶ TAM EKRAN';fullBtn.setAttribute('aria-label',active?'Tam ekrandan çık':'Grafiği tam ekran yap');if(chart)requestAnimationFrame(()=>chart.resize());}
-async function toggleFullscreen(){try{if(document.fullscreenElement===chartSection){await document.exitFullscreen();cssFullscreen=false;}else if(cssFullscreen){cssFullscreen=false;}else if(chartSection.requestFullscreen){await chartSection.requestFullscreen();}else{cssFullscreen=true;}syncFullscreen();}catch(error){cssFullscreen=!cssFullscreen;syncFullscreen();}}
-document.addEventListener('fullscreenchange',()=>{if(document.fullscreenElement!==chartSection)cssFullscreen=false;syncFullscreen();});fullBtn.addEventListener('click',toggleFullscreen);
+const telegramApp=window.Telegram&&window.Telegram.WebApp;
+function syncFullscreen(){const active=document.fullscreenElement===chartSection||cssFullscreen||(telegramApp&&telegramApp.isFullscreen===true);chartSection.classList.toggle('is-fullscreen',active);document.body.classList.toggle('chart-fullscreen',active);fullBtn.textContent=active?'⤢ GERİ':'⛶ TAM EKRAN';fullBtn.setAttribute('aria-label',active?'Grafikten çık':'Grafiği telefon ekranına yay');if(chart)requestAnimationFrame(()=>{chart.resize();setTimeout(()=>chart&&chart.resize(),180);});}
+async function toggleFullscreen(){const active=chartSection.classList.contains('is-fullscreen')||cssFullscreen||(telegramApp&&telegramApp.isFullscreen===true);if(active){cssFullscreen=false;if(telegramApp&&typeof telegramApp.exitFullscreen==='function'){try{telegramApp.exitFullscreen();}catch(e){}}if(document.fullscreenElement===chartSection){try{await document.exitFullscreen();}catch(e){}}syncFullscreen();return;}
+cssFullscreen=true;syncFullscreen();if(telegramApp&&typeof telegramApp.requestFullscreen==='function'){try{telegramApp.requestFullscreen();}catch(e){}}else if(chartSection.requestFullscreen){try{await chartSection.requestFullscreen();}catch(e){cssFullscreen=true;syncFullscreen();}}}
+document.addEventListener('fullscreenchange',()=>{if(document.fullscreenElement!==chartSection&&!cssFullscreen)syncFullscreen();else syncFullscreen();});
+if(telegramApp&&typeof telegramApp.onEvent==='function'){telegramApp.onEvent('fullscreenChanged',syncFullscreen);telegramApp.onEvent('viewportChanged',()=>{if(chart)requestAnimationFrame(()=>chart.resize());});}
+fullBtn.addEventListener('click',toggleFullscreen);
 fillIndicators();initializeChart();$('symbol').addEventListener('change',changeSymbol);$('period').addEventListener('change',changePeriod);$('add-indicator').addEventListener('click',addIndicator);$('remove-indicator').addEventListener('click',removeIndicator);connectPrice();
 window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);if(socket)socket.close();for(const ws of subscriptions.values())try{ws.close();}catch{}if(chart&&window.klinecharts.dispose)window.klinecharts.dispose('chart');});
 })();
