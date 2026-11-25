@@ -21,6 +21,27 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 .price{margin:18px 0 10px;font-size:clamp(48px,12vw,100px);line-height:1.05;font-weight:750;letter-spacing:-.055em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .unit{font-size:13px;color:#8298b0;letter-spacing:.18em}
 @media(max-width:480px){.top{margin-bottom:20vh}.price{font-size:clamp(42px,12vw,68px)}}
+
+#scannerOpen{margin-top:26px;border:1px solid #1c7b58;background:linear-gradient(135deg,#0d241b,#102d24);color:#a8ffd8;border-radius:12px;padding:13px 20px;font-size:12px;font-weight:800;letter-spacing:.12em;width:min(100%,280px);cursor:pointer}
+#scannerPanel{display:none;position:fixed;z-index:5;inset:0;background:rgba(2,7,6,.96);padding:calc(env(safe-area-inset-top) + 16px) 14px calc(env(safe-area-inset-bottom) + 16px);overflow:auto;text-shadow:none;text-align:left}
+#scannerPanel.show{display:block}
+.sc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+.sc-title{font-size:15px;font-weight:900;letter-spacing:.12em;color:#b8ffe0}
+.sc-close{border:1px solid #294438;background:#102019;color:#dcefe6;border-radius:10px;padding:9px 13px;font-size:18px}
+.sc-status{font-size:11px;color:#9bb3a6;margin:10px 0 14px;display:flex;justify-content:space-between;gap:8px}
+.sc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.sc-stat{background:#0b1712;border:1px solid #1c3328;border-radius:12px;padding:12px}
+.sc-stat small{display:block;color:#7e9b8b;font-size:10px;letter-spacing:.08em;margin-bottom:7px}
+.sc-stat b{font-size:18px;color:#e9fff3;font-variant-numeric:tabular-nums}
+.sc-section{font-size:11px;font-weight:800;letter-spacing:.12em;color:#8fa99a;margin:18px 0 9px}
+.sc-list{display:grid;gap:8px}
+.sc-item{background:#0b1712;border:1px solid #1c3328;border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.sc-symbol{font-size:14px;font-weight:900;color:#effff5}
+.sc-meta{font-size:11px;color:#91a99a;margin-top:5px;line-height:1.5}
+.sc-score{font-size:18px;font-weight:900;color:#64efad;text-align:right}
+.sc-empty{border:1px dashed #31513f;border-radius:12px;padding:18px;color:#91a99a;font-size:12px;text-align:center}
+.sc-refresh{border:1px solid #244d39;background:#10271b;color:#b6fbd0;border-radius:10px;padding:10px 13px;font-size:11px;font-weight:800}
+.sc-foot{font-size:10px;color:#647c6d;line-height:1.5;margin-top:16px}
 </style>
 </head>
 <body>
@@ -30,8 +51,9 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 <select id="symbol" aria-label="Coin seç">
 <option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option><option value="LINKUSDT">LINK / USDT</option><option value="AVAXUSDT">AVAX / USDT</option><option value="HBARUSDT">HBAR / USDT</option>
 </select>
-<div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>
+<div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div><button id="scannerOpen" type="button">PROJECT 7 · SPOT SCANNER</button>
 </main>
+<section id="scannerPanel" aria-label="Project 7 Spot Scanner"><div class="sc-head"><div class="sc-title">PROJECT 7 / SPOT SCANNER</div><button class="sc-close" id="scannerClose" type="button" aria-label="Kapat">×</button></div><div class="sc-status"><span id="scConnection">Bağlantı kontrol ediliyor</span><button class="sc-refresh" id="scRefresh" type="button">YENİLE</button></div><div class="sc-grid"><div class="sc-stat"><small>TARANAN PARİTE</small><b id="scUniverse">—</b></div><div class="sc-stat"><small>TOPLAM SİNYAL</small><b id="scSignals">—</b></div><div class="sc-stat"><small>60 DK BAŞARI</small><b id="scHitRate">—</b></div><div class="sc-stat"><small>ORT. GETİRİ</small><b id="scAvgReturn">—</b></div></div><div class="sc-section">SON ERKEN ADAYLAR</div><div class="sc-list" id="scList"><div class="sc-empty">Veriler yükleniyor…</div></div><div class="sc-foot" id="scUpdated">Veriler Binance Spot piyasa akışından alınır. Sinyaller izleme amaçlıdır; otomatik emir gönderilmez.</div></section>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id),symbols=['btcusdt','ethusdt','solusdt','bnbusdt','xrpusdt','dogeusdt','linkusdt','avaxusdt','hbarusdt'];
@@ -64,7 +86,40 @@ function connect(){
  socket.onclose=()=>{status(false,'YENİDEN BAĞLANIYOR');retryTimer=setTimeout(connect,retryDelay);retryDelay=Math.min(retryDelay*2,8000);};
 }
 $('symbol').addEventListener('change',render);render();connect();
-window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);if(socket)socket.close();});
+const SCANNER_API='https://project-7-spot-scanner-i8l2.onrender.com';
+let scannerTimer=null,scannerBusy=false;
+const fmtPct=v=>Number.isFinite(Number(v))?(Number(v)>0?'+':'')+Number(v).toFixed(2)+'%':'—';
+async function loadScanner(){
+ if(scannerBusy)return;scannerBusy=true;
+ try{
+  const [sr,rr,pr]=await Promise.all([
+   fetch(SCANNER_API+'/api/status',{cache:'no-store'}),
+   fetch(SCANNER_API+'/api/signals?limit=15',{cache:'no-store'}),
+   fetch(SCANNER_API+'/api/performance',{cache:'no-store'})
+  ]);
+  if(!sr.ok||!rr.ok||!pr.ok)throw new Error('API yanıtı alınamadı');
+  const [s,rows,p]=await Promise.all([sr.json(),rr.json(),pr.json()]);
+  $('scConnection').textContent=s.connected?'● CANLI VERİ · '+(s.lastMessageAt?new Date(s.lastMessageAt).toLocaleTimeString('tr-TR'):'bağlandı'):'● VERİ AKIŞI BEKLENİYOR';
+  $('scUniverse').textContent=s.universeSize||0;
+  $('scSignals').textContent=p.totalSignals??s.signals??0;
+  $('scHitRate').textContent=p.hitRate60mPct==null?'—':p.hitRate60mPct.toFixed(1)+'%';
+  $('scAvgReturn').textContent=p.averageReturn60mPct==null?'—':fmtPct(p.averageReturn60mPct);
+  const list=$('scList');
+  if(!Array.isArray(rows)||!rows.length){list.innerHTML='<div class="sc-empty">Henüz eşik üstü erken aday oluşmadı.</div>';}
+  else{list.innerHTML=rows.map(r=>{
+   const m=r.windows&&r.windows.s10||{},score=Number(r.score)||0;
+   const cvd=Number(m.cvd)||0,ratio=Number(m.buyRatio)||0;
+   const type=r.absorption&&r.absorption.type==='buyers_absorbing_sells'?'Alıcı emilimi':r.absorption&&r.absorption.type==='seller_absorbing_buys'?'Satıcı emilimi':'Belirgin emilim yok';
+   return '<article class="sc-item"><div><div class="sc-symbol">'+String(r.symbol||'').replace('USDT','')+'/USDT</div><div class="sc-meta">Fiyat: '+format(r.price)+' USDT<br>10 sn CVD: '+Math.round(cvd).toLocaleString('en-US')+' USDT · Alış: '+ratio.toFixed(1)+'%<br>'+type+'</div></div><div class="sc-score">'+score+'<small style="display:block;font-size:9px;color:#88a997">/100</small></div></article>';
+  }).join('');}
+  $('scUpdated').textContent='Son güncelleme: '+new Date().toLocaleTimeString('tr-TR')+' · Sinyaller otomatik işlem değildir.';
+ }catch(e){$('scConnection').textContent='● BAĞLANTI BEKLENİYOR';$('scList').innerHTML='<div class="sc-empty">Spot Scanner servisine ulaşılamadı. Ücretsiz Render servisi uyku modundaysa ilk bağlantı gecikebilir. '+e.message+'</div>';}
+ finally{scannerBusy=false;}
+}
+function openScanner(){ $('scannerPanel').classList.add('show');loadScanner();clearInterval(scannerTimer);scannerTimer=setInterval(loadScanner,12000); }
+function closeScanner(){ $('scannerPanel').classList.remove('show');clearInterval(scannerTimer);scannerTimer=null; }
+$('scannerOpen').addEventListener('click',openScanner);$('scannerClose').addEventListener('click',closeScanner);$('scRefresh').addEventListener('click',loadScanner);
+window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);clearInterval(scannerTimer);if(socket)socket.close();});
 })();
 </script>
 </body>
