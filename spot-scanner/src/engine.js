@@ -9,7 +9,7 @@ const now = () => Date.now();
 export class SpotScanner {
   constructor({ journal, onAlert = async () => {} }) {
     this.journal = journal; this.onAlert = onAlert;
-    this.symbols = []; this.states = new Map(); this.ws = null;
+    this.symbols = []; this.states = new Map(); this.sockets = []; this.reconnectTimers = new Set();
     this.lastAlert = new Map(); this.connected = false; this.startedAt = now();
     this.universeUpdatedAt = null; this.lastMessageAt = null; this.reconnectTimer = null;
     this.scanTimer = null; this.outcomeTimer = null; this.stopping = false;
@@ -41,21 +41,37 @@ export class SpotScanner {
   }
   connect() {
     if (this.stopping || !this.symbols.length) return;
-    if (this.ws) { try { this.ws.terminate(); } catch {} }
+    for (const socket of this.sockets) {
+      socket.removeAllListeners();
+      try { socket.terminate(); } catch {}
+    }
+    this.sockets = [];
     const streams = this.symbols.flatMap(s => [s+"@aggTrade", s+"@bookTicker", s+"@depth5@100ms"]);
-    const url = WS + "?streams=" + streams.join("/");
-    this.ws = new WebSocket(url);
-    this.ws.on("open", () => { this.connected = true; });
-    this.ws.on("message", raw => {
+    // Keep combined-stream URLs short and isolate reconnects by chunk.
+    for (let i=0;i<streams.length;i+=50) this.connectChunk(streams.slice(i,i+50));
+  }
+  connectChunk(streams) {
+    if (this.stopping || !streams.length) return;
+    const socket = new WebSocket(WS + "?streams=" + streams.join("/"));
+    this.sockets.push(socket);
+    socket.on("open", () => { this.connected = true; });
+    socket.on("message", raw => {
       this.lastMessageAt = now();
       try { const packet = JSON.parse(raw.toString()); this.handle(packet.data); } catch {}
     });
-    this.ws.on("close", () => { this.connected = false; this.scheduleReconnect(); });
-    this.ws.on("error", () => { this.connected = false; });
+    socket.on("close", () => {
+      this.connected = this.sockets.some(s => s.readyState === WebSocket.OPEN);
+      this.scheduleReconnect(streams);
+    });
+    socket.on("error", () => { this.connected = this.sockets.some(s => s.readyState === WebSocket.OPEN); });
   }
-  scheduleReconnect() {
-    if (this.stopping || this.reconnectTimer) return;
-    this.reconnectTimer = setTimeout(() => { this.reconnectTimer = null; this.connect(); }, 3000);
+  scheduleReconnect(streams) {
+    if (this.stopping) return;
+    const timer=setTimeout(() => {
+      this.reconnectTimers.delete(timer);
+      this.connectChunk(streams);
+    },3000);
+    this.reconnectTimers.add(timer);
   }
   handle(d) {
     if (!d?.s) return;
@@ -179,5 +195,5 @@ export class SpotScanner {
     setInterval(()=>this.refreshUniverse().then(()=>this.connect()).catch(e=>console.error("universe",e.message)),3600000);
   }
   status() { return { service:"project-7-spot-scanner",connected:this.connected,universeSize:this.symbols.length,universeUpdatedAt:this.universeUpdatedAt,lastMessageAt:this.lastMessageAt,uptimeMs:now()-this.startedAt,signals:this.journal.rows.filter(x=>x.type==="signal").length }; }
-  stop() { this.stopping=true; clearInterval(this.scanTimer); clearTimeout(this.reconnectTimer); this.ws?.close(); }
+  stop() { this.stopping=true; clearInterval(this.scanTimer); for(const timer of this.reconnectTimers) clearTimeout(timer); this.reconnectTimers.clear(); for(const socket of this.sockets) socket.close(); }
 }
