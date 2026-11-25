@@ -53,6 +53,7 @@ export class SpotScanner {
   connectChunk(streams) {
     if (this.stopping || !streams.length) return;
     const socket = new WebSocket(WS + "?streams=" + streams.join("/"));
+    this.sockets = this.sockets.filter(s => s.readyState === WebSocket.OPEN || s.readyState === WebSocket.CONNECTING);
     this.sockets.push(socket);
     socket.on("open", () => { this.connected = true; });
     socket.on("message", raw => {
