@@ -80,6 +80,9 @@ function addIndicator(){if(!chart)return;const name=$('indicator').value;try{con
 function removeIndicator(){if(!chart)return;const all=chart.getIndicators();if(!all.length)return;const last=all[all.length-1];chart.removeIndicator({id:last.id});updateIndicatorCount();}
 function intervalToPeriod(interval){return periods[interval]||periods['15m'];}
 function periodToInterval(period){const span=Number(period&&period.span)||15,type=period&&period.type;if(type==='minute')return span+'m';if(type==='hour')return span+'h';if(type==='day')return span+'d';return $('period').value;}
+function intervalMs(interval){return ({'1m':60000,'5m':300000,'15m':900000,'1h':3600000,'4h':14400000,'1d':86400000})[interval]||900000;}
+function normalizeKline(k){return {timestamp:Number(k[0]),open:Number(k[1]),high:Number(k[2]),low:Number(k[3]),close:Number(k[4]),volume:Number(k[5]),turnover:Number(k[7])};}
+const subscriptions=new Map();
 function makeDataLoader(){
  return {
   async getBars({type,timestamp,symbol,period,callback}){
@@ -89,7 +92,7 @@ function makeDataLoader(){
    if(type==='backward'){callback([],{backward:false});return;}
    const response=await fetch('https://api.binance.com/api/v3/klines?'+params.toString());
    if(!response.ok)throw new Error('Binance geçmiş mum API hatası: '+response.status);
-   const raw=await response.json(),bars=raw.map(k=>({timestamp:Number(k[0]),open:Number(k[1]),high:Number(k[2]),low:Number(k[3]),close:Number(k[4]),volume:Number(k[5]),turnover:Number(k[7])})).sort((a,b)=>a.timestamp-b.timestamp);
+   const raw=await response.json(),bars=raw.map(normalizeKline).sort((a,b)=>a.timestamp-b.timestamp);
    callback(bars,{forward:raw.length===1000,backward:false});
   },
   subscribeBar({symbol,period,callback}){
@@ -105,7 +108,6 @@ function makeDataLoader(){
   }
  };
 }
-const subscriptions=new Map();
 function initializeChart(){
  if(!window.klinecharts||!window.klinecharts.init){$('chart-error').style.display='block';$('chart-error').textContent='Grafik kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.';return;}
  chart=window.klinecharts.init('chart');
