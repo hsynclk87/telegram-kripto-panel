@@ -33,15 +33,18 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
   socket.onmessage=event=>{
    let msg;try{msg=JSON.parse(event.data)}catch{return}
    if(msg.type==="snapshot"){
-    const markets=msg.data?.markets,rows=Array.isArray(markets)?markets:Object.values(markets||{});
-    for(const market of rows){const p=Number(market?.binanceSpot?.lastPrice);if(market?.symbol&&Number.isFinite(p)&&p>0)prices[market.symbol]=p}
+    const rows=msg.data?.prices||{};
+    for(const [symbol,item] of Object.entries(rows)){
+     const p=Number(item?.price);
+     if(Number.isFinite(p)&&p>0)prices[symbol]=p;
+    }
     render();
-   }else if(msg.type==="market"){
-    const d=msg.data||{};
-    if(d.exchange==="binanceSpot"&&d.symbol&&Number.isFinite(Number(d.lastPrice))&&Number(d.lastPrice)>0){prices[d.symbol]=Number(d.lastPrice);if(d.symbol===$("symbol").value)$("price").textContent=format(prices[d.symbol])}
-   }else if(msg.type==="trade"){
-    const d=msg.data||{};
-    if(d.exchange==="Binance Spot"&&d.symbol&&Number.isFinite(Number(d.price))&&Number(d.price)>0){prices[d.symbol]=Number(d.price);if(d.symbol===$("symbol").value)$("price").textContent=format(prices[d.symbol])}
+   }else if(msg.type==="price"){
+    const d=msg.data||{},p=Number(d.price);
+    if(d.symbol&&Number.isFinite(p)&&p>0){
+     prices[d.symbol]=p;
+     if(d.symbol===$("symbol").value)$("price").textContent=format(p);
+    }
    }else if(msg.type==="connection"&&msg.data?.exchange==="binanceSpot"&&!msg.data.connected)setStatus(false,"BORSA BAĞLANTISI KESİLDİ");
   };
   socket.onclose=()=>{setStatus(false,"YENİDEN BAĞLANIYOR");retryTimer=setTimeout(connect,retryDelay);retryDelay=Math.min(retryDelay*2,8000)};
