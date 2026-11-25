@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050a08">
-<title>Canlı Binance Fiyatı</title>
+<title>Binance Full Chart</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/klinecharts@10.1.1/dist/umd/klinecharts.min.js"></script>
 <style>
@@ -26,7 +26,7 @@ select{max-width:100%}button{cursor:pointer}button:active{transform:translateY(1
 #chart-heading{padding:14px 16px;color:#a9c2cf;font-size:12px;font-weight:800;letter-spacing:.14em;border-bottom:1px solid rgba(74,116,133,.25)}
 #chart-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px;border-bottom:1px solid rgba(74,116,133,.2)}
 #chart-tools .tool-label{font-size:10px;letter-spacing:.08em;color:#91a6bd;font-weight:800;margin:0 2px 0 0;white-space:nowrap}
-#chart-tools select{min-width:130px;max-width:100%;flex:1 1 180px}
+#chart-tools select{min-width:130px;max-width:100%;flex:1 1 150px}
 #chart-tools button{white-space:nowrap;min-height:42px}
 #chart-tools .tool-button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
 #indicator-count{font-size:11px;color:#a9c2cf;padding:0 5px;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -83,20 +83,24 @@ body.chart-fullscreen #chart{height:0!important;min-height:0!important;flex:1 1 
 <body>
 <canvas id="matrix" aria-hidden="true"></canvas>
 <main>
-<div class="top"><div class="brand">LIVE PRICE</div><div class="status"><i class="dot" id="dot"></i><span id="status">BINANCE BAĞLANIYOR</span></div></div>
+<div class="top"><div class="brand">BINANCE SPOT · FULL CHART</div><div class="status"><i class="dot" id="dot"></i><span id="status">BINANCE BAĞLANIYOR</span></div></div>
 <select id="symbol" aria-label="Coin seç">
 <option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option><option value="LINKUSDT">LINK / USDT</option><option value="AVAXUSDT">AVAX / USDT</option><option value="HBARUSDT">HBAR / USDT</option>
 </select>
 <div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>
 <section id="chart-section">
-<div id="chart-heading">CANLI BINANCE GRAFİĞİ · TEKNİK ANALİZ</div>
+<div id="chart-heading">BINANCE SPOT CHART · CANLI PİYASA VERİSİ</div>
 <div id="chart-tools">
 <span class="tool-label">PERİYOT</span>
-<select id="period" aria-label="Grafik periyodu"><option value="1m">1 DK</option><option value="5m">5 DK</option><option value="15m" selected>15 DK</option><option value="1h">1 SAAT</option><option value="4h">4 SAAT</option><option value="1d">1 GÜN</option></select>
+<select id="period" aria-label="Grafik periyodu">
+<option value="1s">1 SN</option><option value="1m">1 DK</option><option value="3m">3 DK</option><option value="5m">5 DK</option><option value="15m" selected>15 DK</option><option value="30m">30 DK</option><option value="1h">1 SAAT</option><option value="2h">2 SAAT</option><option value="4h">4 SAAT</option><option value="6h">6 SAAT</option><option value="8h">8 SAAT</option><option value="12h">12 SAAT</option><option value="1d">1 GÜN</option><option value="3d">3 GÜN</option><option value="1w">1 HAFTA</option><option value="1M">1 AY</option>
+</select>
+<select id="chart-type" aria-label="Grafik tipi"><option value="candle_solid">Mum</option><option value="candle_stroke">İçi boş mum</option><option value="ohlc">OHLC</option><option value="area">Alan</option></select>
+<span class="tool-label">ÇİZİM</span><select id="drawing-tool" aria-label="Çizim aracı"><option value="">Çizim aracı</option><option value="segment">Trend çizgisi</option><option value="horizontalStraightLine">Yatay çizgi</option><option value="horizontalRayLine">Yatay ışın</option><option value="verticalStraightLine">Dikey çizgi</option><option value="rayLine">Işın</option><option value="fibonacciLine">Fibonacci</option><option value="priceChannelLine">Fiyat kanalı</option><option value="parallelStraightLine">Paralel kanal</option><option value="brush">Serbest çizim</option></select>
 <span class="tool-label">GÖSTERGE</span>
 <select id="indicator" aria-label="Gösterge seç"></select>
 <button id="add-indicator" type="button">+ EKLE</button>
-<button id="remove-indicator" type="button">SON GÖSTERGEYİ SİL</button>
+<button id="remove-indicator" type="button">SON GÖSTERGEYİ SİL</button><button id="clear-drawings" type="button">ÇİZİMLERİ TEMİZLE</button>
 <button id="fullscreen-chart" class="tool-button" type="button" aria-label="Grafiği tam ekran yap">⛶ TAM EKRAN</button>
 <span id="indicator-count">0 gösterge</span>
 </div>
@@ -120,14 +124,14 @@ function status(connected,label){$('status').textContent=label;$('dot').classLis
 function connectPrice(){clearTimeout(retryTimer);if(stopped)return;socket=new WebSocket('wss://stream.binance.com:9443/stream?streams='+symbols.map(s=>s+'@trade').join('/'));socket.onopen=()=>{retryDelay=500;status(true,'CANLI');};socket.onmessage=event=>{let packet;try{packet=JSON.parse(event.data);}catch{return;}const trade=packet.data;if(!trade||trade.e!=='trade')return;const symbol=trade.s,price=Number(trade.p);if(!Number.isFinite(price)||price<=0)return;prices[symbol]=price;if(symbol===$('symbol').value){if(lastSelectedPrice!==null&&price!==lastSelectedPrice)matrixTone=price>lastSelectedPrice?'#00f58a':'#ff263d';lastSelectedPrice=price;$('price').textContent=format(price);}};socket.onerror=()=>{try{socket.close();}catch{}};socket.onclose=()=>{status(false,'YENİDEN BAĞLANIYOR');retryTimer=setTimeout(connectPrice,retryDelay);retryDelay=Math.min(retryDelay*2,8000);};}
 const indicatorNames=[['MA','Hareketli Ortalama (MA)'],['EMA','Üstel Hareketli Ortalama (EMA)'],['SMA','Basit Hareketli Ortalama (SMA)'],['BBI','Çoklu Hareketli Ortalama (BBI)'],['VOL','Hacim (VOL)'],['MACD','Hareketli Ortalama Yakınsama / Iraksama (MACD)'],['BOLL','Bollinger Bantları (BOLL)'],['KDJ','KDJ Stokastik Göstergesi'],['RSI','Göreceli Güç Endeksi (RSI)'],['BIAS','Sapma Oranı (BIAS)'],['BRAR','Duyarlılık Göstergesi (BRAR)'],['CCI','Emtia Kanal Endeksi (CCI)'],['DMI','Yönsel Hareket Endeksi (DMI)'],['CR','CR Enerji Göstergesi'],['PSY','Psikolojik Çizgi (PSY)'],['DMA','Farklı Hareketli Ortalama (DMA)'],['TRIX','Üçlü Üstel Ortalama (TRIX)'],['OBV','Hacim Dengesi (OBV)'],['VR','Hacim Oranı (VR)'],['WR','Williams %R (WR)'],['MTM','Momentum (MTM)'],['EMV','Kolay Hareket (EMV)'],['SAR','Parabolik SAR'],['AO','Harika Osilatör (AO)'],['ROC','Değişim Oranı (ROC)'],['PVT','Fiyat-Hacim Trendi (PVT)'],['AVP','Ortalama Fiyat (AVP)']];
 let chart=null,indicatorCount=0;
-const periods={ '1m':{span:1,type:'minute'},'5m':{span:5,type:'minute'},'15m':{span:15,type:'minute'},'1h':{span:1,type:'hour'},'4h':{span:4,type:'hour'},'1d':{span:1,type:'day'} };
+const periods={'1s':{span:1,type:'second'},'1m':{span:1,type:'minute'},'3m':{span:3,type:'minute'},'5m':{span:5,type:'minute'},'15m':{span:15,type:'minute'},'30m':{span:30,type:'minute'},'1h':{span:1,type:'hour'},'2h':{span:2,type:'hour'},'4h':{span:4,type:'hour'},'6h':{span:6,type:'hour'},'8h':{span:8,type:'hour'},'12h':{span:12,type:'hour'},'1d':{span:1,type:'day'},'3d':{span:3,type:'day'},'1w':{span:1,type:'week'},'1M':{span:1,type:'month'}};
 function fillIndicators(){const sel=$('indicator');for(const [name,label] of indicatorNames){const op=document.createElement('option');op.value=name;op.textContent=label;sel.appendChild(op);}}
 function updateIndicatorCount(){indicatorCount=chart?chart.getIndicators().length:0;$('indicator-count').textContent=indicatorCount+' gösterge';}
 function addIndicator(){if(!chart)return;const name=$('indicator').value;try{const overlay=['MA','EMA','SMA','BBI','BOLL','SAR'].includes(name);chart.createIndicator(overlay?{name,paneId:'candle_pane'}:name,overlay);updateIndicatorCount();}catch(e){console.error('Indicator error',name,e);}}
 function removeIndicator(){if(!chart)return;const all=chart.getIndicators();if(!all.length)return;const last=all[all.length-1];chart.removeIndicator({id:last.id});updateIndicatorCount();}
 function intervalToPeriod(interval){return periods[interval]||periods['15m'];}
-function periodToInterval(period){const span=Number(period&&period.span)||15,type=period&&period.type;if(type==='minute')return span+'m';if(type==='hour')return span+'h';if(type==='day')return span+'d';return $('period').value;}
-function intervalMs(interval){return ({'1m':60000,'5m':300000,'15m':900000,'1h':3600000,'4h':14400000,'1d':86400000})[interval]||900000;}
+function periodToInterval(period){const span=Number(period&&period.span)||15,type=period&&period.type;if(type==='second')return span+'s';if(type==='minute')return span+'m';if(type==='hour')return span+'h';if(type==='day')return span+'d';if(type==='week')return span+'w';if(type==='month')return span+'M';return $('period').value;}
+function intervalMs(interval){return ({'1s':1000,'1m':60000,'3m':180000,'5m':300000,'15m':900000,'30m':1800000,'1h':3600000,'2h':7200000,'4h':14400000,'6h':21600000,'8h':28800000,'12h':43200000,'1d':86400000,'3d':259200000,'1w':604800000})[interval]||2592000000;}
 function normalizeKline(k){return {timestamp:Number(k[0]),open:Number(k[1]),high:Number(k[2]),low:Number(k[3]),close:Number(k[4]),volume:Number(k[5]),turnover:Number(k[7])};}
 const subscriptions=new Map();
 function makeDataLoader(){
@@ -136,11 +140,12 @@ function makeDataLoader(){
    const interval=periodToInterval(period),ticker=symbol.ticker||$('symbol').value;
    const params=new URLSearchParams({symbol:ticker,interval,limit:'1000'});
    if(type==='forward'&&timestamp)params.set('endTime',String(timestamp-1));
-   if(type==='backward'){callback([],{backward:false});return;}
+   if(type==='backward'&&timestamp)params.set('startTime',String(timestamp+1));
    const response=await fetch('https://api.binance.com/api/v3/klines?'+params.toString());
    if(!response.ok)throw new Error('Binance geçmiş mum API hatası: '+response.status);
    const raw=await response.json(),bars=raw.map(normalizeKline).sort((a,b)=>a.timestamp-b.timestamp);
-   callback(bars,{forward:raw.length===1000,backward:false});
+   const more=raw.length===1000;
+   callback(bars,type==='forward'?{forward:more,backward:false}:type==='backward'?{forward:false,backward:more}:{forward:more,backward:false});
   },
   subscribeBar({symbol,period,callback}){
    const ticker=(symbol.ticker||$('symbol').value).toLowerCase(),interval=periodToInterval(period),key=ticker+'_'+interval;
@@ -158,11 +163,12 @@ function makeDataLoader(){
 function initializeChart(){
  if(!window.klinecharts||!window.klinecharts.init){$('chart-error').style.display='block';$('chart-error').textContent='Grafik kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.';return;}
  chart=window.klinecharts.init('chart');
- chart.setStyles({grid:{horizontal:{color:'#182531'},vertical:{color:'#182531'}},candle:{bar:{upColor:'#16c784',downColor:'#ea3943',noChangeColor:'#9aa4ad',upBorderColor:'#16c784',downBorderColor:'#ea3943',upWickColor:'#16c784',downWickColor:'#ea3943'}},technicalIndicator:{bar:{upColor:'#16c784',downColor:'#ea3943',noChangeColor:'#9aa4ad'}}});
+ chart.setStyles({grid:{show:true,horizontal:{show:true,color:'#1d2935'},vertical:{show:true,color:'#1d2935'}},candle:{type:'candle_solid',bar:{upColor:'#0ecb81',downColor:'#f6465d',noChangeColor:'#9aa4ae',upBorderColor:'#0ecb81',downBorderColor:'#f6465d',upWickColor:'#0ecb81',downWickColor:'#f6465d'},tooltip:{showRule:'always'}},crosshair:{show:true},technicalIndicator:{bar:{upColor:'#0ecb81',downColor:'#f6465d',noChangeColor:'#9aa4ae'}}});
  chart.setSymbol({ticker:$('symbol').value,pricePrecision:8,volumePrecision:4});
  chart.setPeriod(intervalToPeriod($('period').value));
  chart.setDataLoader(makeDataLoader());
  chart.createIndicator('VOL');
+ chart.createIndicator({name:'MA',calcParams:[7,25,99],paneId:'candle_pane'},true);
  updateIndicatorCount();
 }
 function changeSymbol(){const symbol=$('symbol').value;lastSelectedPrice=prices[symbol]??null;$('pair').textContent=symbol.replace('USDT',' / USDT');$('price').textContent=format(prices[symbol]);if(chart)chart.setSymbol({ticker:symbol,pricePrecision:8,volumePrecision:4});}
@@ -175,7 +181,11 @@ cssFullscreen=true;syncFullscreen();if(telegramApp&&typeof telegramApp.requestFu
 document.addEventListener('fullscreenchange',()=>{if(document.fullscreenElement!==chartSection&&!cssFullscreen)syncFullscreen();else syncFullscreen();});
 if(telegramApp&&typeof telegramApp.onEvent==='function'){telegramApp.onEvent('fullscreenChanged',syncFullscreen);telegramApp.onEvent('viewportChanged',()=>{if(chart)requestAnimationFrame(()=>chart.resize());});}
 fullBtn.addEventListener('click',toggleFullscreen);
-fillIndicators();initializeChart();$('symbol').addEventListener('change',changeSymbol);$('period').addEventListener('change',changePeriod);$('add-indicator').addEventListener('click',addIndicator);$('remove-indicator').addEventListener('click',removeIndicator);connectPrice();
+fillIndicators();initializeChart();$('symbol').addEventListener('change',changeSymbol);$('period').addEventListener('change',changePeriod);$('add-indicator').addEventListener('click',addIndicator);$('remove-indicator').addEventListener('click',removeIndicator);
+$('chart-type').addEventListener('change',()=>{if(chart)chart.setStyles({candle:{type:$('chart-type').value}});});
+$('drawing-tool').addEventListener('change',()=>{const tool=$('drawing-tool').value;if(chart&&tool){chart.createOverlay(tool);$('drawing-tool').value='';}});
+$('clear-drawings').addEventListener('click',()=>{if(chart){chart.getOverlays().forEach(item=>chart.removeOverlay({id:item.id}));}});
+connectPrice();
 window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);if(socket)socket.close();for(const ws of subscriptions.values())try{ws.close();}catch{}if(chart&&window.klinecharts.dispose)window.klinecharts.dispose('chart');});
 })();
 </script>
