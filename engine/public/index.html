@@ -89,6 +89,35 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 .osc-aggregate-item:active,.osc-aggregate-item.active{border-color:#7da2bf;background:#172b3d}.osc-aggregate-item .main{display:flex;flex-direction:column;gap:4px;min-width:0}.osc-aggregate-item b{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.osc-aggregate-item small{font-size:9px;color:#91a6ba}.osc-aggregate-item .kind{font-size:9px;font-weight:850;white-space:nowrap;padding:5px 7px;border-radius:6px}
 .bull-side .kind{background:#123b32;color:#5de4b4}.bear-side .kind{background:#421d2b;color:#ff8294}.osc-no-signal{font-size:10px;color:#8197ad;padding:14px 8px;text-align:center}
 @media(max-width:620px){#oscLab .osc-toolbar{gap:7px;flex-wrap:wrap}#oscLab .osc-toolbar label{flex:1 1 38%}#oscLab #oscRefresh{flex:1 1 100%;height:38px}#oscScanStatus{padding:0 0 4px}.osc-summary{gap:7px}.osc-stat{padding:10px 9px}.osc-stat small{font-size:8px;line-height:1.35;min-height:21px}.osc-stat strong{font-size:23px}.osc-stat span{font-size:9px}.osc-aggregate-grid{grid-template-columns:1fr}.osc-signal-list{max-height:240px}.osc-aggregate-head b{font-size:10px}.osc-aggregate-head small{max-width:230px}}
+
+/* Oscillator Lab — redesigned control surface */
+#oscLab{background:radial-gradient(ellipse at 50% -18%,rgba(39,111,139,.22),transparent 48%),#070d17;color:#edf4fc;padding:env(safe-area-inset-top) clamp(12px,3vw,30px) max(24px,env(safe-area-inset-bottom));}
+#oscLab .osc-head{max-width:1320px;margin:0 auto;min-height:58px;border-color:#26384c;background:rgba(7,13,23,.94)}
+#oscLab .osc-head strong{font-size:12px;letter-spacing:.19em}
+#oscLab .osc-head button{border-radius:9px;background:#121f30;border-color:#30445c}
+#oscLab .osc-toolbar{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:minmax(190px,245px) minmax(260px,1fr) auto;align-items:end;gap:14px;padding:18px 0 12px;background:transparent;border:0;position:relative;top:auto;backdrop-filter:none}
+#oscLab .osc-toolbar label,#oscLab .osc-time-control{display:flex;flex-direction:column;gap:8px;color:#8498b0;font-size:9px;font-weight:850;letter-spacing:.14em;min-width:0}
+#oscLab .osc-toolbar select{width:100%;height:46px;appearance:auto;background:#111e2e;border:1px solid #31465e;border-radius:11px;color:#f2f7fc;padding:0 13px;font-size:14px;font-weight:800;letter-spacing:.02em;}
+#oscLab .osc-time-switch{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;padding:4px;height:46px;background:#0d1826;border:1px solid #26394e;border-radius:11px}
+#oscLab .osc-tf-btn{border:0;border-radius:7px;background:transparent;color:#8ea3ba;font-size:12px;font-weight:850;cursor:pointer;min-width:0}
+#oscLab .osc-tf-btn.active{background:linear-gradient(135deg,#17664f,#174a55);color:#e6fff5;box-shadow:0 2px 12px rgba(20,184,128,.18)}
+#oscLab #oscRefresh{height:46px;padding:0 17px;border-radius:11px;background:#142d32;border:1px solid #28685b;color:#9df1d1;white-space:nowrap}
+#oscLab #oscScanStatus{grid-column:1/-1;padding:0 2px;color:#7890a9;font-size:10px;letter-spacing:.02em}
+#oscLab .osc-market-line{max-width:1320px;margin:0 auto 16px;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;border:1px solid #24394d;border-radius:12px;background:linear-gradient(100deg,rgba(17,39,55,.88),rgba(11,24,37,.88));}
+#oscLab .osc-market-line div{display:flex;flex-direction:column;gap:5px}#oscLab .osc-market-line small{font-size:8px;letter-spacing:.16em;color:#7f95ad;font-weight:850}#oscLab .osc-market-line strong{font-size:15px;letter-spacing:.04em;color:#f3f8ff}#oscLab .osc-market-line>span{font-size:10px;font-weight:850;letter-spacing:.1em;color:#79dfc0;background:#12352f;padding:7px 10px;border-radius:7px}
+#oscLab .osc-summary,#oscLab .osc-aggregate,#oscLab .osc-layout{max-width:1320px;margin-left:auto;margin-right:auto}
+#oscLab .osc-stat{border-radius:12px;background:linear-gradient(145deg,#132337,#0b1725);border-color:#263c53;min-height:100px;justify-content:center}
+#oscLab .osc-aggregate{padding:18px;background:linear-gradient(145deg,rgba(16,30,46,.98),rgba(9,19,31,.98));border-color:#263a50}
+#oscLab .osc-side{background:#0b1724;border-color:#25394e;border-radius:11px;padding:13px}
+#oscLab .osc-layout{grid-template-columns:minmax(0,1.7fr) minmax(280px,.9fr);gap:15px}
+#oscLab .osc-card{border-radius:14px;border-color:#263b52;padding:17px}
+#oscLab .osc-title h2{font-size:21px}
+#oscLab #oscCanvas{height:360px;border-radius:11px;background:linear-gradient(180deg,#091523,#0b1928);border-color:#23394f}
+#oscLab #oscExplain{border-radius:10px;background:#0b1724;border-color:#20364c}
+#oscLab .osc-item{border-radius:9px;min-height:46px}
+@media(max-width:760px){#oscLab .osc-toolbar{grid-template-columns:minmax(0,1fr);gap:11px;padding-top:13px}#oscLab .osc-toolbar label,#oscLab .osc-time-control{width:100%}#oscLab .osc-toolbar select{height:45px}#oscLab .osc-time-switch{height:45px}#oscLab #oscRefresh{width:100%;height:42px}#oscLab #oscScanStatus{grid-column:auto}#oscLab .osc-market-line{margin-bottom:12px;padding:11px 13px}#oscLab .osc-summary{margin-top:10px}#oscLab .osc-stat{min-height:84px}#oscLab .osc-aggregate{padding:13px}#oscLab .osc-layout{grid-template-columns:minmax(0,1fr)}#oscLab .osc-card{padding:13px}#oscLab #oscCanvas{height:290px}}
+@media(min-width:761px) and (max-width:1000px){#oscLab .osc-toolbar{grid-template-columns:180px minmax(220px,1fr) auto}#oscLab .osc-layout{grid-template-columns:minmax(0,1.3fr) minmax(260px,.9fr)}}
+
 </style>
 </head>
 <body>
@@ -104,9 +133,10 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 <section id="oscLab" aria-label="Gösterge ve uyumsuzluk laboratuvarı">
 <div class="osc-head"><strong>OSCILLATOR LAB</strong><button id="oscClose">KAPAT ✕</button></div>
 <div class="osc-controls osc-toolbar">
-<label>PARİTE<select id="oscSymbol" aria-label="Analiz coin"><option>BTCUSDT</option><option>ETHUSDT</option><option>SOLUSDT</option><option>BNBUSDT</option><option>XRPUSDT</option><option>DOGEUSDT</option><option>LINKUSDT</option><option>AVAXUSDT</option><option>HBARUSDT</option></select></label>
-<label>ZAMAN DİLİMİ<select id="oscTime" aria-label="Zaman dilimi"><option value="15m" selected>15 dakika</option><option value="1h">1 saat</option><option value="4h">4 saat</option><option value="1d">1 gün</option><option value="1w">1 hafta</option></select></label>
-<button id="oscRefresh">VERİLERİ YENİLE ↻</button><span id="oscScanStatus">33 gösterge taranacak</span></div>
+<label class="osc-pair-control">PARİTE<select id="oscSymbol" aria-label="Analiz paritesi"><option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option><option value="LINKUSDT">LINK / USDT</option><option value="AVAXUSDT">AVAX / USDT</option><option value="HBARUSDT">HBAR / USDT</option></select></label>
+<div class="osc-time-control"><span>ZAMAN DİLİMİ</span><div class="osc-time-switch" role="group" aria-label="Grafik zaman dilimi"><button type="button" class="osc-tf-btn active" data-tf="15m">15D</button><button type="button" class="osc-tf-btn" data-tf="1h">1S</button><button type="button" class="osc-tf-btn" data-tf="4h">4S</button><button type="button" class="osc-tf-btn" data-tf="1d">1G</button><button type="button" class="osc-tf-btn" data-tf="1w">1H</button></div></div>
+<button id="oscRefresh" type="button">YENİLE ↻</button><span id="oscScanStatus">33 gösterge taranacak</span></div>
+<div class="osc-market-line"><div><small>AKTİF ANALİZ</small><strong id="oscActiveMarket">BTC / USDT</strong></div><span id="oscActiveTF">15 DAKİKA</span></div>
 <div class="osc-summary">
 <div class="osc-stat"><small>POZİTİF UYUMSUZLUK</small><strong id="oscBullCount">—</strong><span>Alıcı yönlü</span></div>
 <div class="osc-stat"><small>NEGATİF UYUMSUZLUK</small><strong id="oscBearCount">—</strong><span>Satıcı yönlü</span></div>
@@ -232,8 +262,9 @@ function divergences(price,osc){const pl=pivots(price,'low'),ph=pivots(price,'hi
 pair(pl,pivots(osc,'low'),true);pair(ph,pivots(osc,'high'),false);return out.sort((a,b)=>b.b.i-a.b.i);}
 function draw(){const canvas=$('oscCanvas'),ctx=canvas.getContext('2d'),w=canvas.clientWidth,h=canvas.clientHeight,dpr=devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);const offset=state.rows.length-Math.min(120,state.rows.length),rows=state.rows.slice(-120),vals=state.series.slice(-120),valid=vals.filter(x=>x!=null&&Number.isFinite(x));if(!rows.length||!valid.length){ctx.fillStyle='#8da3ba';ctx.fillText('Gösterge verisi bekleniyor',20,30);return;}const pad={l:12,r:12,t:18,b:22},pw=w-pad.l-pad.r,ph=(h-pad.t-pad.b)*.43,oh=(h-pad.t-pad.b)*.39,top=pad.t,bottom=top+ph+30;const pmin=Math.min(...rows.map(x=>x.l)),pmax=Math.max(...rows.map(x=>x.h)),vmin=Math.min(...valid),vmax=Math.max(...valid),px=i=>pad.l+i/(rows.length-1)*pw,py=v=>top+(pmax-v)/(pmax-pmin||1)*ph,oy=v=>bottom+(vmax-v)/(vmax-vmin||1)*oh;ctx.strokeStyle='#203447';ctx.lineWidth=1;for(let k=0;k<4;k++){const y=top+k*ph/3;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();}const cw=Math.max(2,pw/rows.length*.62);rows.forEach((x,i)=>{const xx=px(i),up=x.c>=x.o,col=up?'#20d99b':'#ff5268';ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xx,py(x.h));ctx.lineTo(xx,py(x.l));ctx.stroke();const y=Math.min(py(x.o),py(x.c)),bh=Math.max(1,Math.abs(py(x.o)-py(x.c)));ctx.fillRect(xx-cw/2,y,cw,bh);});ctx.fillStyle='#8da3ba';ctx.font='10px Arial';ctx.fillText('FİYAT · MUM',pad.l,11);ctx.fillText('GÖSTERGE · '+(defs.find(x=>x[0]===state.selected)?.[1]||''),pad.l,bottom-7);ctx.beginPath();vals.forEach((v,i)=>{if(v==null)return;const y=oy(v);if(i===0)ctx.moveTo(px(i),y);else ctx.lineTo(px(i),y);});ctx.strokeStyle='#42b9ff';ctx.lineWidth=2;ctx.stroke();state.divs.slice(0,8).forEach(d=>{const i=d.b.i-offset,j=d.a.i-offset;if(i<0||j<0||i>=rows.length||j>=rows.length)return;const bullish=d.type.toLowerCase().includes('pozitif'),col=bullish?'#20d99b':'#ff5268';ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px(j),py(state.rows[d.a.i].c));ctx.lineTo(px(i),py(state.rows[d.b.i].c));ctx.stroke();ctx.beginPath();ctx.moveTo(px(j),oy(state.series[d.a.i]));ctx.lineTo(px(i),oy(state.series[d.b.i]));ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.arc(px(i),oy(state.series[d.b.i]),4,0,Math.PI*2);ctx.fill();});ctx.fillStyle='#8da3ba';ctx.fillText(new Date(rows[0].t).toLocaleString('tr-TR'),pad.l,h-4);ctx.fillText(new Date(rows[rows.length-1].t).toLocaleString('tr-TR'),w-125,h-4);}
 function renderList(){const q=($('oscSearch')?.value||'').trim().toLocaleLowerCase('tr-TR'),cat=$('oscCategory')?.value||'all';const items=defs.filter(x=>(cat==='all'||x[2]===cat)&&(!q||(x[1]+' '+x[2]+' '+x[3]).toLocaleLowerCase('tr-TR').includes(q)));$('oscList').innerHTML=items.map(x=>'<button class="osc-item '+(x[0]===state.selected?'active':'')+'" data-id="'+x[0]+'" data-index="'+String(defs.indexOf(x)+1).padStart(2,'0')+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')||'<div class="osc-empty">Bu filtrede gösterge bulunamadı.</div>';$('oscList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{state.selected=b.dataset.id;state.series=calc(state.selected,state.rows);state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);renderSelected();});}
-function renderSelected(){const d=defs.find(x=>x[0]===state.selected);$('oscName').textContent=d[1];$('oscGroup').textContent=d[2];$('oscExplain').textContent=d[3];draw();renderList();}
+function renderSelected(){const d=defs.find(x=>x[0]===state.selected);$('oscName').textContent=d[1];$('oscGroup').textContent=d[2];$('oscExplain').textContent=d[3];$('oscTF').textContent=tfNames[state.tf];draw();renderList();}
 function renderAggregate(){
+syncMarketLabel();
 const bulls=state.aggregate.filter(x=>x.side==='bull'),bears=state.aggregate.filter(x=>x.side==='bear');
 $('oscBullCount').textContent=bulls.length;$('oscBearCount').textContent=bears.length;$('oscTotalCount').textContent=state.aggregate.length;
 $('oscBullLabel').textContent=bulls.length+' tespit';$('oscBearLabel').textContent=bears.length+' tespit';
@@ -261,28 +292,56 @@ state.aggregate.push({id:d[0],name:d[1],group:d[2],type:hit.type,side:hit.type.t
 }
 state.aggregate.sort((a,b)=>b.time-a.time);
 state.rows=state.rowsByTf[state.tf]||state.rowsByTf['15m']||[];
+syncMarketLabel();
 state.series=calc(state.selected,state.rows);
 state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
-$('oscLoading').textContent='Son 8 mum bölgesi · '+symbol+' · 5 zaman dilimi · 33 gösterge';$('oscScanStatus').textContent='5/5 zaman dilimi tarandı';render();
+$('oscLoading').textContent='Güncel fiyat bölgesi · '+symbol+' · '+tfNames[state.tf]+' grafiği';$('oscScanStatus').textContent='5/5 zaman dilimi · 33/33 gösterge tarandı';syncMarketLabel();render();
 }catch(e){if(version===requestVersion){$('oscLoading').textContent='Veri alınamadı: '+e.message;$('oscScanStatus').textContent='Tarama başarısız';}}
 finally{if(version===requestVersion)$('oscRefresh').disabled=false;}
 }
-function openLab(){ $('oscLab').classList.add('show');calculate();}
-$('oscLabBtn').onclick=openLab;$('oscClose').onclick=()=>$('oscLab').classList.remove('show');
-$('oscSymbol').onchange=()=>{state.symbol=$('oscSymbol').value;calculate();};
-function changeTimeframe(){
-const next=$('oscTime').value;
+function syncMarketLabel(){
+const label=state.symbol.replace('USDT',' / USDT');
+$('oscActiveMarket').textContent=label;
+$('oscActiveTF').textContent=tfNames[state.tf];
+$('oscTF').textContent=tfNames[state.tf];
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tf===state.tf));
+}
+function setTimeframe(next){
 if(!timeframes.includes(next))return;
 state.tf=next;
 state.rows=state.rowsByTf[next]||[];
 state.series=calc(state.selected,state.rows);
 state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
-$('oscTF').textContent=tfNames[next];
-$('oscLoading').textContent=state.rows.length?'Grafik zaman dilimi: '+tfNames[next]+' · son fiyat bölgesi':'Bu zaman diliminin verisi henüz yüklenmedi.';
+syncMarketLabel();
+$('oscLoading').textContent=state.rows.length?'Grafik: '+state.symbol+' · '+tfNames[next]+' · son fiyat bölgesi':'Bu zaman diliminin verisi yükleniyor…';
 renderSelected();
+renderAggregate();
+if(!state.rows.length)calculate();
 }
-$('oscTime').addEventListener('change',changeTimeframe);
-$('oscTime').addEventListener('input',changeTimeframe);
+function setSymbol(next){
+if(!symbols.includes(next.toLowerCase()))return;
+state.symbol=next.toUpperCase();
+$('oscSymbol').value=state.symbol;
+$('symbol').value=state.symbol;
+$('pair').textContent=state.symbol.replace('USDT',' / USDT');
+render();
+syncMarketLabel();
+$('oscLoading').textContent=state.symbol+' için Binance verileri yükleniyor…';
+calculate();
+}
+function openLab(){
+state.symbol=$('symbol').value.toUpperCase();
+$('oscSymbol').value=state.symbol;
+$('oscLab').classList.add('show');
+syncMarketLabel();
+calculate();
+}
+$('oscLabBtn').onclick=openLab;
+$('oscClose').onclick=()=>$('oscLab').classList.remove('show');
+$('oscSymbol').addEventListener('change',e=>setSymbol(e.target.value));
+$('oscSymbol').addEventListener('input',e=>{if(e.target.value.toUpperCase()!==state.symbol)setSymbol(e.target.value);});
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeframe(btn.dataset.tf)));
+$('symbol').addEventListener('change',()=>{if($('oscLab').classList.contains('show'))setSymbol($('symbol').value);});
 $('oscRefresh').onclick=calculate;
 renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory').addEventListener('change',renderList);
 })();
