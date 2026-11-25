@@ -448,10 +448,70 @@ function startBinanceBookSync(exchange, symbol, restBase) {
   return onDepth;
 }
 
+function startDedicatedBinancePriceFeed() {
+  const streams = SYMBOLS.map(symbol => symbol.toLowerCase() + "@trade").join("/");
+  let socket = null;
+  let retryDelay = 500;
+  let retryTimer = null;
+  let stopped = false;
+
+  const connect = () => {
+    if (stopped) return;
+    // Sadece son işlem fiyatları: mum/emir defteri/analiz trafiği bu hatta girmez.
+    socket = new WebSocket("wss://stream.binance.com:9443/stream?streams=" + streams, {
+      perMessageDeflate: false,
+      handshakeTimeout: 10000
+    });
+    socket.on("open", () => {
+      retryDelay = 500;
+      state.exchanges.binanceSpot.connected = true;
+      state.exchanges.binanceSpot.lastError = null;
+      publish("connection", { exchange: "binanceSpot", connected: true });
+      log("info", "Dedicated Binance spot price feed connected");
+    });
+    socket.on("message", buffer => {
+      let packet;
+      try { packet = JSON.parse(buffer.toString()); } catch { return; }
+      const d = packet?.data;
+      if (d?.e !== "trade") return;
+      const symbol = symbolFrom(d.s);
+      const price = Number(d.p);
+      if (!symbol || !Number.isFinite(price) || price <= 0 || !state.markets[symbol]) return;
+      const timestamp = Number(d.T);
+      const market = state.markets[symbol];
+      market.binanceSpot.lastPrice = price;
+      market.binanceSpot.priceTimestamp = timestamp;
+      market.updatedAt = new Date().toISOString();
+      state.exchanges.binanceSpot.lastMessageAt = market.updatedAt;
+      state.exchanges.binanceSpot.lastDataAt = market.updatedAt;
+      publish("price", { symbol, price, timestamp });
+    });
+    socket.on("error", error => {
+      state.exchanges.binanceSpot.lastError = error.message;
+    });
+    socket.on("close", () => {
+      if (stopped) return;
+      state.exchanges.binanceSpot.connected = false;
+      state.exchanges.binanceSpot.reconnects += 1;
+      publish("connection", { exchange: "binanceSpot", connected: false });
+      const delay = retryDelay;
+      retryDelay = Math.min(retryDelay * 2, 5000);
+      retryTimer = setTimeout(connect, delay);
+    });
+  };
+  connect();
+  return () => {
+    stopped = true;
+    clearTimeout(retryTimer);
+    if (socket && socket.readyState < WebSocket.CLOSING) socket.close();
+  };
+}
+
 function startBinanceSpot() {
+  // Ağır emir defteri ve mum akışını fiyat kanalından ayrı tut.
   const streams = SYMBOLS.flatMap((s) => {
     const x = s.toLowerCase();
-    return [x + "@trade", x + "@depth@100ms", x + "@kline_1m", x + "@kline_15m", x + "@kline_1h", x + "@kline_4h"];
+    return [x + "@depth@100ms", x + "@kline_1m", x + "@kline_15m", x + "@kline_1h", x + "@kline_4h"];
   }).join("/");
   for (const symbol of SYMBOLS) depthHandlers.binanceSpot.set(symbol, startBinanceBookSync("binanceSpot", symbol, "https://data-api.binance.vision"));
   return connectSocket(
@@ -461,23 +521,7 @@ function startBinanceSpot() {
       const d = packet.data;
       if (!d) return;
       const symbol = symbolFrom(d.s);
-      if (d.e === "trade") {
-        const price = Number(d.p);
-        if (Number.isFinite(price) && price > 0) {
-          const market = state.markets[symbol];
-          if (market) {
-            market.binanceSpot.lastPrice = price;
-            market.binanceSpot.priceTimestamp = Number(d.T);
-            market.updatedAt = now();
-          }
-          publish("price", { symbol, price, timestamp: Number(d.T) });
-        }
-        addTrade({
-          exchange: "Binance Spot", id: "spot:" + d.t, symbol, price: Number(d.p),
-          quantity: Number(d.q), quoteValue: Number(d.p) * Number(d.q),
-          side: d.m ? "SELL" : "BUY", timestamp: d.T
-        });
-      } else if (d.e === "depthUpdate") {
+      if (d.e === "depthUpdate") {
         depthHandlers.binanceSpot.get(symbol)?.(d);
       } else if (d.e === "kline") {
         const k = d.k;
@@ -884,7 +928,7 @@ server.listen(PORT, HOST, () => {
       log("error", "PostgreSQL initialization failed; continuing in memory", { error: error.message });
     }
   })();
-  upstreamStops.push(startBinanceSpot(), startBinanceFutures(), startBybit());
+  upstreamStops.push(startDedicatedBinancePriceFeed(), startBinanceSpot(), startBinanceFutures(), startBybit());
   // Başlangıç yüklemesi başarısız/eksik kalan sembolleri otomatik tamamla.
   const historyRetry = setInterval(() => {
     const incomplete = SYMBOLS.some(symbol => ["1m","15m","1h","4h"].some(i => (state.markets[symbol]?.["candles"+i]?.length || 0) < 1000));
