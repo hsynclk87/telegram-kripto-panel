@@ -48,10 +48,10 @@ test("Wilder ATR and ADX use the expected 14-period seed positions",()=>{
 
 test("signal clustering only combines same direction and nearby pivots",()=>{
  const items=[
-  {id:"rsi",tf:"1h",side:"bull",index:100,time:1000},
+  {id:"rsi",tf:"1h",side:"bull",index:101,time:1010},
   {id:"mfi",tf:"1h",side:"bull",index:103,time:1030},
-  {id:"cci",tf:"1h",side:"bull",index:104,time:1040},
-  {id:"rsi",tf:"1h",side:"bull",index:99,time:990},
+  {id:"cci",tf:"1h",side:"bull",index:99,time:990},
+  {id:"rsi",tf:"1h",side:"bull",index:100,time:1000},
   {id:"macd",tf:"1h",side:"bear",index:101,time:1010},
   {id:"obv",tf:"4h",side:"bull",index:101,time:1010}
  ];
