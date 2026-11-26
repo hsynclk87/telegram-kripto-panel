@@ -123,6 +123,22 @@ test("kline normalization sorts, deduplicates, validates and excludes the open c
  assert.ok(normalized.every((x,i)=>i===0||x.t>normalized[i-1].t));
 });
 
+test("kline normalization rejects missing intervals and stale feed data",()=>{
+ const rows=syntheticRows(110);
+ const interval=900000;
+ const withGap=rows.filter((_,i)=>i!==50).map(rawKline);
+ assert.throws(()=>normalizeKlines(withGap,rows.at(-1).closeTime+1,interval),/zaman boşluğu/);
+ const now=rows.at(-1).closeTime+interval*3;
+ assert.throws(()=>normalizeKlines(rows.map(rawKline),now,interval),/güncel değil/);
+});
+
+test("kline normalization rejects a conflicting duplicate candle",()=>{
+ const rows=syntheticRows(105).map(rawKline);
+ const duplicate=rows[20].slice();duplicate[4]=String(Number(duplicate[4])+1);
+ rows.push(duplicate);
+ assert.throws(()=>normalizeKlines(rows,1000000000),/Çakışan mükerrer mum/);
+});
+
 test("kline normalization rejects impossible OHLC and taker-volume data",()=>{
  const rows=syntheticRows(105).map(rawKline);
  rows[10][2]="1";
