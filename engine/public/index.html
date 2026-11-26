@@ -300,7 +300,9 @@ async function calculate(options={}){
     if(!res.ok){const detail=await res.text().catch(()=> '');throw Error('HTTP '+res.status+(detail?' · '+detail.slice(0,140):''));}
     const raw=await res.json();
     if(!Array.isArray(raw)||raw.length<100)throw Error('Yetersiz mum verisi ('+(Array.isArray(raw)?raw.length:0)+')');
-    const rows=normalizeKlines(raw);
+    const intervalMs={'15m':900000,'1h':3600000,'4h':14400000,'1d':86400000,'1w':604800000}[tf];
+    const serverTime=Number(res.headers.get('X-Server-Time'))||Date.now();
+    const rows=normalizeKlines(raw,serverTime,intervalMs);
     completed++;
     if(version===requestVersion)$('oscScanStatus').textContent='Veri alındı · '+completed+'/5 zaman dilimi';
     return {tf,rows};
