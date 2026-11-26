@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
+const ALLOWED_WEB_ORIGINS = new Set(["https://hsynclk87.github.io"]);
 const INDEX = resolve(fileURLToPath(new URL("../public/index.html", import.meta.url)));
 const ANALYSIS_CORE = resolve(fileURLToPath(new URL("../public/analysis-core.js", import.meta.url)));
 const ALLOWED = new Set(["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT","LINKUSDT","AVAXUSDT","HBARUSDT"]);
@@ -44,6 +45,18 @@ async function marketContext(symbol) {
 }
 
 const server = http.createServer(async (req, res) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_WEB_ORIGINS.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Expose-Headers", "X-Server-Time");
+  }
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, { "Cache-Control": "no-store" });
+    return res.end();
+  }
   const url = new URL(req.url || "/", "http://localhost");
   const path = url.pathname;
   if (req.method !== "GET" && req.method !== "HEAD") {
