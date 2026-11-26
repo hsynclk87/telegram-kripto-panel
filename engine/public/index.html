@@ -597,7 +597,7 @@ syncMarketLabel();
 calculate();
 }
 $('oscLabBtn').onclick=openLab;
-$('oscClose').onclick=()=>$('oscLab').classList.remove('show');
+$('oscClose').onclick=()=>{$('oscLab').classList.remove('show');closeLive();};
 $('oscSymbol').addEventListener('change',e=>setSymbol(e.target.value));
 document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeframe(btn.dataset.tf)));
 $('symbol').addEventListener('change',()=>{if($('oscLab').classList.contains('show'))setSymbol($('symbol').value);});
@@ -659,7 +659,7 @@ function startLive(symbol){
  if(liveTimer)clearInterval(liveTimer);
  if(slowTimer)clearInterval(slowTimer);
  liveTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show'))loadMarketContext(symbol);},30000);
- slowTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show'))calculate();},60000);
+ // Teknik göstergeler yalnızca kullanıcı yenilediğinde veya sembol/zaman dilimi değiştiğinde hesaplanır.
 }
 renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory').addEventListener('change',renderList);
 })();
