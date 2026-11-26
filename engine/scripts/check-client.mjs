@@ -7,6 +7,15 @@ const pagesPath=new URL("../../index.html",import.meta.url);
 const render=readFileSync(renderPath,"utf8");
 const pages=readFileSync(pagesPath,"utf8");
 const files=[["Render",render],["GitHub Pages",pages]];
+const ids=[...render.matchAll(/\\bid="([^"]+)"/g)].map(match=>match[1]);
+const idSet=new Set(ids);
+const duplicates=ids.filter((id,index)=>ids.indexOf(id)!==index);
+const references=[...render.matchAll(/\\$\\(['"]([^'"]+)['"]\\)/g)].map(match=>match[1]);
+const missing=[...new Set(references.filter(id=>!idSet.has(id)))];
+if(duplicates.length)throw new Error("Duplicate HTML IDs: "+duplicates.join(", "));
+if(missing.length)throw new Error("JavaScript references missing HTML IDs: "+missing.join(", "));
+if((render.match(/<style>/g)||[]).length!==1)throw new Error("Expected one consolidated stylesheet");
+console.log("DOM ID and stylesheet audit: OK");
 for(const [name,html] of files){
  const match=html.match(/<script type="module">([\s\S]*?)<\/script>/);
  if(!match)throw new Error(name+" browser module script not found");
