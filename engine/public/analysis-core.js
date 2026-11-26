@@ -7,7 +7,7 @@ const defs=[
 ['macd','MACD Histogram','Trend','MACD ve sinyal çizgisi arasındaki farkla momentum değişimini izler.'],
 ['cmf','Chaikin Money Flow','Para Akışı','Hacim ve mum kapanış konumundan alım/satım akışını ölçer. Sıfır üstü pozitif, altı negatiftir.'],
 ['adx','ADX','Trend','Trendin gücünü ölçer; 25 üzeri belirgin trend, 20 altı zayıf trend kabul edilir.'],
-['vwap','VWAP Sapması','Fiyat Referansı','Fiyatın seans VWAP değerine göre yüzde konumunu gösterir.'],
+['vwap','VWAP / VWMA Sapması','Fiyat Referansı','15m–4h grafiklerinde UTC günlük seans VWAP; 1d–1w grafiklerinde 20 dönemlik VWMA yaklaşımı kullanılır.'],
 ['atr','ATR','Volatilite','Piyasanın ortalama gerçek hareket aralığını ölçer; yön sinyali değildir.']
 ];
 const directionalIds=new Set(['rsi','stochrsi','mfi','cci','obv','macd','cmf','vwap']);
@@ -60,17 +60,17 @@ function pivots(a,type){const out=[];for(let i=3;i<a.length-3;i++){const value=a
 function divergences(price,osc){if(price.length!==osc.length)return [];
  const pl=pivots(price,'low'),ph=pivots(price,'high'),ol=pivots(osc,'low'),oh=pivots(osc,'high'),out=[];
  const nearest=(arr,index)=>{let lo=0,hi=arr.length;while(lo<hi){const mid=(lo+hi)>>1;if(arr[mid].i<index)lo=mid+1;else hi=mid;}let best=null,dist=4;for(let k=Math.max(0,lo-1);k<Math.min(arr.length,lo+2);k++){const d=Math.abs(arr[k].i-index);if(d<=3&&d<dist){best=arr[k];dist=d;}}return best;};
- function pair(pp,oo,low){for(let k=1;k<pp.length;k++){const a=pp[k-1],b=pp[k];if(b.i-a.i<5||b.i-a.i>80)continue;const swing=Math.abs(b.v-a.v)/Math.max(Math.abs(a.v),1e-12);if(low?b.v>=a.v:b.v<=a.v){/* directional condition is checked below */}const x=nearest(oo,a.i),y=nearest(oo,b.i);if(!x||!y||x.i>=y.i)continue;const regular=low?(b.v<a.v&&y.v>x.v):(b.v>a.v&&y.v<x.v),hidden=low?(b.v>a.v&&y.v<x.v):(b.v<a.v&&y.v>x.v);if(regular||hidden)out.push({a,b,type:low?(regular?'Pozitif':'Gizli pozitif'):(regular?'Negatif':'Gizli negatif'),confirmed:true});}}
+ function pair(pp,oo,low){for(let k=1;k<pp.length;k++){const a=pp[k-1],b=pp[k];if(b.i-a.i<5||b.i-a.i>80)continue;const x=nearest(oo,a.i),y=nearest(oo,b.i);if(!x||!y||x.i>=y.i)continue;const regular=low?(b.v<a.v&&y.v>x.v):(b.v>a.v&&y.v<x.v),hidden=low?(b.v>a.v&&y.v<x.v):(b.v<a.v&&y.v>x.v);if(regular||hidden)out.push({a,b,type:low?(regular?'Pozitif':'Gizli pozitif'):(regular?'Negatif':'Gizli negatif'),confirmed:true});}}
  pair(pl,ol,true);pair(ph,oh,false);return out.sort((a,b)=>b.b.i-a.b.i);
 }
-export {ema,sma,calc,pivots,divergences};
+export {defs,directionalIds,directionalDefs,ema,sma,calc,pivots,divergences};
 export function normalizeKlines(raw,now=Date.now()){
  if(!Array.isArray(raw))throw new Error('Binance mum yanıtı dizi değil');
  const parsed=raw.map((x,i)=>({t:Number(x[0]),o:Number(x[1]),h:Number(x[2]),l:Number(x[3]),c:Number(x[4]),v:Number(x[5]),closeTime:Number(x[6]),quoteVolume:Number(x[7]),trades:Number(x[8]),tb:Number(x[9]),takerBuyQuoteVolume:Number(x[10])}));
  if(parsed.some(x=>![x.t,x.o,x.h,x.l,x.c,x.v,x.closeTime,x.quoteVolume,x.tb,x.takerBuyQuoteVolume].every(Number.isFinite)))throw new Error('Mum verisinde geçersiz sayısal alan var');
  parsed.sort((a,b)=>a.t-b.t);
  const unique=parsed.filter((x,i)=>i===0||x.t!==parsed[i-1].t);
- for(const x of unique){if(x.t<=0||x.closeTime<x.t||x.o<=0||x.c<=0||x.l<=0||x.h<x.l||x.h<Math.max(x.o,x.c)||x.l>Math.min(x.o,x.c)||x.v<0||x.quoteVolume<0||x.tb<0||x.tb>x.v*1.000001)throw new Error('OHLCV tutarsızlığı · '+new Date(x.t).toISOString());}
+ for(const x of unique){if(x.t<=0||x.closeTime<x.t||x.o<=0||x.c<=0||x.l<=0||x.h<x.l||x.h<Math.max(x.o,x.c)||x.l>Math.min(x.o,x.c)||x.v<0||x.quoteVolume<0||x.tb<0||x.tb>x.v*1.000001||x.takerBuyQuoteVolume>x.quoteVolume*1.000001)throw new Error('OHLCV tutarsızlığı · '+new Date(x.t).toISOString());}
  const closed=unique.filter(x=>x.closeTime<now);
  if(closed.length<100)throw new Error('Yeterli kapanmış mum yok · '+closed.length+'/100');
  return closed;
