@@ -679,7 +679,7 @@ $('pair').textContent=state.symbol.replace('USDT',' / USDT');
 render();
 syncMarketLabel();
 $('oscLoading').textContent=state.symbol+' için Binance verileri yükleniyor…';
-calculate();
+calculate({force:true});
 }
 function openLab(){
 const alreadyOpen=$('oscLab').classList.contains('show');
