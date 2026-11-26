@@ -23,6 +23,7 @@ jobs:
         with:
           node-version: 22
       - run: npm run check
+      - run: npm test
       - run: docker build -t telegram-live-price-mini-app .
       - name: HTTP smoke test
         run: |
@@ -34,4 +35,5 @@ jobs:
             sleep 1
           done
           curl --fail --silent http://127.0.0.1:8080/health
-          curl --fail --silent http://127.0.0.1:8080/ | grep -q "LIVE PRICE"
+          curl --fail --silent http://127.0.0.1:8080/ | grep -q "MATRIX"
+          curl --fail --silent http://127.0.0.1:8080/analysis-core.js | grep -q "normalizeKlines"
