@@ -231,6 +231,29 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 
 .osc-gauge-card{margin:8px 0 14px;padding:18px 16px 14px;border:1px solid #29415a;border-radius:18px;background:linear-gradient(150deg,#102235,#091521 70%);box-shadow:0 16px 38px #0005;text-align:center}.gauge-heading{display:flex;justify-content:space-between;align-items:center;color:#dce9f7;font-size:12px;letter-spacing:.12em}.gauge-heading span{font-size:10px;color:#8da9bf}.gauge-wrap{position:relative;width:min(100%,360px);height:190px;margin:14px auto 0;overflow:hidden}.gauge-arc{position:absolute;left:50%;top:0;transform:translateX(-50%);width:300px;height:300px;border-radius:50%;background:conic-gradient(from 270deg,#ff4058 0deg,#ff9a49 55deg,#d9bc56 90deg,#35c99a 145deg,#20dfaa 180deg,transparent 180deg);mask:radial-gradient(circle,transparent 0 62%,#000 63% 70%,transparent 71%)}.gauge-inner{position:absolute;inset:30%;border-radius:50%;background:#0b1927}.gauge-needle{position:absolute;left:50%;bottom:50%;height:112px;width:3px;border-radius:5px;background:#f4f8fc;transform-origin:50% 100%;transform:translateX(-50%) rotate(-90deg);box-shadow:0 0 12px #fff9;transition:transform .65s cubic-bezier(.2,.8,.2,1)}.gauge-hub{position:absolute;left:50%;top:50%;width:17px;height:17px;transform:translate(-50%,-50%);border-radius:50%;background:#e8f1fa;border:4px solid #30475e}.gauge-value{position:absolute;left:0;right:0;bottom:15px;font-size:36px;font-weight:850;letter-spacing:-.05em;color:#eef6ff;font-variant-numeric:tabular-nums}.gauge-scale{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:8px;letter-spacing:.06em;color:#91a7bc}.gauge-caption{color:#a9bdcf;font-size:12px;min-height:18px}.gauge-votes{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}.gauge-votes span{border:1px solid #30465b;border-radius:20px;padding:5px 9px;font-size:9px;font-weight:800;color:#b9c9d8}.gauge-votes span:first-child{color:#4ee0ae}.gauge-votes span:last-child{color:#ff7180}
 @media(max-width:480px){.osc-gauge-card{padding:15px 10px}.gauge-wrap{height:175px}.gauge-arc{width:270px;height:270px}.gauge-needle{height:100px}.gauge-value{font-size:32px}}
+
+/* Unified divergence feed: compact, grouped, glanceable */
+#oscLab .osc-feed-legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin:0 0 14px;color:#91a3b6;font-size:10px}
+#oscLab .osc-feed-legend span{display:flex;align-items:center;gap:7px}
+#oscLab .osc-feed-legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
+#oscLab .bull-dot{background:#35d6a2;box-shadow:0 0 8px #35d6a2}
+#oscLab .bear-dot{background:#ff647b;box-shadow:0 0 8px #ff647b}
+#oscLab .osc-feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#oscLab .osc-feed-card{min-width:0;padding:14px;border:1px solid #293b4e;border-left:3px solid #35d6a2;border-radius:11px;background:linear-gradient(145deg,#101e2c,#0b1520)}
+#oscLab .osc-feed-card.is-bear{border-left-color:#ff647b}
+#oscLab .osc-feed-card-top,#oscLab .osc-feed-card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#oscLab .osc-direction{font-size:9px;font-weight:900;letter-spacing:.1em;color:#55dfb0}
+#oscLab .is-bear .osc-direction{color:#ff8192}
+#oscLab .osc-feed-tf{font-size:9px;font-weight:800;color:#c2d0de;background:#1a2b3b;padding:5px 7px;border-radius:5px;white-space:nowrap}
+#oscLab .osc-feed-card-main{display:flex;flex-direction:column;gap:4px;margin:13px 0 10px}
+#oscLab .osc-feed-card-main strong{font-size:19px;letter-spacing:-.03em;color:#eff5fb}
+#oscLab .osc-feed-card-main small{font-size:10px;color:#8fa2b6;line-height:1.45}
+#oscLab .osc-indicator-tags{display:flex;flex-wrap:wrap;gap:5px;min-height:24px}
+#oscLab .osc-indicator-tag{font-size:9px;font-weight:750;color:#b9c9d8;background:#172737;border:1px solid #2a3d50;border-radius:5px;padding:5px 7px}
+#oscLab .osc-feed-card-foot{margin-top:12px;padding-top:9px;border-top:1px solid #223447;color:#8195a9;font-size:9px}
+#oscLab .osc-feed-empty{grid-column:1/-1;display:flex;flex-direction:column;gap:7px;padding:25px 17px;text-align:center;border:1px dashed #34475b;border-radius:11px;color:#d8e3ed;background:#0c1722;font-size:12px}
+#oscLab .osc-feed-empty span{color:#879caf;font-size:10px;line-height:1.5}
+@media(max-width:620px){#oscLab .osc-feed{grid-template-columns:1fr;gap:8px}#oscLab .osc-feed-card{padding:12px}#oscLab .osc-feed-card-main{margin:10px 0 8px}#oscLab .osc-feed-card-main strong{font-size:17px}}
 </style>
 </head>
 <body>
@@ -247,7 +270,7 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 <div class="osc-head"><strong>OSCILLATOR LAB</strong><button id="oscClose" type="button" onclick="document.getElementById('oscLab').classList.remove('show')">KAPAT ✕</button></div>
 <div class="osc-controls osc-toolbar">
 <label class="osc-pair-control">PARİTE<select id="oscSymbol" aria-label="Analiz paritesi"><option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option><option value="LINKUSDT">LINK / USDT</option><option value="AVAXUSDT">AVAX / USDT</option><option value="HBARUSDT">HBAR / USDT</option></select></label>
-<div class="osc-time-control"><span>ZAMAN DİLİMİ</span><div class="osc-time-switch" role="group" aria-label="Grafik zaman dilimi"><button type="button" class="osc-tf-btn active" data-tf="15m">15D</button><button type="button" class="osc-tf-btn" data-tf="1h">1S</button><button type="button" class="osc-tf-btn" data-tf="4h">4S</button><button type="button" class="osc-tf-btn" data-tf="1d">1G</button><button type="button" class="osc-tf-btn" data-tf="1w">1H</button></div></div>
+<div class="osc-time-control"><span>AKIŞ FİLTRESİ · ZAMAN DİLİMİ</span><div class="osc-time-switch" role="group" aria-label="Uyumsuzluk zaman dilimi filtresi"><button type="button" class="osc-tf-btn active" data-tf="all">TÜMÜ</button><button type="button" class="osc-tf-btn" data-tf="15m">15D</button><button type="button" class="osc-tf-btn" data-tf="1h">1S</button><button type="button" class="osc-tf-btn" data-tf="4h">4S</button><button type="button" class="osc-tf-btn" data-tf="1d">1G</button><button type="button" class="osc-tf-btn" data-tf="1w">1H</button></div></div>
 <button id="oscRefresh" type="button">YENİLE ↻</button><span id="oscScanStatus">10 temel gösterge taranacak</span></div>
 <div class="osc-market-line"><div><small>AKTİF ANALİZ</small><strong id="oscActiveMarket">BTC / USDT</strong></div><span id="oscActiveTF">15 DAKİKA</span></div>
 <div class="osc-gauge-card"><div class="gauge-heading"><b>CANLI PİYASA YÖNÜ</b><span id="gaugeState">HESAPLANIYOR</span></div><div class="gauge-wrap"><div class="gauge-arc"><div class="gauge-inner"></div><div class="gauge-needle" id="gaugeNeedle"></div><div class="gauge-hub"></div></div><div class="gauge-value" id="gaugeValue">—</div><div class="gauge-scale"><span>GÜÇLÜ SATIŞ</span><span>NÖTR</span><span>GÜÇLÜ ALIŞ</span></div></div><div class="gauge-caption" id="gaugeCaption">10 temel gösterge ve canlı piyasa akışı birlikte değerlendiriliyor.</div><div class="gauge-votes"><span id="gaugeBull">ALICI 0</span><span id="gaugeNeutral">NÖTR 0</span><span id="gaugeBear">SATICI 0</span></div></div>
@@ -255,20 +278,12 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 <div class="osc-stat"><small>POZİTİF UYUMSUZLUK</small><strong id="oscBullCount">—</strong><span>Alıcı yönlü</span></div>
 <div class="osc-stat"><small>NEGATİF UYUMSUZLUK</small><strong id="oscBearCount">—</strong><span>Satıcı yönlü</span></div>
 <div class="osc-stat"><small>TOPLAM TESPİT</small><strong id="oscTotalCount">—</strong><span>10 temel gösterge</span></div></div>
-<div class="osc-card osc-aggregate"><div class="osc-aggregate-head"><div><b>TÜM GÖSTERGELER · UYUMSUZLUK AKIŞI</b><small>Son fiyat bölgesindeki güncel, teyitli uyumsuzluklar · 5 zaman dilimi</small></div><span class="osc-chip" id="oscAggregateTF">15 dakika</span></div>
-<div class="osc-aggregate-grid"><section class="osc-side bull-side"><div class="osc-side-title"><b>POZİTİF</b><span id="oscBullLabel">0 tespit</span></div><div id="oscBullList" class="osc-signal-list"></div></section>
-<section class="osc-side bear-side"><div class="osc-side-title"><b>NEGATİF</b><span id="oscBearLabel">0 tespit</span></div><div id="oscBearList" class="osc-signal-list"></div></section></div></div>
-<div class="osc-layout">
-<div class="osc-card">
-<div class="osc-title"><h2 id="oscName">RSI</h2><span class="osc-chip" id="oscGroup">Momentum</span></div>
-<canvas id="oscCanvas"></canvas>
-<div id="oscLoading">Veri bekleniyor…</div>
-<div id="oscExplain"></div>
-<div class="osc-title" style="margin-top:15px"><b>Uyumsuzluk tespitleri</b><span class="osc-chip" id="oscTF">15m</span></div>
-<div id="oscSignals" class="osc-signals"></div>
-</div>
-<div class="osc-card"><div class="osc-library-head"><b>GÖSTERGE KÜTÜPHANESİ</b><span class="osc-library-count">10 ŞABLON</span></div><div class="osc-library-tools"><input id="oscSearch" type="search" placeholder="Gösterge ara…" aria-label="Gösterge ara"><select id="oscCategory" aria-label="Kategori filtrele"><option value="all">Tüm kategoriler</option><option>Momentum</option><option>Para Akışı</option><option>Hacim</option><option>Trend</option><option>Volatilite</option><option>Piyasa Akışı</option></select></div><div id="oscList"></div></div>
-</div>
+<div class="osc-card osc-aggregate"><div class="osc-aggregate-head"><div><b>UYUMSUZLUK AKIŞI</b><small>Göstergeler aynı yön ve zaman diliminde birleştirilir · En yeni tespit üstte</small></div><span class="osc-chip" id="oscAggregateTF">CANLI TARAMA</span></div>
+<div class="osc-feed-legend"><span><i class="bull-dot"></i> Pozitif · fiyat dip yaparken gösterge güçleniyor</span><span><i class="bear-dot"></i> Negatif · fiyat tepe yaparken gösterge zayıflıyor</span></div>
+<div id="oscFeed" class="osc-feed"><div class="osc-feed-empty">Tarama başlatılıyor…</div></div></div>
+<div class="osc-layout" aria-hidden="true" style="display:none">
+<div class="osc-card"><div class="osc-title"><h2 id="oscName">RSI</h2><span class="osc-chip" id="oscGroup">Momentum</span></div><canvas id="oscCanvas"></canvas><div id="oscLoading">Veri bekleniyor…</div><div id="oscExplain"></div><div class="osc-title" style="margin-top:15px"><b>Uyumsuzluk tespitleri</b><span class="osc-chip" id="oscTF">15m</span></div><div id="oscSignals" class="osc-signals"></div></div>
+<div class="osc-card"><div class="osc-library-head"><b>GÖSTERGE KÜTÜPHANESİ</b><span class="osc-library-count">10 ŞABLON</span></div><div class="osc-library-tools"><input id="oscSearch" type="search" placeholder="Gösterge ara…" aria-label="Gösterge ara"><select id="oscCategory" aria-label="Kategori filtrele"><option value="all">Tüm kategoriler</option><option>Momentum</option><option>Para Akışı</option><option>Hacim</option><option>Trend</option><option>Volatilite</option><option>Piyasa Akışı</option></select></div><div id="oscList"></div></div></div>
 
 <div class="research-panel" id="researchPanel">
   <div class="research-head"><b>CANLI PİYASA AKIŞI · ÇOKLU KAYNAK</b><small id="researchUpdated">Veri bekleniyor</small></div>
@@ -334,7 +349,7 @@ const defs=[
 ['vwap','VWAP Sapması','Fiyat Referansı','Fiyatın seans VWAP değerine göre yüzde konumunu gösterir.'],
 ['atr','ATR','Volatilite','Piyasanın ortalama gerçek hareket aralığını ölçer; yön sinyali değildir.']
 ];
-const state={rows:[],rowsByTf:{},selected:'rsi',tf:'15m',symbol:'BTCUSDT',series:[],divs:[],aggregate:[]};let requestVersion=0; const timeframes=['15m','1h','4h','1d','1w']; const tfNames={'15m':'15 DAKİKA','1h':'1 SAAT','4h':'4 SAAT','1d':'1 GÜN','1w':'1 HAFTA'};
+const state={rows:[],rowsByTf:{},selected:'rsi',tf:'15m',feedTf:'all',symbol:'BTCUSDT',series:[],divs:[],aggregate:[]};let requestVersion=0; const timeframes=['15m','1h','4h','1d','1w']; const tfNames={'15m':'15 DAKİKA','1h':'1 SAAT','4h':'4 SAAT','1d':'1 GÜN','1w':'1 HAFTA'};
 const ema=(a,p)=>{let out=Array(a.length).fill(null),k=2/(p+1),v=null;for(let i=0;i<a.length;i++){if(a[i]==null)continue;v=v==null?a[i]:a[i]*k+v*(1-k);out[i]=v;}return out;};
 const sma=(a,p)=>a.map((_,i)=>i+1<p?null:a.slice(i-p+1,i+1).every(v=>v!=null)?a.slice(i-p+1,i+1).reduce((x,y)=>x+y,0)/p:null);
 const calc=(id,r)=>{const c=r.map(x=>x.c),h=r.map(x=>x.h),l=r.map(x=>x.l),v=r.map(x=>x.v),n=c.length,chg=c.map((x,i)=>i?x-c[i-1]:null),tr=r.map((x,i)=>i?Math.max(x.h-x.l,Math.abs(x.h-r[i-1].c),Math.abs(x.l-r[i-1].c)):x.h-x.l),pos=chg.map(x=>x==null?null:Math.max(x,0)),neg=chg.map(x=>x==null?null:Math.max(-x,0));
@@ -386,14 +401,26 @@ function draw(){const canvas=$('oscCanvas'),ctx=canvas.getContext('2d'),w=canvas
 function renderList(){const q=($('oscSearch')?.value||'').trim().toLocaleLowerCase('tr-TR'),cat=$('oscCategory')?.value||'all';const items=defs.filter(x=>(cat==='all'||x[2]===cat)&&(!q||(x[1]+' '+x[2]+' '+x[3]).toLocaleLowerCase('tr-TR').includes(q)));$('oscList').innerHTML=items.map(x=>'<button class="osc-item '+(x[0]===state.selected?'active':'')+'" data-id="'+x[0]+'" data-index="'+String(defs.indexOf(x)+1).padStart(2,'0')+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')||'<div class="osc-empty">Bu filtrede gösterge bulunamadı.</div>';$('oscList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{state.selected=b.dataset.id;state.series=calc(state.selected,state.rows);state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);renderSelected();});}
 function renderSelected(){const d=defs.find(x=>x[0]===state.selected);$('oscName').textContent=d[1];$('oscGroup').textContent=d[2];$('oscExplain').textContent=d[3];$('oscTF').textContent=tfNames[state.tf];draw();renderList();}
 function renderAggregate(){
-syncMarketLabel();
-const bulls=state.aggregate.filter(x=>x.side==='bull'),bears=state.aggregate.filter(x=>x.side==='bear');
-$('oscBullCount').textContent=bulls.length;$('oscBearCount').textContent=bears.length;$('oscTotalCount').textContent=state.aggregate.length;
-$('oscBullLabel').textContent=bulls.length+' tespit';$('oscBearLabel').textContent=bears.length+' tespit';
-$('oscAggregateTF').textContent='5 ZAMAN DİLİMİ';$('oscTF').textContent=tfNames[state.tf];
-const grouped=(items)=>timeframes.map(tf=>{const arr=items.filter(x=>x.tf===tf);return '<div class="osc-tf-group"><div class="osc-tf-heading">'+tfNames[tf]+' <span>'+arr.length+'</span></div>'+(arr.length?arr.map(x=>'<button class="osc-aggregate-item" data-indicator="'+x.id+'" data-tf="'+x.tf+'"><span class="main"><b>'+x.name+'</b><small>'+x.type+' · '+new Date(x.time).toLocaleString('tr-TR')+'</small></span><span class="kind">'+(x.side==='bull'?'POZİTİF':'NEGATİF')+'</span></button>').join(''):'<div class="osc-no-signal">Güncel uyumsuzluk yok</div>')+'</div>';}).join('');
-$('oscBullList').innerHTML=grouped(bulls);$('oscBearList').innerHTML=grouped(bears);
-document.querySelectorAll('.osc-aggregate-item[data-indicator]').forEach(btn=>btn.onclick=()=>{state.selected=btn.dataset.indicator;state.tf=btn.dataset.tf;state.rows=state.rowsByTf[state.tf]||[];syncMarketLabel();state.series=calc(state.selected,state.rows);state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);renderSelected();document.querySelector('.osc-layout')?.scrollIntoView({behavior:'smooth',block:'start'});});
+ const all=state.aggregate.slice().sort((a,b)=>b.time-a.time);
+ const visible=state.feedTf==='all'?all:all.filter(x=>x.tf===state.feedTf);
+ const bulls=visible.filter(x=>x.side==='bull'),bears=visible.filter(x=>x.side==='bear');
+ $('oscBullCount').textContent=bulls.length;$('oscBearCount').textContent=bears.length;$('oscTotalCount').textContent=visible.length;
+ $('oscBullLabel').textContent=bulls.length+' tespit';$('oscBearLabel').textContent=bears.length+' tespit';
+ $('oscAggregateTF').textContent=state.feedTf==='all'?'TÜM ZAMAN DİLİMLERİ':tfNames[state.feedTf];
+ document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tf===state.feedTf));
+ const groups=new Map();
+ for(const item of visible){
+  const key=item.tf+'|'+item.side;
+  if(!groups.has(key))groups.set(key,{tf:item.tf,side:item.side,time:item.time,items:[]});
+  const g=groups.get(key);g.time=Math.max(g.time,item.time);
+  if(!g.items.some(x=>x.id===item.id&&x.type===item.type))g.items.push(item);
+ }
+ const cards=[...groups.values()].sort((a,b)=>b.time-a.time).map(g=>{
+  const positive=g.side==='bull',names=g.items.map(x=>'<span class="osc-indicator-tag">'+x.name+'</span>').join('');
+  const types=[...new Set(g.items.map(x=>x.type))].join(' · ');
+  return '<article class="osc-feed-card '+(positive?'is-bull':'is-bear')+'"><div class="osc-feed-card-top"><span class="osc-direction">'+(positive?'POZİTİF UYUMSUZLUK':'NEGATİF UYUMSUZLUK')+'</span><span class="osc-feed-tf">'+tfNames[g.tf]+'</span></div><div class="osc-feed-card-main"><strong>'+g.items.length+' gösterge aynı yönde</strong><small>'+types+'</small></div><div class="osc-indicator-tags">'+names+'</div><div class="osc-feed-card-foot"><span>'+new Date(g.time).toLocaleString('tr-TR')+'</span><span>'+g.items.length+' / 10 gösterge</span></div></article>';
+ }).join('');
+ $('oscFeed').innerHTML=cards||'<div class="osc-feed-empty"><strong>Bu filtrede güncel uyumsuzluk bulunamadı.</strong><span>Bu, göstergelerin aynı anda uyumsuzluk üretmediği anlamına gelir; tek başına alım veya satım sinyali değildir.</span></div>';
 }
 
 function researchFeatures(rows){
@@ -572,16 +599,9 @@ $('oscTF').textContent=tfNames[state.tf];
 document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tf===state.tf));
 }
 function setTimeframe(next){
-if(!timeframes.includes(next))return;
-state.tf=next;
-state.rows=state.rowsByTf[next]||[];
-state.series=calc(state.selected,state.rows);
-state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
-syncMarketLabel();
-$('oscLoading').textContent=state.rows.length?'Grafik: '+state.symbol+' · '+tfNames[next]+' · son fiyat bölgesi':'Bu zaman diliminin verisi yükleniyor…';
-renderSelected();
+if(next!=='all'&&!timeframes.includes(next))return;
+state.feedTf=next;
 renderAggregate();
-if(!state.rows.length)calculate();
 }
 function setSymbol(next){
 if(!['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','LINKUSDT','AVAXUSDT','HBARUSDT'].includes(String(next).toUpperCase()))return;
