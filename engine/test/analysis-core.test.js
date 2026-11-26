@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calc, ema, pivots, divergences, normalizeKlines, defs, directionalIds, directionalDefs } from "../public/analysis-core.js";
+import { calc, ema, pivots, divergences, normalizeKlines, clusterSignals, defs, directionalIds, directionalDefs } from "../public/analysis-core.js";
 
 function syntheticRows(length=220){
  return Array.from({length},(_,i)=>{
@@ -27,6 +27,39 @@ test("EMA uses an SMA seed and Wilder RSI handles flat markets",()=>{
  const rsi=calc("rsi",flat);
  assert.equal(rsi[14],50);
  assert.equal(rsi.at(-1),50);
+});
+
+test("Wilder RSI matches the published 14-period reference example",()=>{
+ const closes=[44.34,44.09,44.15,43.61,44.33,44.83,45.10,45.42,45.84,46.08,45.89,46.03,45.61,46.28,46.28];
+ const rows=closes.map(c=>({c,h:c+1,l:c-1,v:100}));
+ assert.ok(Math.abs(calc("rsi",rows)[14]-70.464)<0.01);
+});
+
+test("Wilder ATR and ADX use the expected 14-period seed positions",()=>{
+ const flat=Array.from({length:40},()=>({c:100,h:101,l:99,v:10}));
+ const atr=calc("atr",flat);
+ assert.equal(atr[13],null);
+ assert.equal(atr[14],2);
+ const trend=Array.from({length:50},(_,i)=>({c:100+i,h:102+i*2,l:99+i,v:10}));
+ const adx=calc("adx",trend);
+ assert.equal(adx[26],null);
+ assert.ok(Math.abs(adx[27]-100)<1e-8);
+});
+
+test("signal clustering only combines same direction and nearby pivots",()=>{
+ const items=[
+  {id:"rsi",tf:"1h",side:"bull",index:100,time:1000},
+  {id:"mfi",tf:"1h",side:"bull",index:103,time:1030},
+  {id:"cci",tf:"1h",side:"bull",index:104,time:1040},
+  {id:"rsi",tf:"1h",side:"bull",index:99,time:990},
+  {id:"macd",tf:"1h",side:"bear",index:101,time:1010},
+  {id:"obv",tf:"4h",side:"bull",index:101,time:1010}
+ ];
+ const groups=clusterSignals(items,3);
+ const nearby=groups.find(g=>g.tf==="1h"&&g.side==="bull");
+ assert.ok(nearby);
+ assert.deepEqual(nearby.items.map(x=>x.id).sort(),["mfi","rsi"]);
+ assert.equal(groups.length,4);
 });
 
 test("MFI returns a neutral value for a fully flat market",()=>{
@@ -64,6 +97,15 @@ test("confirmed pivot engine identifies regular bullish and bearish divergences"
  const price2=Array(32).fill(10),osc2=Array(32).fill(50);
  price2[5]=20;price2[15]=22;osc2[5]=80;osc2[15]=70;
  assert.ok(divergences(price2,osc2).some(x=>x.type==="Negatif"));
+});
+
+test("pivot engine detects hidden bullish and bearish divergences",()=>{
+ const p=Array(32).fill(10),o=Array(32).fill(50);
+ p[5]=5;p[15]=6;o[5]=30;o[15]=20;
+ assert.ok(divergences(p,o).some(x=>x.type==="Gizli pozitif"));
+ const p2=Array(32).fill(10),o2=Array(32).fill(50);
+ p2[5]=22;p2[15]=20;o2[5]=70;o2[15]=80;
+ assert.ok(divergences(p2,o2).some(x=>x.type==="Gizli negatif"));
 });
 
 test("pivot engine does not treat equal-price plateaus as repeated pivots",()=>{
