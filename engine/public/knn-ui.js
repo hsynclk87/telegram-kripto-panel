@@ -1,5 +1,5 @@
 (()=>{"use strict";
-const API="https://telegram-kripto-analysis-engine.onrender.com/api/knn";
+const API="/api/knn";
 const $=s=>document.querySelector(s),fmt=(v,d=2)=>v==null?"—":(Number(v)*100).toFixed(d)+"%",num=(v,d=2)=>v==null?"—":Number(v).toLocaleString("tr-TR",{maximumFractionDigits:d}),date=v=>new Date(v).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
 const symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT","LINKUSDT","AVAXUSDT","HBARUSDT"];
 const css=`
