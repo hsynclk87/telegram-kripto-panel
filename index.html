@@ -106,7 +106,9 @@ function connect(){clearTimeout(retryTimer);if(stopped)return;const streams=symb
 $('symbol').addEventListener('change',render);render();connect();window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(retryTimer);if(socket)socket.close();});
 })();
 </script>
-<script>
+<script type="module">
+import {defs,directionalIds,directionalDefs,ema,calc,divergences,normalizeKlines,clusterSignals} from 'https://telegram-kripto-analysis-engine.onrender.com/analysis-core.js';
+const API_ORIGIN='https://telegram-kripto-analysis-engine.onrender.com';
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 if(!$('oscLabBtn'))return;
