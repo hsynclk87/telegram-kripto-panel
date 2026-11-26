@@ -219,6 +219,7 @@ function renderResearch(){
  set('ctxTaker',volume?(takerBuy/volume*100).toFixed(1)+'%':'—',volume&&takerBuy/volume>=.52?'research-positive':'research-negative');
 }
 async function loadMarketContext(symbol){
+ const requestId=++marketContextRequest;
  const status=$('ctxSourceStatus');
  if(status)status.textContent='Piyasa kaynakları sorgulanıyor…';
  const put=(id,value,cls)=>{const el=$(id);if(!el)return;el.textContent=value;el.classList.remove('research-positive','research-negative');if(cls)el.classList.add(cls);};
@@ -226,6 +227,7 @@ async function loadMarketContext(symbol){
   const res=await fetch('/api/market-context?symbol='+encodeURIComponent(symbol),{cache:'no-store'});
   if(!res.ok)throw Error('API '+res.status);
   const payload=await res.json(),s=payload.sources||{};
+  if(requestId!==marketContextRequest||symbol!==state.symbol)return;
   const cgIds={BTCUSDT:'bitcoin',ETHUSDT:'ethereum',SOLUSDT:'solana',BNBUSDT:'binancecoin',XRPUSDT:'ripple',DOGEUSDT:'dogecoin',LINKUSDT:'chainlink',AVAXUSDT:'avalanche-2',HBARUSDT:'hedera-hashgraph'};
   const q=encodeURIComponent(symbol);
   const direct={
@@ -262,10 +264,10 @@ async function loadMarketContext(symbol){
   put('ctxFundingHint',fund.length?'Binance Futures · son fonlama':'Binance funding kaynağı yanıt vermedi');
   put('ctxBybitMark',by?fmt(by.markPrice)+' / '+fmt(by.indexPrice):'Bybit verisi yok');
   put('ctxBybitFunding',by?'Funding '+(Number(by.fundingRate)*100).toFixed(4)+'%':'Bybit lineer piyasa verisi yok');
-  const sum=arr=>Array.isArray(arr)?arr.slice(0,20).reduce((n,x)=>n+Number(x[1]),0):0;
-  const bids=sum(bb?.b),asks=sum(bb?.a),fbids=sum(fb?.bids),fasks=sum(fb?.asks),totalBids=bids+fbids,totalAsks=asks+fasks,ratio=totalBids+totalAsks?totalBids/(totalBids+totalAsks):null;
+  const sumNotional=arr=>Array.isArray(arr)?arr.slice(0,20).reduce((n,x)=>n+Number(x[0])*Number(x[1]),0):0;
+  const bids=sumNotional(bb?.b),asks=sumNotional(bb?.a),fbids=sumNotional(fb?.bids),fasks=sumNotional(fb?.asks),totalBids=bids+fbids,totalAsks=asks+fasks,ratio=totalBids+totalAsks?totalBids/(totalBids+totalAsks):null;
   put('ctxBook',ratio==null?'—':(ratio*100).toFixed(1)+'% alış',ratio==null?'':ratio>=.55?'research-positive':ratio<=.45?'research-negative':'');
-  put('ctxBookHint',ratio==null?'Binance / Bybit order book verisi yok':'Binance + Bybit · ilk 20 kademe');
+  put('ctxBookHint',ratio==null?'Binance / Bybit order book verisi yok':'Binance Futures + Bybit Linear · ilk 20 kademe · USDT notional');
   const ls=get('longShortRatio')||[],top=get('topLongShort')||[],taker=get('takerRatio')||[];
   const latest=ls[ls.length-1],latestTop=top[top.length-1],latestTaker=taker[taker.length-1];
   put('ctxLs',latest?Number(latest.longShortRatio).toFixed(2):'—');
@@ -273,9 +275,9 @@ async function loadMarketContext(symbol){
   put('ctxMarketCap',cg?fmt(Number(cg.market_cap)/1e9)+'B':'—');
   put('ctxCgVolume',cg?fmt(Number(cg.total_volume)/1e6)+'M · 24s':'—');
   const errors=Object.entries(s).filter(([,v])=>!v.ok).map(([k])=>k);
-  put('researchUpdated','UTC '+new Date(payload.fetchedAt).toLocaleTimeString('tr-TR'));
+  put('researchUpdated','Son veri '+new Date(payload.fetchedAt).toLocaleTimeString('tr-TR'));
   if(status)status.textContent=errors.length?'Kısmi veri · '+errors.join(', '):'Kaynak yanıtları alındı · Binance · Bybit · CoinGecko';
- }catch(e){if(status)status.textContent='Piyasa verisi alınamadı: '+e.message;}
+ }catch(e){if(requestId===marketContextRequest&&status)status.textContent='Piyasa verisi alınamadı: '+e.message;}
 }
 function render(){renderSelected();renderAggregate();renderResearch();}
 async function calculate(options={}){
@@ -412,7 +414,7 @@ function closeLive(){
 }
 function livePut(id,value,cls){
  const el=$(id);if(!el)return;el.textContent=value;
- if(cls){el.classList.remove('research-positive','research-negative');el.classList.add(cls);}
+ el.classList.remove('research-positive','research-negative');if(cls)el.classList.add(cls);
 }
 function startLive(symbol){
  if(liveSymbol===symbol&&liveSockets.some(ws=>ws.readyState===WebSocket.OPEN))return;
