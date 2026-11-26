@@ -476,8 +476,8 @@ function renderResearch(){
  const ind=[['RSI','rsi'],['Stoch RSI','stochrsi'],['MFI','mfi'],['CCI','cci'],['OBV','obv'],['MACD','macd'],['CMF','cmf'],['ADX','adx'],['VWAP','vwap'],['ATR','atr']];
  const latest=ind.map(([name,id])=>{const a=calc(id,rows),v=a[a.length-1];return name+': '+(v==null?'—':Number(v).toFixed(2));});
  const box=$('researchIndicators');if(box)box.innerHTML=latest.map(x=>'<span class="research-badge">'+x+'</span>').join('');
- const last=rows[rows.length-1],volume=rows.slice(-20).reduce((s,x)=>s+x.v,0),buy=rows.slice(-20).reduce((s,x)=>s+x.tb,0);
- set('ctxTaker',volume?(buy/volume*100).toFixed(1)+'%':'—',volume&&buy/volume>=.52?'research-positive':'research-negative');
+ const last=rows[rows.length-1],volume=rows.slice(-20).reduce((s,x)=>s+x.v,0),takerBuy=rows.slice(-20).reduce((s,x)=>s+x.tb,0);
+ set('ctxTaker',volume?(takerBuy/volume*100).toFixed(1)+'%':'—',volume&&takerBuy/volume>=.52?'research-positive':'research-negative');
 }
 async function loadMarketContext(symbol){
  const status=$('ctxSourceStatus');
