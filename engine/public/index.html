@@ -543,7 +543,7 @@ async function calculate(){
 startLive(state.symbol);const version=++requestVersion;$('oscLoading').textContent='Binance verileri alınıyor; 5 zaman dilimi ve 10 gösterge taranıyor…';$('oscScanStatus').textContent='5 zaman dilimi taranıyor…';$('oscRefresh').disabled=true;
 try{
 const symbol=state.symbol;
-const batches=await Promise.all(timeframes.map(async tf=>{const url='/api/klines?symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(tf)+'&limit=500';const res=await fetch(url,{cache:'no-store'});if(!res.ok){const detail=await res.text().catch(()=> '');throw Error(tf+' veri isteği HTTP '+res.status+(detail?' · '+detail.slice(0,180):''));}const raw=await res.json();if(!Array.isArray(raw)||raw.length<100)throw Error(tf+' için yetersiz mum verisi: '+(Array.isArray(raw)?raw.length:'geçersiz yanıt'));return [tf,raw.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],tb:+x[9]}))];}));
+const batches=await Promise.all(timeframes.map(async tf=>{const url='/api/klines?symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(tf)+'&limit=500';const res=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(15000)});if(!res.ok){const detail=await res.text().catch(()=> '');throw Error(tf+' veri isteği HTTP '+res.status+(detail?' · '+detail.slice(0,180):''));}const raw=await res.json();if(!Array.isArray(raw)||raw.length<100)throw Error(tf+' için yetersiz mum verisi: '+(Array.isArray(raw)?raw.length:'geçersiz yanıt'));return [tf,raw.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],tb:+x[9]}))];}));
 if(version!==requestVersion)return;
 state.rowsByTf=Object.fromEntries(batches);state.aggregate=[];
 for(const [tf,rows] of batches){
@@ -561,7 +561,7 @@ syncMarketLabel();
 state.series=calc(state.selected,state.rows);
 state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
 $('oscLoading').textContent='Güncel fiyat bölgesi · '+symbol+' · '+tfNames[state.tf]+' grafiği';$('oscScanStatus').textContent='5/5 zaman dilimi · 10/10 gösterge tarandı';syncMarketLabel();loadMarketContext(symbol);try{renderSelected();}catch(e){$('oscLoading').textContent='Mum verisi geldi; grafik çizim hatası: '+e.message;}try{renderAggregate();}catch(e){$('oscScanStatus').textContent='Uyumsuzluk listesi hatası: '+e.message;}try{renderResearch();}catch(e){$('oscScanStatus').textContent='Gösterge hesaplama hatası: '+e.message;}
-}catch(e){if(version===requestVersion){$('oscLoading').textContent='Veri alınamadı: '+e.message;$('oscScanStatus').textContent='Tarama başarısız';}}
+}catch(e){if(version===requestVersion){$('oscLoading').textContent='Tarama durdu: '+e.message;$('oscScanStatus').textContent='HATA · '+e.message;}}
 finally{if(version===requestVersion)$('oscRefresh').disabled=false;}
 }
 function syncMarketLabel(){
