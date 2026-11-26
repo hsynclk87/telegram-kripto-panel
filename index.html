@@ -20,7 +20,7 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 .pair{margin-top:30px;font-size:13px;letter-spacing:.16em;color:#8da3ba;font-weight:700}
 .price{margin:18px 0 10px;font-size:clamp(48px,12vw,100px);line-height:1.05;font-weight:750;letter-spacing:-.055em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .unit{font-size:13px;color:#8298b0;letter-spacing:.18em}
-#oscLabBtn{margin-top:28px;background:#10251f;border:1px solid #1e7658;color:#a8f5d6;border-radius:12px;padding:12px 18px;font-weight:700;letter-spacing:.04em}
+#knnOpen{margin-top:10px;background:#101e2b;border:1px solid #3c6e87;color:#bce8f4;border-radius:11px;padding:12px 20px;font-size:12px;font-weight:800;letter-spacing:.08em}#oscLabBtn{margin-top:28px;background:#10251f;border:1px solid #1e7658;color:#a8f5d6;border-radius:12px;padding:12px 18px;font-weight:700;letter-spacing:.04em}
 #oscLab{display:none;position:fixed;inset:0;z-index:5;background:#071018;color:#eaf2fc;text-shadow:none;overflow:auto;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
 #oscLab.show{display:block}.osc-head{position:sticky;top:0;background:#071018;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #203447}
 .osc-head strong{font-size:15px;letter-spacing:.08em}.osc-head button,.osc-actions button{background:#142333;border:1px solid #2b4057;color:#eaf2fc;border-radius:9px;padding:9px 12px}
@@ -49,6 +49,7 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 </select>
 <div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>
 <button id="oscLabBtn">GÖSTERGE LABORATUVARI</button>
+<button id="knnOpen" type="button">KNN MARKET INTELLIGENCE</button>
 </main>
 <section id="oscLab" aria-label="Gösterge ve uyumsuzluk laboratuvarı">
 <div class="osc-head"><strong>OSCILLATOR LAB</strong><button id="oscClose">KAPAT ✕</button></div>
@@ -87,6 +88,6 @@ $('symbol').addEventListener('change',render);render();connect();window.addEvent
 })();
 </script>
 <script src="./oscillator-lab.js?v=12c6987"></script>
-<script src="./knn-ui.js?v=1"></script>
+<script src="./knn-ui.js?v=20261126b"></script>
 </body>
 </html>
