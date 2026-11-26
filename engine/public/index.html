@@ -275,6 +275,7 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
     <div class="research-metric"><small>FUNDING</small><strong id="ctxFunding">—</strong><span id="ctxFundingHint">Son fonlama oranı</span></div>
     <div class="research-metric"><small>BYBIT MARK / INDEX</small><strong id="ctxBybitMark">—</strong><span id="ctxBybitFunding">Bybit lineer piyasa</span></div>
     <div class="research-metric"><small>ORDER BOOK DENGESİ</small><strong id="ctxBook">—</strong><span id="ctxBookHint">İlk 20 kademe · Binance + Bybit</span></div>
+    <div class="research-metric"><small>LONG / SHORT DENGESİ</small><strong id="ctxLs">—</strong><span id="ctxLsHint">Global hesaplar · üst trader · taker oranı</span></div>
     <div class="research-metric"><small>SPOT TAKER ALIMI</small><strong id="ctxTaker">—</strong><span>Son 20 kapanmış mum · hacim vekili</span></div>
     <div class="research-metric"><small>COINGECKO · PİYASA</small><strong id="ctxMarketCap">—</strong><span id="ctxCgVolume">Piyasa değeri ve 24s hacim</span></div>
   </div>
@@ -563,6 +564,12 @@ renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory'
 </body>
 </html>:'—');put('ctxOiChange',oiCh==null?'OI geçmişi yok':(oiCh>=0?'+':'')+oiCh.toFixed(2)+'% · '+oi.length+' saatlik seri',oiCh==null?'':oiCh>=0?'research-positive':'research-negative');
   const fr=fund.length?Number(fund[fund.length-1].fundingRate):null;
+  const ls=get('longShortRatio')||[],topLs=get('topLongShort')||[],takerRatio=get('takerRatio')||[];
+  const lastLs=ls.length?ls[ls.length-1]:null,lastTop=topLs.length?topLs[topLs.length-1]:null,lastTaker=takerRatio.length?takerRatio[takerRatio.length-1]:null;
+  const longShare=lastLs?Number(lastLs.longAccount)/(Number(lastLs.longAccount)+Number(lastLs.shortAccount))*100:null;
+  put('ctxLs',lastLs?Number(lastLs.longShortRatio).toFixed(2)+'x':'—',longShare==null?'':longShare>60?'research-negative':longShare<40?'research-positive':'');
+  put('ctxLsHint',lastLs?'Global long '+longShare.toFixed(1)+'% · top trader '+(lastTop?Number(lastTop.longShortRatio).toFixed(2)+'x':'—')+' · taker '+(lastTaker?Number(lastTaker.buySellRatio).toFixed(2)+'x':'—'):'Long/short serisi yok');
+
   put('ctxFunding',fr==null?'—':(fr*100).toFixed(4)+'%',fr==null?'':fr>=0?'research-positive':'research-negative');
   put('ctxFundingHint',fund.length?'Binance son fonlama · '+new Date(Number(fund[fund.length-1].fundingTime)).toLocaleTimeString('tr-TR'):'Funding verisi yok');
   put('ctxBybitMark',by?usd(by.markPrice)+' / '+usd(by.indexPrice):'—');
