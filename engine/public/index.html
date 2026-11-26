@@ -543,7 +543,7 @@ async function calculate(){
 startLive(state.symbol);const version=++requestVersion;$('oscLoading').textContent='Binance verileri alınıyor; 5 zaman dilimi ve 10 gösterge taranıyor…';$('oscScanStatus').textContent='5 zaman dilimi taranıyor…';$('oscRefresh').disabled=true;
 try{
 const symbol=state.symbol;
-const batches=await Promise.all(timeframes.map(async tf=>{const url='https://api.binance.com/api/v3/klines?symbol='+symbol+'&interval='+tf+'&limit=500';const res=await fetch(url);if(!res.ok)throw Error(tf+' veri yanıtı: '+res.status);const raw=await res.json();return [tf,raw.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],tb:+x[9]}))];}));
+const batches=await Promise.all(timeframes.map(async tf=>{const url='/api/klines?symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(tf)+'&limit=500';const res=await fetch(url);if(!res.ok)throw Error(tf+' veri yanıtı: '+res.status);const raw=await res.json();return [tf,raw.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],tb:+x[9]}))];}));
 if(version!==requestVersion)return;
 state.rowsByTf=Object.fromEntries(batches);state.aggregate=[];
 for(const [tf,rows] of batches){
@@ -584,7 +584,7 @@ renderAggregate();
 if(!state.rows.length)calculate();
 }
 function setSymbol(next){
-if(!symbols.includes(next.toLowerCase()))return;
+if(!['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','LINKUSDT','AVAXUSDT','HBARUSDT'].includes(String(next).toUpperCase()))return;
 state.symbol=next.toUpperCase();
 $('oscSymbol').value=state.symbol;
 $('symbol').value=state.symbol;
