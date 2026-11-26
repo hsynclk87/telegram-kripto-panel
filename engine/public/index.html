@@ -508,7 +508,7 @@ state.rows=state.rowsByTf[state.tf]||state.rowsByTf['15m']||[];
 syncMarketLabel();
 state.series=calc(state.selected,state.rows);
 state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
-$('oscLoading').textContent='Güncel fiyat bölgesi · '+symbol+' · '+tfNames[state.tf]+' grafiği';$('oscScanStatus').textContent='5/5 zaman dilimi · 33/33 gösterge tarandı';syncMarketLabel();render();
+$('oscLoading').textContent='Güncel fiyat bölgesi · '+symbol+' · '+tfNames[state.tf]+' grafiği';$('oscScanStatus').textContent='5/5 zaman dilimi · 33/33 gösterge tarandı';syncMarketLabel();render();loadMarketContext(symbol);
 }catch(e){if(version===requestVersion){$('oscLoading').textContent='Veri alınamadı: '+e.message;$('oscScanStatus').textContent='Tarama başarısız';}}
 finally{if(version===requestVersion)$('oscRefresh').disabled=false;}
 }
