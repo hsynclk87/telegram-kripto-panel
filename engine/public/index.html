@@ -396,8 +396,12 @@ default:out=rsi14;
 }
 return out;};
 function pivots(a,type){const out=[];for(let i=3;i<a.length-3;i++){if(a[i]==null)continue;let ok=true;for(let j=i-3;j<=i+3;j++){if(j===i||a[j]==null)continue;if(type==='low'?a[j]<a[i]:a[j]>a[i]){ok=false;break;}}if(ok)out.push({i,v:a[i]});}return out;}
-function divergences(price,osc){const pl=pivots(price,'low'),ph=pivots(price,'high'),ol=pivots(osc,'low'),oh=pivots(osc,'high'),out=[];function pair(pp,oo,low){for(let k=1;k<pp.length;k++){const a=pp[k-1],b=pp[k];if(b.i-a.i<5||b.i-a.i>80)continue;const x=oo.filter(z=>Math.abs(z.i-a.i)<=3).sort((m,n)=>Math.abs(m.i-a.i)-Math.abs(n.i-a.i))[0],y=oo.filter(z=>Math.abs(z.i-b.i)<=3).sort((m,n)=>Math.abs(m.i-b.i)-Math.abs(n.i-b.i))[0];if(!x||!y||x.i===y.i)continue;const regular=low?(b.v<a.v&&y.v>x.v):(b.v>a.v&&y.v<x.v),hidden=low?(b.v>a.v&&y.v<x.v):(b.v<a.v&&y.v>x.v);if(regular||hidden)out.push({a,b,type:low?(regular?'Pozitif':'Gizli pozitif'):(regular?'Negatif':'Gizli negatif'),confirmed:true});}}
-pair(pl,pivots(osc,'low'),true);pair(ph,pivots(osc,'high'),false);return out.sort((a,b)=>b.b.i-a.b.i);}
+function divergences(price,osc){
+ const pl=pivots(price,'low'),ph=pivots(price,'high'),ol=pivots(osc,'low'),oh=pivots(osc,'high'),out=[];
+ const nearest=(arr,index)=>{let lo=0,hi=arr.length;while(lo<hi){const mid=(lo+hi)>>1;if(arr[mid].i<index)lo=mid+1;else hi=mid;}let best=null,dist=4;for(let k=Math.max(0,lo-1);k<Math.min(arr.length,lo+2);k++){const d=Math.abs(arr[k].i-index);if(d<=3&&d<dist){best=arr[k];dist=d;}}return best;};
+ function pair(pp,oo,low){for(let k=1;k<pp.length;k++){const a=pp[k-1],b=pp[k];if(b.i-a.i<5||b.i-a.i>80)continue;const x=nearest(oo,a.i),y=nearest(oo,b.i);if(!x||!y||x.i===y.i)continue;const regular=low?(b.v<a.v&&y.v>x.v):(b.v>a.v&&y.v<x.v),hidden=low?(b.v>a.v&&y.v<x.v):(b.v<a.v&&y.v>x.v);if(regular||hidden)out.push({a,b,type:low?(regular?'Pozitif':'Gizli pozitif'):(regular?'Negatif':'Gizli negatif'),confirmed:true});}}
+ pair(pl,ol,true);pair(ph,oh,false);return out.sort((a,b)=>b.b.i-a.b.i);
+}
 function draw(){const canvas=$('oscCanvas'),ctx=canvas.getContext('2d'),w=canvas.clientWidth,h=canvas.clientHeight,dpr=devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);const offset=state.rows.length-Math.min(120,state.rows.length),rows=state.rows.slice(-120),vals=state.series.slice(-120),valid=vals.filter(x=>x!=null&&Number.isFinite(x));if(!rows.length||!valid.length){ctx.fillStyle='#8da3ba';ctx.fillText('Gösterge verisi bekleniyor',20,30);return;}const pad={l:12,r:12,t:18,b:22},pw=w-pad.l-pad.r,ph=(h-pad.t-pad.b)*.43,oh=(h-pad.t-pad.b)*.39,top=pad.t,bottom=top+ph+30;const pmin=Math.min(...rows.map(x=>x.l)),pmax=Math.max(...rows.map(x=>x.h)),vmin=Math.min(...valid),vmax=Math.max(...valid),px=i=>pad.l+i/(rows.length-1)*pw,py=v=>top+(pmax-v)/(pmax-pmin||1)*ph,oy=v=>bottom+(vmax-v)/(vmax-vmin||1)*oh;ctx.strokeStyle='#203447';ctx.lineWidth=1;for(let k=0;k<4;k++){const y=top+k*ph/3;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();}const cw=Math.max(2,pw/rows.length*.62);rows.forEach((x,i)=>{const xx=px(i),up=x.c>=x.o,col=up?'#20d99b':'#ff5268';ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xx,py(x.h));ctx.lineTo(xx,py(x.l));ctx.stroke();const y=Math.min(py(x.o),py(x.c)),bh=Math.max(1,Math.abs(py(x.o)-py(x.c)));ctx.fillRect(xx-cw/2,y,cw,bh);});ctx.fillStyle='#8da3ba';ctx.font='10px Arial';ctx.fillText('FİYAT · MUM',pad.l,11);ctx.fillText('GÖSTERGE · '+(defs.find(x=>x[0]===state.selected)?.[1]||''),pad.l,bottom-7);ctx.beginPath();vals.forEach((v,i)=>{if(v==null)return;const y=oy(v);if(i===0)ctx.moveTo(px(i),y);else ctx.lineTo(px(i),y);});ctx.strokeStyle='#42b9ff';ctx.lineWidth=2;ctx.stroke();state.divs.slice(0,8).forEach(d=>{const i=d.b.i-offset,j=d.a.i-offset;if(i<0||j<0||i>=rows.length||j>=rows.length)return;const bullish=d.type.toLowerCase().includes('pozitif'),col=bullish?'#20d99b':'#ff5268';ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px(j),py(state.rows[d.a.i].c));ctx.lineTo(px(i),py(state.rows[d.b.i].c));ctx.stroke();ctx.beginPath();ctx.moveTo(px(j),oy(state.series[d.a.i]));ctx.lineTo(px(i),oy(state.series[d.b.i]));ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.arc(px(i),oy(state.series[d.b.i]),4,0,Math.PI*2);ctx.fill();});ctx.fillStyle='#8da3ba';ctx.fillText(new Date(rows[0].t).toLocaleString('tr-TR'),pad.l,h-4);ctx.fillText(new Date(rows[rows.length-1].t).toLocaleString('tr-TR'),w-125,h-4);}
 function renderList(){const q=($('oscSearch')?.value||'').trim().toLocaleLowerCase('tr-TR'),cat=$('oscCategory')?.value||'all';const items=defs.filter(x=>(cat==='all'||x[2]===cat)&&(!q||(x[1]+' '+x[2]+' '+x[3]).toLocaleLowerCase('tr-TR').includes(q)));$('oscList').innerHTML=items.map(x=>'<button class="osc-item '+(x[0]===state.selected?'active':'')+'" data-id="'+x[0]+'" data-index="'+String(defs.indexOf(x)+1).padStart(2,'0')+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')||'<div class="osc-empty">Bu filtrede gösterge bulunamadı.</div>';$('oscList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{state.selected=b.dataset.id;state.series=calc(state.selected,state.rows);state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);renderSelected();});}
 function renderSelected(){const d=defs.find(x=>x[0]===state.selected);$('oscName').textContent=d[1];$('oscGroup').textContent=d[2];$('oscExplain').textContent=d[3];$('oscTF').textContent=tfNames[state.tf];draw();renderList();}
@@ -590,9 +594,16 @@ const batches=await Promise.all(timeframes.map(async tf=>{
 }));
 if(version!==requestVersion)return;
 state.rowsByTf=Object.fromEntries(batches);state.aggregate=[];
-for(const [tf,rows] of batches){
- for(const d of defs){
-  const series=calc(d[0],rows),hits=divergences(rows.map(x=>x.c),series);
+const priceByTf=new Map(batches.map(([tf,rows])=>[tf,rows.map(x=>x.c)]));
+for(let ti=0;ti<batches.length;ti++){
+ const [tf,rows]=batches[ti],prices=priceByTf.get(tf);
+ for(let di=0;di<defs.length;di++){
+  const d=defs[di];
+  $('oscFeed').innerHTML='<div class="osc-feed-empty"><strong>'+tfNames[tf]+' taranıyor</strong><span>'+d[1]+' hesaplanıyor · '+(ti*defs.length+di+1)+'/50 işlem</span></div>';
+  $('oscScanStatus').textContent=(ti+1)+'/5 zaman dilimi · '+(di+1)+'/10 gösterge · '+tfNames[tf];
+  await new Promise(resolve=>setTimeout(resolve,0));
+  if(version!==requestVersion)return;
+  const series=calc(d[0],rows),hits=divergences(prices,series);
   for(const hit of hits){
    if(hit.b.i<rows.length-9)continue;
    state.aggregate.push({id:d[0],name:d[1],group:d[2],type:hit.type,side:hit.type.toLocaleLowerCase('tr-TR').includes('pozitif')?'bull':'bear',time:rows[hit.b.i].t,index:hit.b.i,tf});
