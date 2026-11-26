@@ -405,7 +405,7 @@ $('oscSymbol').addEventListener('change',e=>setSymbol(e.target.value));
 document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeframe(btn.dataset.tf)));
 $('symbol').addEventListener('change',()=>{if($('oscLab').classList.contains('show'))setSymbol($('symbol').value);});
 $('oscRefresh').onclick=()=>calculate({force:true});
-let liveSockets=[],liveRetry=[],liveTimer=null,slowTimer=null,liveSymbol=null,liveSpot=null,liveMark=null,liveStops=[];
+let liveSockets=[],liveRetry=[],liveTimer=null,slowTimer=null,liveSymbol=null,liveSpot=null,liveMark=null,liveStops=[],nextAutoScanAt=0;
 function closeLive(){
  liveStops.forEach(stop=>{try{stop();}catch{}});liveStops=[];
  liveRetry.forEach(clearTimeout);liveRetry=[];
@@ -466,7 +466,8 @@ function startLive(symbol){
   }
  });
  liveTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show'))loadMarketContext(symbol);},30000);
- slowTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show')&&!scanRunning)calculate();},60000);
+ nextAutoScanAt=(Math.floor(Date.now()/900000)+1)*900000+2500;
+ slowTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show')&&!scanRunning&&Date.now()>=nextAutoScanAt){nextAutoScanAt=(Math.floor(Date.now()/900000)+1)*900000+2500;calculate();}},15000);
 }
 renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory').addEventListener('change',renderList);
 })();
