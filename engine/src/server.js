@@ -85,7 +85,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (!Array.isArray(data) || data.length < 100) throw new Error("Binance yetersiz mum verisi döndürdü: " + (Array.isArray(data) ? data.length : "geçersiz yanıt"));
       console.log("[klines] ok", symbol, interval, data.length, primaryError ? "fallback=api.binance.com" : "source=data-api.binance.vision");
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Server-Time": String(Date.now()) });
       return res.end(JSON.stringify(data));
     } catch (error) {
       console.error("[klines] failed", symbol, interval, String(error.message || error));
