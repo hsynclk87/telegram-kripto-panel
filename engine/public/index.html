@@ -233,6 +233,7 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 @media(max-width:480px){.osc-gauge-card{padding:15px 10px}.gauge-wrap{height:175px}.gauge-arc{width:270px;height:270px}.gauge-needle{height:100px}.gauge-value{font-size:32px}}
 
 /* Unified divergence feed: compact, grouped, glanceable */
+#oscLab .osc-time-switch{grid-template-columns:repeat(6,minmax(0,1fr))!important}
 #oscLab .osc-feed-legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin:0 0 14px;color:#91a3b6;font-size:10px}
 #oscLab .osc-feed-legend span{display:flex;align-items:center;gap:7px}
 #oscLab .osc-feed-legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
@@ -594,9 +595,9 @@ finally{if(version===requestVersion)$('oscRefresh').disabled=false;}
 function syncMarketLabel(){
 const label=state.symbol.replace('USDT',' / USDT');
 $('oscActiveMarket').textContent=label;
-$('oscActiveTF').textContent=tfNames[state.tf];
+$('oscActiveTF').textContent=state.feedTf==='all'?'TÜM ZAMAN DİLİMLERİ':tfNames[state.feedTf];
 $('oscTF').textContent=tfNames[state.tf];
-document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tf===state.tf));
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tf===state.feedTf));
 }
 function setTimeframe(next){
 if(next!=='all'&&!timeframes.includes(next))return;
