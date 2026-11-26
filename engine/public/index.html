@@ -262,7 +262,7 @@ async function loadMarketContext(symbol){
   put('ctxBybitMark',by?fmt(by.markPrice)+' / '+fmt(by.indexPrice):'—');
   put('ctxBybitFunding',by?'Bybit Linear snapshot · Funding '+(Number(by.fundingRate)*100).toFixed(4)+'%':'Bybit mark/index verisi yok');
   const sumNotional=arr=>Array.isArray(arr)?arr.slice(0,20).reduce((n,x)=>n+Number(x[0])*Number(x[1]),0):0;
-  const bids=sumNotional(bb?.b),asks=sumNotional(bb?.a),fbids=sumNotional(fb?.bids),fasks=sumNotional(fb?.asks),totalBids=bids+fbids,totalAsks=asks+fasks,ratio=totalBids+totalAsks?totalBids/(totalBids+totalAsks):null;
+  const bids=sumNotional(bb?.b),asks=sumNotional(bb?.a),fbids=sumNotional(fb?.bids),fasks=sumNotional(fb?.asks),totalBids=bids+fbids,totalAsks=asks+fasks,ratio=totalBids>0&&totalAsks>0?totalBids/(totalBids+totalAsks):null;
   put('ctxBook',ratio==null?'—':(ratio*100).toFixed(1)+'% alış',ratio==null?'':ratio>=.55?'research-positive':ratio<=.45?'research-negative':'');
   put('ctxBookHint',ratio==null?'Binance / Bybit order book verisi yok':'Binance Futures + Bybit Linear · ilk 20 kademe · USDT notional');
   const ls=get('longShortRatio')||[],top=get('topLongShort')||[],taker=get('takerRatio')||[];
@@ -426,7 +426,7 @@ function startLive(symbol){
  const fmt=x=>Number(x).toLocaleString('en-US',{maximumFractionDigits:8});
  const depthRatio=(bids,asks)=>{
   const notional=levels=>(Array.isArray(levels)?levels.slice(0,20):[]).reduce((n,x)=>n+Number(x[0])*Number(x[1]),0);
-  const bid=notional(bids),ask=notional(asks);return bid+ask?bid/(bid+ask):null;
+  const bid=notional(bids),ask=notional(asks);return bid>0&&ask>0?bid/(bid+ask):null;
  };
  const connect=(url,handler)=>{
   let stopped=false,ws=null,timer=null;
@@ -447,7 +447,7 @@ function startLive(symbol){
    liveSpot=Number(d.p);livePut('ctxSpotPrice',fmt(liveSpot));
    if(liveMark&&liveSpot){const p=(liveMark/liveSpot-1)*100;livePut('ctxPremium',(p>=0?'+':'')+p.toFixed(3)+'%',p>=0?'research-positive':'research-negative');}
   }else if(d.e==='bookTicker'){
-   const bid=Number(d.b)*Number(d.B),ask=Number(d.a)*Number(d.A),r=bid+ask?bid/(bid+ask):null;
+   const bid=Number(d.b)*Number(d.B),ask=Number(d.a)*Number(d.A),r=bid>0&&ask>0?bid/(bid+ask):null;
    if(r!==null){livePut('ctxBook',(r*100).toFixed(1)+'% alış',r>=.55?'research-positive':r<=.45?'research-negative':'');livePut('ctxBookHint','Binance Spot · en iyi kademe · USDT notional');}
   }else if(d.lastUpdateId||d.e==='depthUpdate'){
    const r=depthRatio(d.bids||d.b,d.asks||d.a);
