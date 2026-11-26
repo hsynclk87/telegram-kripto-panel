@@ -44,7 +44,17 @@ const server = http.createServer(async (req, res) => {
   }
   if (path === "/health") {
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-    return res.end(JSON.stringify({ ok: true, service: "telegram-live-price-mini-app", modules: [] }));
+    return res.end(JSON.stringify({ ok: true, service: "telegram-live-price-mini-app", modules: ["live-price","oscillators","market-context","knn","walk-forward-backtest"] }));
+  }
+  if (path === "/api/market-context") {
+    const symbol = String(url.searchParams.get("symbol") || "BTCUSDT").toUpperCase();
+    if (!ALLOWED.has(symbol)) {
+      res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, error: "Unsupported symbol" }));
+    }
+    const result = await marketContext(symbol);
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+    return res.end(JSON.stringify({ ok: true, symbol, fetchedAt: new Date().toISOString(), sources: result }));
   }
   if (path !== "/" && path !== "/index.html") {
     res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
