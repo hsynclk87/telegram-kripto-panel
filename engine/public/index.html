@@ -406,62 +406,66 @@ $('oscSymbol').addEventListener('change',e=>setSymbol(e.target.value));
 document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeframe(btn.dataset.tf)));
 $('symbol').addEventListener('change',()=>{if($('oscLab').classList.contains('show'))setSymbol($('symbol').value);});
 $('oscRefresh').onclick=()=>calculate({force:true});
-let liveSockets=[],liveRetry=[],liveTimer=null,slowTimer=null,liveSymbol=null,liveSpot=null,liveMark=null;
+let liveSockets=[],liveRetry=[],liveTimer=null,slowTimer=null,liveSymbol=null,liveSpot=null,liveMark=null,liveStops=[];
 function closeLive(){
- liveSockets.forEach(ws=>{try{ws.close();}catch{}});
- liveSockets=[];liveRetry.forEach(clearTimeout);liveRetry=[];
+ liveStops.forEach(stop=>{try{stop();}catch{}});liveStops=[];
+ liveRetry.forEach(clearTimeout);liveRetry=[];
+ liveSockets.forEach(ws=>{try{ws.onclose=null;ws.close();}catch{}});liveSockets=[];
  if(liveTimer)clearInterval(liveTimer);if(slowTimer)clearInterval(slowTimer);
+ liveTimer=null;slowTimer=null;liveSymbol=null;liveSpot=null;liveMark=null;
 }
 function livePut(id,value,cls){
  const el=$(id);if(!el)return;el.textContent=value;
  el.classList.remove('research-positive','research-negative');if(cls)el.classList.add(cls);
 }
 function startLive(symbol){
- if(liveSymbol===symbol&&liveSockets.some(ws=>ws.readyState===WebSocket.OPEN))return;
+ if(liveSymbol===symbol&&liveSockets.some(ws=>ws.readyState===WebSocket.OPEN||ws.readyState===WebSocket.CONNECTING))return;
  closeLive();liveSymbol=symbol;liveSpot=null;liveMark=null;
  const low=symbol.toLowerCase();
  const streams=low+'@trade/'+low+'@bookTicker/'+low+'@depth20@100ms';
  const futures=low+'@markPrice@1s/'+low+'@depth20@100ms';
  const fmt=x=>Number(x).toLocaleString('en-US',{maximumFractionDigits:8});
+ const depthRatio=(bids,asks)=>{
+  const notional=levels=>(Array.isArray(levels)?levels.slice(0,20):[]).reduce((n,x)=>n+Number(x[0])*Number(x[1]),0);
+  const bid=notional(bids),ask=notional(asks);return bid+ask?bid/(bid+ask):null;
+ };
  const connect=(url,handler)=>{
-  let stopped=false,ws;
+  let stopped=false,ws=null,timer=null;
+  const schedule=()=>{if(stopped||liveSymbol!==symbol)return;timer=setTimeout(open,1800);liveRetry.push(timer);};
   const open=()=>{
    if(stopped||liveSymbol!==symbol)return;
-   ws=new WebSocket(url);liveSockets.push(ws);
-   ws.onopen=()=>{livePut('ctxSourceStatus','CANLI · Binance Spot + Futures WebSocket');};
-   ws.onmessage=e=>{let packet;try{packet=JSON.parse(e.data);}catch{return;}handler(packet.data||packet);};
+   try{ws=new WebSocket(url);liveSockets.push(ws);}catch{schedule();return;}
+   ws.onopen=()=>{if(!stopped)livePut('ctxSourceStatus','CANLI · Binance Spot + Futures WebSocket');};
+   ws.onmessage=e=>{if(stopped)return;let packet;try{packet=JSON.parse(e.data);}catch{return;}handler(packet.data||packet);};
    ws.onerror=()=>{try{ws.close();}catch{}};
-   ws.onclose=()=>{if(stopped||liveSymbol!==symbol)return;const t=setTimeout(open,1800);liveRetry.push(t);};
+   ws.onclose=()=>{liveSockets=liveSockets.filter(x=>x!==ws);schedule();};
   };
-  open();
-  return()=>{stopped=true;if(ws)try{ws.close();}catch{}};
+  const stop=()=>{stopped=true;if(timer)clearTimeout(timer);if(ws){ws.onclose=null;try{ws.close();}catch{}}};
+  liveStops.push(stop);open();
  };
  connect('wss://stream.binance.com:9443/stream?streams='+streams,d=>{
   if(d.e==='trade'){
    liveSpot=Number(d.p);livePut('ctxSpotPrice',fmt(liveSpot));
-   if(liveMark){const p=(liveMark/liveSpot-1)*100;livePut('ctxPremium',(p>=0?'+':'')+p.toFixed(3)+'%',p>=0?'research-positive':'research-negative');}
+   if(liveMark&&liveSpot){const p=(liveMark/liveSpot-1)*100;livePut('ctxPremium',(p>=0?'+':'')+p.toFixed(3)+'%',p>=0?'research-positive':'research-negative');}
   }else if(d.e==='bookTicker'){
-   const bid=Number(d.B),ask=Number(d.A),sum=bid+ask,r=sum?bid/sum:null;
-   if(r!==null){livePut('ctxBook',(r*100).toFixed(1)+'% alış');livePut('ctxBookHint','Canlı en iyi alış/satış miktarı · Binance Spot');}
-  }else if(d.e==='depthUpdate'||d.lastUpdateId){
-   const bids=d.b||[],asks=d.a||[],bv=bids.reduce((n,x)=>n+Number(x[1]),0),av=asks.reduce((n,x)=>n+Number(x[1]),0),r=bv+av?bv/(bv+av):null;
-   if(r!==null){livePut('ctxBook',(r*100).toFixed(1)+'% alış',r>=.55?'research-positive':r<=.45?'research-negative':'');livePut('ctxBookHint','Canlı derinlik · Binance Spot');}
+   const bid=Number(d.b)*Number(d.B),ask=Number(d.a)*Number(d.A),r=bid+ask?bid/(bid+ask):null;
+   if(r!==null){livePut('ctxBook',(r*100).toFixed(1)+'% alış',r>=.55?'research-positive':r<=.45?'research-negative':'');livePut('ctxBookHint','Binance Spot · en iyi kademe · USDT notional');}
+  }else if(d.lastUpdateId||d.e==='depthUpdate'){
+   const r=depthRatio(d.bids||d.b,d.asks||d.a);
+   if(r!==null){livePut('ctxBook',(r*100).toFixed(1)+'% alış',r>=.55?'research-positive':r<=.45?'research-negative':'');livePut('ctxBookHint','Binance Spot · ilk 20 kademe · USDT notional');}
   }
  });
  connect('wss://fstream.binance.com/stream?streams='+futures,d=>{
   if(d.e==='markPriceUpdate'){
-   liveMark=Number(d.p);
-   livePut('ctxBybitMark','Binance Mark '+fmt(liveMark)+' · index '+fmt(d.i));
+   liveMark=Number(d.p);livePut('ctxBybitMark',fmt(liveMark)+' / '+fmt(d.i));
    if(liveSpot){const p=(liveMark/liveSpot-1)*100;livePut('ctxPremium',(p>=0?'+':'')+p.toFixed(3)+'%',p>=0?'research-positive':'research-negative');}
    livePut('ctxFunding',(Number(d.r)*100).toFixed(4)+'%');
    livePut('ctxFundingHint','Binance Futures · sonraki fonlama '+new Date(Number(d.T)).toLocaleTimeString('tr-TR'));
-  }else if(d.e==='depthUpdate'||d.lastUpdateId){
-   const bids=d.b||[],asks=d.a||[],bv=bids.reduce((n,x)=>n+Number(x[1]),0),av=asks.reduce((n,x)=>n+Number(x[1]),0),r=bv+av?bv/(bv+av):null;
-   if(r!==null){livePut('ctxBook',(r*100).toFixed(1)+'% alış',r>=.55?'research-positive':r<=.45?'research-negative':'');livePut('ctxBookHint','Canlı derinlik · Binance Futures');}
+  }else if(d.lastUpdateId||d.e==='depthUpdate'){
+   const r=depthRatio(d.bids||d.b,d.asks||d.a);
+   if(r!==null){livePut('ctxBook',(r*100).toFixed(1)+'% alış',r>=.55?'research-positive':r<=.45?'research-negative':'');livePut('ctxBookHint','Binance Futures · ilk 20 kademe · USDT notional');}
   }
  });
- if(liveTimer)clearInterval(liveTimer);
- if(slowTimer)clearInterval(slowTimer);
  liveTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show'))loadMarketContext(symbol);},30000);
  slowTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show')&&!scanRunning)calculate();},60000);
 }
