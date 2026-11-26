@@ -226,16 +226,28 @@ export function clusterSignals(items,maxDistance=3){
  }
  return groups.sort((a,b)=>b.time-a.time);
 }
-export function normalizeKlines(raw,now=Date.now()){
+export function normalizeKlines(raw,now=Date.now(),expectedIntervalMs=null){
  if(!Array.isArray(raw))throw new Error('Binance mum yanıtı dizi değil');
  const parsed=raw.map(x=>({t:Number(x[0]),o:Number(x[1]),h:Number(x[2]),l:Number(x[3]),c:Number(x[4]),v:Number(x[5]),closeTime:Number(x[6]),quoteVolume:Number(x[7]),trades:Number(x[8]),tb:Number(x[9]),takerBuyQuoteVolume:Number(x[10])}));
- if(parsed.some(x=>![x.t,x.o,x.h,x.l,x.c,x.v,x.closeTime,x.quoteVolume,x.tb,x.takerBuyQuoteVolume].every(Number.isFinite)))throw new Error('Mum verisinde geçersiz sayısal alan var');
+ if(parsed.some(x=>![x.t,x.o,x.h,x.l,x.c,x.v,x.closeTime,x.quoteVolume,x.trades,x.tb,x.takerBuyQuoteVolume].every(Number.isFinite)))throw new Error('Mum verisinde geçersiz sayısal alan var');
  parsed.sort((a,b)=>a.t-b.t);
- const unique=parsed.filter((x,i)=>i===0||x.t!==parsed[i-1].t);
- for(const x of unique){
-  if(x.t<=0||x.closeTime<x.t||x.o<=0||x.c<=0||x.l<=0||x.h<x.l||x.h<Math.max(x.o,x.c)||x.l>Math.min(x.o,x.c)||x.v<0||x.quoteVolume<0||x.tb<0||x.tb>x.v*1.000001||x.takerBuyQuoteVolume<0||x.takerBuyQuoteVolume>x.quoteVolume*1.000001)throw new Error('OHLCV tutarsızlığı · '+new Date(x.t).toISOString());
+ const unique=[];
+ for(const candle of parsed){
+  const previous=unique.at(-1);
+  if(previous&&candle.t===previous.t){
+   if(['o','h','l','c','v','closeTime','quoteVolume','trades','tb','takerBuyQuoteVolume'].some(key=>candle[key]!==previous[key]))throw new Error('Çakışan mükerrer mum · '+new Date(candle.t).toISOString());
+   continue;
+  }
+  unique.push(candle);
+ }
+ for(let i=0;i<unique.length;i++){
+  const x=unique[i];
+  if(x.t<=0||x.closeTime<x.t||x.o<=0||x.c<=0||x.l<=0||x.h<x.l||x.h<Math.max(x.o,x.c)||x.l>Math.min(x.o,x.c)||x.v<0||x.quoteVolume<0||!Number.isInteger(x.trades)||x.trades<0||x.tb<0||x.tb>x.v*1.000001||x.takerBuyQuoteVolume<0||x.takerBuyQuoteVolume>x.quoteVolume*1.000001)throw new Error('OHLCV tutarsızlığı · '+new Date(x.t).toISOString());
+  if(expectedIntervalMs&&x.closeTime!==x.t+expectedIntervalMs-1)throw new Error('Mum kapanış zamanı beklenen aralıkla uyuşmuyor · '+new Date(x.t).toISOString());
+  if(expectedIntervalMs&&i>0&&x.t-unique[i-1].t!==expectedIntervalMs)throw new Error('Mum serisinde zaman boşluğu var · '+new Date(x.t).toISOString());
  }
  const closed=unique.filter(x=>x.closeTime<now);
  if(closed.length<100)throw new Error('Yeterli kapanmış mum yok · '+closed.length+'/100');
+ if(expectedIntervalMs&&now-closed.at(-1).closeTime>expectedIntervalMs*1.5)throw new Error('Binance mum verisi güncel değil · son kapanış eski');
  return closed;
 }
