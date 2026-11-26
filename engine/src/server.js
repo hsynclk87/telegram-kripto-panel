@@ -49,6 +49,24 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
     return res.end(JSON.stringify({ ok: true, service: "telegram-live-price-mini-app", modules: ["live-price","oscillators","market-context","knn","walk-forward-backtest"] }));
   }
+  if (path === "/api/klines") {
+    const symbol = String(url.searchParams.get("symbol") || "BTCUSDT").toUpperCase();
+    const interval = String(url.searchParams.get("interval") || "15m");
+    const limit = Math.min(500, Math.max(100, Number(url.searchParams.get("limit") || 500)));
+    const allowedIntervals = new Set(["15m","1h","4h","1d","1w"]);
+    if (!ALLOWED.has(symbol) || !allowedIntervals.has(interval) || !Number.isInteger(limit)) {
+      res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, error: "Unsupported symbol, interval, or limit" }));
+    }
+    try {
+      const data = await jsonGet("https://api.binance.com/api/v3/klines?symbol=" + encodeURIComponent(symbol) + "&interval=" + encodeURIComponent(interval) + "&limit=" + limit);
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+      return res.end(JSON.stringify(data));
+    } catch (error) {
+      res.writeHead(502, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, error: String(error.message || error) }));
+    }
+  }
   if (path === "/api/market-context") {
     const symbol = String(url.searchParams.get("symbol") || "BTCUSDT").toUpperCase();
     if (!ALLOWED.has(symbol)) {
