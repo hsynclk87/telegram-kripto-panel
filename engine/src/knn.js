@@ -19,7 +19,7 @@ function features(r){
   const rw=rsi.slice(i-13,i+1);if(rw.some(x=>x===null))continue;
   const lo=Math.min(...rw),hi=Math.max(...rw),st=(rsi[i]-lo)/Math.max(hi-lo,1e-9);
   let pos=0,neg=0,obv=0,vol=0,pv=0,vv=0;
-  for(let j=i-19;j<=i;j++){const flow=tp[j]*r[j].v;if(j&&tp[j]>tp[j-1])pos+=flow;else if(j&&tp[j]<tp[j-1])neg+=flow;if(j&&r[j].c>r[j-1].c)obv+=r[j].v;else if(j&&r[j].c<r[j-1].c)obv-=r[j].v;vol+=r[j].v;pv+=flow;vv+=r[j].v}
+  for(let j=i-19;j<=i;j++){const flow=tp[j]*r[j].v;if(j>=i-13){if(j&&tp[j]>tp[j-1])pos+=flow;else if(j&&tp[j]<tp[j-1])neg+=flow}if(j&&r[j].c>r[j-1].c)obv+=r[j].v;else if(j&&r[j].c<r[j-1].c)obv-=r[j].v;vol+=r[j].v;pv+=flow;vv+=r[j].v}
   let tpMean=avg(tp,i,20),dev=0;for(let j=i-19;j<=i;j++)dev+=Math.abs(tp[j]-tpMean);
   const cci=(tp[i]-tpMean)/Math.max(.015*dev/20,1e-9),mfi=neg===0?100:100-100/(1+pos/neg),atrPct=avg(tr,i,14)/r[i].c,vwap=pv/Math.max(vv,1e-12),rel=r[i].v/Math.max(avg(r.map(x=>x.v),i-1,20),1e-12),roc=r[i].c/r[i-10].c-1,body=(r[i].c-r[i].o)/Math.max(atrPct*r[i].c,1e-9);
   f[i]=[rsi[i]/100,st,mfi/100,clamp(cci/300,-2,2),clamp(obv/Math.max(vol,1e-12),-1,1),clamp((adx[i]||0)/100,0,1),atrPct,(r[i].c-vwap)/vwap,clamp(rel,0,5)/5,clamp(roc,-.15,.15),clamp(body,-3,3)/3]
