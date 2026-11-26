@@ -46,8 +46,8 @@
 <div class="osc-market-line"><div><small>AKTİF ANALİZ</small><strong id="oscActiveMarket">BTC / USDT</strong></div><span id="oscActiveTF">15 DAKİKA</span></div>
 <div class="osc-gauge-card"><div class="gauge-heading"><b>GÖSTERGE YÖN DENGESİ</b><span id="gaugeState">HESAPLANIYOR</span></div><div class="gauge-wrap"><div class="gauge-arc"><div class="gauge-inner"></div><div class="gauge-needle" id="gaugeNeedle"></div><div class="gauge-hub"></div></div><div class="gauge-value" id="gaugeValue">—</div><div class="gauge-scale"><span>GÜÇLÜ SATIŞ</span><span>NÖTR</span><span>GÜÇLÜ ALIŞ</span></div></div><div class="gauge-caption" id="gaugeCaption">Sekiz yönlü gösterge eşit oyla değerlendirilir. Bu değer olasılık veya başarı oranı değildir.</div><div class="gauge-votes"><span id="gaugeBull">ALICI 0</span><span id="gaugeNeutral">NÖTR 0</span><span id="gaugeBear">SATICI 0</span></div></div>
 <div class="osc-summary">
-<div class="osc-stat"><small>POZİTİF UYUMSUZLUK</small><strong id="oscBullCount">—</strong><span>Alıcı yönlü</span></div>
-<div class="osc-stat"><small>NEGATİF UYUMSUZLUK</small><strong id="oscBearCount">—</strong><span>Satıcı yönlü</span></div>
+<div class="osc-stat"><small>POZİTİF UYUMSUZLUK</small><strong id="oscBullCount">—</strong><span id="oscBullLabel">Alıcı yönlü</span></div>
+<div class="osc-stat"><small>NEGATİF UYUMSUZLUK</small><strong id="oscBearCount">—</strong><span id="oscBearLabel">Satıcı yönlü</span></div>
 <div class="osc-stat"><small>TOPLAM TESPİT</small><strong id="oscTotalCount">—</strong><span>8 yönlü · 2 bağlam göstergesi</span></div></div>
 <div class="osc-card osc-aggregate"><div class="osc-aggregate-head"><div><b>UYUMSUZLUK AKIŞI</b><small>8 yönlü gösterge · Aynı zaman diliminde ve en fazla 3 mum yakınlığındaki pivotlar birlikte gruplanır</small></div><span class="osc-chip" id="oscAggregateTF">CANLI TARAMA</span></div>
 <div class="osc-feed-legend"><span><i class="bull-dot"></i> Pozitif · fiyat dip yaparken gösterge güçleniyor</span><span><i class="bear-dot"></i> Negatif · fiyat tepe yaparken gösterge zayıflıyor</span></div>
@@ -63,7 +63,7 @@
     <div class="research-metric"><small>FUTURES PREMIUM</small><strong id="ctxPremium">—</strong><span id="ctxFuturesChange">Spot / vadeli fiyat farkı</span></div>
     <div class="research-metric"><small>AÇIK POZİSYON · 1S</small><strong id="ctxOi">—</strong><span id="ctxOiChange">Son 30 saatlik seri</span></div>
     <div class="research-metric"><small>FUNDING</small><strong id="ctxFunding">—</strong><span id="ctxFundingHint">Son fonlama oranı</span></div>
-    <div class="research-metric"><small>BINANCE FUTURES · MARK / INDEX</small><strong id="ctxBybitMark">—</strong><span id="ctxBybitFunding">Binance Futures mark price akışı</span></div>
+    <div class="research-metric"><small>MARK / INDEX · KAYNAK ALTA YAZILIR</small><strong id="ctxBybitMark">—</strong><span id="ctxBybitFunding">Bybit Linear · veri bekleniyor</span></div>
     <div class="research-metric"><small>ORDER BOOK DENGESİ</small><strong id="ctxBook">—</strong><span id="ctxBookHint">İlk 20 kademe · Binance + Bybit</span></div>
     <div class="research-metric"><small>LONG / SHORT DENGESİ</small><strong id="ctxLs">—</strong><span id="ctxLsHint">Global hesaplar · üst trader · taker oranı</span></div>
     <div class="research-metric"><small>SPOT TAKER ALIMI</small><strong id="ctxTaker">—</strong><span>Son 20 kapanmış mum · hacim vekili</span></div>
@@ -88,7 +88,7 @@
 </div>
 </section>
 <script type="module">
-import {defs,directionalIds,directionalDefs,ema,calc,divergences,normalizeKlines} from './analysis-core.js';
+import {defs,directionalIds,directionalDefs,ema,calc,divergences,normalizeKlines,clusterSignals} from './analysis-core.js';
 (()=>{'use strict';
 const $=id=>document.getElementById(id),symbols=['btcusdt','ethusdt','solusdt','bnbusdt','xrpusdt','dogeusdt','linkusdt','avaxusdt','hbarusdt'];
 const prices=Object.create(null);let socket=null,retryTimer=null,retryDelay=500,stopped=false,matrixTone='#00e676',lastSelectedPrice=null;
@@ -117,13 +117,7 @@ function renderSelected(){const d=defs.find(x=>x[0]===state.selected);$('oscName
 function renderAggregate(){
  const all=state.aggregate.slice().sort((a,b)=>b.index-a.index);
  const visible=state.feedTf==='all'?all:all.filter(x=>x.tf===state.feedTf);
- const groups=[];
- for(const item of visible){
-  let group=groups.find(g=>g.tf===item.tf&&g.side===item.side&&Math.abs(g.anchorIndex-item.index)<=3);
-  if(!group){group={tf:item.tf,side:item.side,anchorIndex:item.index,time:item.time,items:[]};groups.push(group);}
-  if(!group.items.some(x=>x.id===item.id))group.items.push(item);
-  group.time=Math.max(group.time,item.time);
- }
+ const groups=clusterSignals(visible,3);
  groups.sort((a,b)=>b.time-a.time);
  const bulls=groups.filter(x=>x.side==='bull'),bears=groups.filter(x=>x.side==='bear');
  $('oscBullCount').textContent=bulls.length;$('oscBearCount').textContent=bears.length;$('oscTotalCount').textContent=groups.length;
@@ -178,7 +172,9 @@ function runKnnResearch(rows){
  return {current,trades:trades.length,wins,winRate:trades.length?wins/trades.length:0,netReturn:equity-1,maxDD};
 }
 function renderResearch(){
- const rows=(state.feedTf!=='all'&&state.rowsByTf[state.feedTf])?state.rowsByTf[state.feedTf]:(state.rowsByTf['15m']||state.rows||[]);
+ const preferredTf=state.feedTf==='all'?'15m':state.feedTf;
+ const analysisTf=state.rowsByTf[preferredTf]?preferredTf:(state.rowsByTf['15m']?'15m':Object.keys(state.rowsByTf)[0]);
+ const rows=state.rowsByTf[analysisTf]||state.rows||[];
  if(rows.length<100)return;
  const specs=[
   ['RSI','rsi',v=>v>55?1:v<45?-1:0],
@@ -197,7 +193,7 @@ function renderResearch(){
  const needle=$('gaugeNeedle');if(needle)needle.style.transform='translateX(-50%) rotate('+angle+'deg)';
  const gv=$('gaugeValue');if(gv)gv.textContent=bounded+'/100';
  const gs=$('gaugeState');if(gs){gs.textContent=bounded>=65?'ALICI AĞIRLIKLI':bounded<=35?'SATICI AĞIRLIKLI':'DENGELİ';gs.style.color=bounded>=65?'#65dfb5':bounded<=35?'#f18a98':'#e1c47a';}
- const caption=$('gaugeCaption');if(caption)caption.textContent=(state.feedTf==='all'?'15 dakika referansında':tfNames[state.feedTf]+' referansında')+' · '+buy+' alıcı / '+sell+' satıcı / '+neutral+' nötr oy. ADX '+(Number.isFinite(adx)?adx.toFixed(1):'—')+' · ATR '+(Number.isFinite(atr)&&price>0?(atr/price*100).toFixed(2)+'%':'—')+'. Denge puanı olasılık değildir.';
+ const caption=$('gaugeCaption');if(caption)caption.textContent=(tfNames[analysisTf]+' referansında')+' · '+buy+' alıcı / '+sell+' satıcı / '+neutral+' nötr oy. ADX '+(Number.isFinite(adx)?adx.toFixed(1):'—')+' · ATR '+(Number.isFinite(atr)&&price>0?(atr/price*100).toFixed(2)+'%':'—')+'. Denge puanı olasılık değildir.';
  const gb=$('gaugeBull');if(gb)gb.textContent='ALICI '+buy;const gn=$('gaugeNeutral');if(gn)gn.textContent='NÖTR '+neutral;const gr=$('gaugeBear');if(gr)gr.textContent='SATICI '+sell;
  const m=runKnnResearch(rows),fmtPct=x=>((x*100)>=0?'+':'')+(x*100).toFixed(2)+'%';
  const set=(id,v,cls)=>{const el=$(id);if(!el)return;el.textContent=v;el.classList.remove('research-positive','research-negative');if(cls)el.classList.add(cls);};
@@ -207,7 +203,7 @@ function renderResearch(){
   set('knnReturn',fmtPct(m.current.expected),m.current.expected>=0?'research-positive':'research-negative');
   set('knnDecision',m.current.up>=.62?'YUKARI':m.current.down>=.62?'AŞAĞI':'NÖTR',m.current.up>=.62?'research-positive':m.current.down>=.62?'research-negative':'');
   set('knnSamples',m.current.n+' geçmiş örnek · '+m.current.neighbors+' komşu','');
- }else{set('knnDecision','VERİ AZ','');set('knnSamples','Model için yeterli örnek yok','');}
+ }else{set('knnUp','—','');set('knnDown','—','');set('knnReturn','—','');set('knnDecision','VERİ AZ','');set('knnSamples','Model için yeterli örnek yok','');}
  set('btReturn',fmtPct(m.netReturn),m.netReturn>=0?'research-positive':'research-negative');
  set('btWin',(m.winRate*100).toFixed(1)+'%','');
  set('btTrades',m.trades+' işlem · '+m.wins+' kazanç','');
@@ -248,6 +244,7 @@ async function loadMarketContext(symbol){
    try{const rr=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(7000)});if(!rr.ok)throw Error('HTTP '+rr.status);const data=await rr.json();if(key.startsWith('bybit')&&data.retCode!==0)throw Error(data.retMsg||'Bybit error');s[key]={ok:true,data,via:'browser-fallback'};}
    catch(error){s[key]={ok:false,error:String(error.message||error)};}
   }));
+  if(requestId!==marketContextRequest||symbol!==state.symbol)return;
   const get=k=>s[k]?.ok?s[k].data:null;
   const spot=get('spot24h'),fut=get('futures24h'),oi=get('openInterest')||[],fund=get('funding')||[],fb=get('futuresBook');
   const by=get('bybitTicker')?.result?.list?.[0],bb=get('bybitBook')?.result,cg=get('coingecko')?.[0];
@@ -262,8 +259,8 @@ async function loadMarketContext(symbol){
   put('ctxOiChange',oiChange==null?'OI geçmişi yok':(oiChange>=0?'+':'')+oiChange.toFixed(2)+'%',oiChange==null?'':oiChange>=0?'research-positive':'research-negative');
   put('ctxFunding',fund.length?(Number(fund[fund.length-1].fundingRate)*100).toFixed(4)+'%':'Funding verisi yok');
   put('ctxFundingHint',fund.length?'Binance Futures · son fonlama':'Binance funding kaynağı yanıt vermedi');
-  put('ctxBybitMark',by?fmt(by.markPrice)+' / '+fmt(by.indexPrice):'Bybit verisi yok');
-  put('ctxBybitFunding',by?'Funding '+(Number(by.fundingRate)*100).toFixed(4)+'%':'Bybit lineer piyasa verisi yok');
+  put('ctxBybitMark',by?fmt(by.markPrice)+' / '+fmt(by.indexPrice):'—');
+  put('ctxBybitFunding',by?'Bybit Linear snapshot · Funding '+(Number(by.fundingRate)*100).toFixed(4)+'%':'Bybit mark/index verisi yok');
   const sumNotional=arr=>Array.isArray(arr)?arr.slice(0,20).reduce((n,x)=>n+Number(x[0])*Number(x[1]),0):0;
   const bids=sumNotional(bb?.b),asks=sumNotional(bb?.a),fbids=sumNotional(fb?.bids),fasks=sumNotional(fb?.asks),totalBids=bids+fbids,totalAsks=asks+fasks,ratio=totalBids+totalAsks?totalBids/(totalBids+totalAsks):null;
   put('ctxBook',ratio==null?'—':(ratio*100).toFixed(1)+'% alış',ratio==null?'':ratio>=.55?'research-positive':ratio<=.45?'research-negative':'');
@@ -457,7 +454,7 @@ function startLive(symbol){
  });
  connect('wss://fstream.binance.com/stream?streams='+futures,d=>{
   if(d.e==='markPriceUpdate'){
-   liveMark=Number(d.p);livePut('ctxBybitMark',fmt(liveMark)+' / '+fmt(d.i));
+   liveMark=Number(d.p);livePut('ctxBybitMark',fmt(liveMark)+' / '+fmt(d.i));livePut('ctxBybitFunding','Binance Futures · canlı mark/index');
    if(liveSpot){const p=(liveMark/liveSpot-1)*100;livePut('ctxPremium',(p>=0?'+':'')+p.toFixed(3)+'%',p>=0?'research-positive':'research-negative');}
    livePut('ctxFunding',(Number(d.r)*100).toFixed(4)+'%');
    livePut('ctxFundingHint','Binance Futures · sonraki fonlama '+new Date(Number(d.T)).toLocaleTimeString('tr-TR'));
