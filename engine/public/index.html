@@ -349,8 +349,8 @@ const defs=[
 ['adx','ADX','Trend','Trendin gücünü ölçer; 25 üzeri belirgin trend, 20 altı zayıf trend kabul edilir.'],
 ['vwap','VWAP Sapması','Fiyat Referansı','Fiyatın seans VWAP değerine göre yüzde konumunu gösterir.'],
 ['atr','ATR','Volatilite','Piyasanın ortalama gerçek hareket aralığını ölçer; yön sinyali değildir.']
-];
-const state={rows:[],rowsByTf:{},selected:'rsi',tf:'15m',feedTf:'all',symbol:'BTCUSDT',series:[],divs:[],aggregate:[]};let requestVersion=0; const timeframes=['15m','1h','4h','1d','1w']; const tfNames={'15m':'15 DAKİKA','1h':'1 SAAT','4h':'4 SAAT','1d':'1 GÜN','1w':'1 HAFTA'};
+]; 
+const state={rows:[],rowsByTf:{},selected:'rsi',tf:'15m',feedTf:'all',symbol:'BTCUSDT',series:[],divs:[],aggregate:[]};let requestVersion=0,activeScanController=null,scanRunning=false; const timeframes=['15m','1h','4h','1d','1w']; const tfNames={'15m':'15 DAKİKA','1h':'1 SAAT','4h':'4 SAAT','1d':'1 GÜN','1w':'1 HAFTA'};
 const ema=(a,p)=>{let out=Array(a.length).fill(null),k=2/(p+1),v=null;for(let i=0;i<a.length;i++){if(a[i]==null)continue;v=v==null?a[i]:a[i]*k+v*(1-k);out[i]=v;}return out;};
 const sma=(a,p)=>a.map((_,i)=>i+1<p?null:a.slice(i-p+1,i+1).every(v=>v!=null)?a.slice(i-p+1,i+1).reduce((x,y)=>x+y,0)/p:null);
 const calc=(id,r)=>{const c=r.map(x=>x.c),h=r.map(x=>x.h),l=r.map(x=>x.l),v=r.map(x=>x.v),n=c.length,chg=c.map((x,i)=>i?x-c[i-1]:null),tr=r.map((x,i)=>i?Math.max(x.h-x.l,Math.abs(x.h-r[i-1].c),Math.abs(x.l-r[i-1].c)):x.h-x.l),pos=chg.map(x=>x==null?null:Math.max(x,0)),neg=chg.map(x=>x==null?null:Math.max(-x,0));
@@ -395,11 +395,11 @@ case'cvd':{out=Array(n).fill(null);let s=0;for(let i=0;i<n;i++){s+=(2*r[i].tb-r[
 default:out=rsi14;
 }
 return out;};
-function pivots(a,type){const out=[];for(let i=3;i<a.length-3;i++){if(a[i]==null)continue;let ok=true;for(let j=i-3;j<=i+3;j++){if(j===i||a[j]==null)continue;if(type==='low'?a[j]<a[i]:a[j]>a[i]){ok=false;break;}}if(ok)out.push({i,v:a[i]});}return out;}
+function pivots(a,type){const out=[];for(let i=3;i<a.length-3;i++){const value=a[i];if(!Number.isFinite(value))continue;let ok=true;for(let j=i-3;j<=i+3;j++){if(j===i||!Number.isFinite(a[j]))continue;if(type==='low'?a[j]<=value:a[j]>=value){ok=false;break;}}if(ok)out.push({i,v:value});}return out;}
 function divergences(price,osc){
  const pl=pivots(price,'low'),ph=pivots(price,'high'),ol=pivots(osc,'low'),oh=pivots(osc,'high'),out=[];
  const nearest=(arr,index)=>{let lo=0,hi=arr.length;while(lo<hi){const mid=(lo+hi)>>1;if(arr[mid].i<index)lo=mid+1;else hi=mid;}let best=null,dist=4;for(let k=Math.max(0,lo-1);k<Math.min(arr.length,lo+2);k++){const d=Math.abs(arr[k].i-index);if(d<=3&&d<dist){best=arr[k];dist=d;}}return best;};
- function pair(pp,oo,low){for(let k=1;k<pp.length;k++){const a=pp[k-1],b=pp[k];if(b.i-a.i<5||b.i-a.i>80)continue;const x=nearest(oo,a.i),y=nearest(oo,b.i);if(!x||!y||x.i===y.i)continue;const regular=low?(b.v<a.v&&y.v>x.v):(b.v>a.v&&y.v<x.v),hidden=low?(b.v>a.v&&y.v<x.v):(b.v<a.v&&y.v>x.v);if(regular||hidden)out.push({a,b,type:low?(regular?'Pozitif':'Gizli pozitif'):(regular?'Negatif':'Gizli negatif'),confirmed:true});}}
+ function pair(pp,oo,low){for(let k=1;k<pp.length;k++){const a=pp[k-1],b=pp[k];if(b.i-a.i<5||b.i-a.i>80)continue;const x=nearest(oo,a.i),y=nearest(oo,b.i);if(!x||!y||x.i>=y.i)continue;const regular=low?(b.v<a.v&&y.v>x.v):(b.v>a.v&&y.v<x.v),hidden=low?(b.v>a.v&&y.v<x.v):(b.v<a.v&&y.v>x.v);if(regular||hidden)out.push({a,b,type:low?(regular?'Pozitif':'Gizli pozitif'):(regular?'Negatif':'Gizli negatif'),confirmed:true});}}
  pair(pl,ol,true);pair(ph,oh,false);return out.sort((a,b)=>b.b.i-a.b.i);
 }
 function draw(){const canvas=$('oscCanvas'),ctx=canvas.getContext('2d'),w=canvas.clientWidth,h=canvas.clientHeight,dpr=devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);const offset=state.rows.length-Math.min(120,state.rows.length),rows=state.rows.slice(-120),vals=state.series.slice(-120),valid=vals.filter(x=>x!=null&&Number.isFinite(x));if(!rows.length||!valid.length){ctx.fillStyle='#8da3ba';ctx.fillText('Gösterge verisi bekleniyor',20,30);return;}const pad={l:12,r:12,t:18,b:22},pw=w-pad.l-pad.r,ph=(h-pad.t-pad.b)*.43,oh=(h-pad.t-pad.b)*.39,top=pad.t,bottom=top+ph+30;const pmin=Math.min(...rows.map(x=>x.l)),pmax=Math.max(...rows.map(x=>x.h)),vmin=Math.min(...valid),vmax=Math.max(...valid),px=i=>pad.l+i/(rows.length-1)*pw,py=v=>top+(pmax-v)/(pmax-pmin||1)*ph,oy=v=>bottom+(vmax-v)/(vmax-vmin||1)*oh;ctx.strokeStyle='#203447';ctx.lineWidth=1;for(let k=0;k<4;k++){const y=top+k*ph/3;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();}const cw=Math.max(2,pw/rows.length*.62);rows.forEach((x,i)=>{const xx=px(i),up=x.c>=x.o,col=up?'#20d99b':'#ff5268';ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xx,py(x.h));ctx.lineTo(xx,py(x.l));ctx.stroke();const y=Math.min(py(x.o),py(x.c)),bh=Math.max(1,Math.abs(py(x.o)-py(x.c)));ctx.fillRect(xx-cw/2,y,cw,bh);});ctx.fillStyle='#8da3ba';ctx.font='10px Arial';ctx.fillText('FİYAT · MUM',pad.l,11);ctx.fillText('GÖSTERGE · '+(defs.find(x=>x[0]===state.selected)?.[1]||''),pad.l,bottom-7);ctx.beginPath();vals.forEach((v,i)=>{if(v==null)return;const y=oy(v);if(i===0)ctx.moveTo(px(i),y);else ctx.lineTo(px(i),y);});ctx.strokeStyle='#42b9ff';ctx.lineWidth=2;ctx.stroke();state.divs.slice(0,8).forEach(d=>{const i=d.b.i-offset,j=d.a.i-offset;if(i<0||j<0||i>=rows.length||j>=rows.length)return;const bullish=d.type.toLowerCase().includes('pozitif'),col=bullish?'#20d99b':'#ff5268';ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px(j),py(state.rows[d.a.i].c));ctx.lineTo(px(i),py(state.rows[d.b.i].c));ctx.stroke();ctx.beginPath();ctx.moveTo(px(j),oy(state.series[d.a.i]));ctx.lineTo(px(i),oy(state.series[d.b.i]));ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.arc(px(i),oy(state.series[d.b.i]),4,0,Math.PI*2);ctx.fill();});ctx.fillStyle='#8da3ba';ctx.fillText(new Date(rows[0].t).toLocaleString('tr-TR'),pad.l,h-4);ctx.fillText(new Date(rows[rows.length-1].t).toLocaleString('tr-TR'),w-125,h-4);}
@@ -418,7 +418,7 @@ function renderAggregate(){
   const key=item.tf+'|'+item.side;
   if(!groups.has(key))groups.set(key,{tf:item.tf,side:item.side,time:item.time,items:[]});
   const g=groups.get(key);g.time=Math.max(g.time,item.time);
-  if(!g.items.some(x=>x.id===item.id&&x.type===item.type))g.items.push(item);
+  if(!g.items.some(x=>x.id===item.id))g.items.push(item);
  }
  const cards=[...groups.values()].sort((a,b)=>b.time-a.time).map(g=>{
   const positive=g.side==='bull',names=g.items.map(x=>'<span class="osc-indicator-tag">'+x.name+'</span>').join('');
@@ -571,60 +571,91 @@ async function loadMarketContext(symbol){
  }catch(e){if(status)status.textContent='Piyasa verisi alınamadı: '+e.message;}
 }
 function render(){renderSelected();renderAggregate();renderResearch();}
-async function calculate(){
-const version=++requestVersion,symbol=state.symbol;
-$('oscLoading').textContent='Binance verileri alınıyor; 5 zaman dilimi ve 10 gösterge taranıyor…';
-$('oscScanStatus').textContent='Tarama başlatıldı · canlı bağlantı kuruluyor…';
-$('oscRefresh').disabled=true;
-try{
-try{startLive(symbol);}catch(liveError){console.warn('Canlı WebSocket bağlantısı kurulamadı; geçmiş veri taraması devam ediyor:',liveError);$('oscScanStatus').textContent='Canlı fiyat bağlantısı kurulamadı · geçmiş veri taraması sürüyor…';}
-let completed=0;
-const batches=await Promise.all(timeframes.map(async tf=>{
- const url='/api/klines?symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(tf)+'&limit=500';
- let signal;
- if(typeof AbortSignal!=='undefined'&&typeof AbortSignal.timeout==='function')signal=AbortSignal.timeout(15000);
- else{const controller=new AbortController();setTimeout(()=>controller.abort(),15000);signal=controller.signal;}
- const res=await fetch(url,{cache:'no-store',signal});
- if(!res.ok){const detail=await res.text().catch(()=> '');throw Error(tf+' veri isteği HTTP '+res.status+(detail?' · '+detail.slice(0,180):''));}
- const raw=await res.json();
- if(!Array.isArray(raw)||raw.length<100)throw Error(tf+' için yetersiz mum verisi: '+(Array.isArray(raw)?raw.length:'geçersiz yanıt'));
- completed++;
- if(version===requestVersion)$('oscScanStatus').textContent=completed+'/5 zaman dilimi verisi alındı · göstergeler hesaplanıyor…';
- return [tf,raw.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],tb:+x[9]}))];
-}));
-if(version!==requestVersion)return;
-state.rowsByTf=Object.fromEntries(batches);state.aggregate=[];
-const priceByTf=new Map(batches.map(([tf,rows])=>[tf,rows.map(x=>x.c)]));
-for(let ti=0;ti<batches.length;ti++){
- const [tf,rows]=batches[ti],prices=priceByTf.get(tf);
- for(let di=0;di<defs.length;di++){
-  const d=defs[di];
-  $('oscFeed').innerHTML='<div class="osc-feed-empty"><strong>'+tfNames[tf]+' taranıyor</strong><span>'+d[1]+' hesaplanıyor · '+(ti*defs.length+di+1)+'/50 işlem</span></div>';
-  $('oscScanStatus').textContent=(ti+1)+'/5 zaman dilimi · '+(di+1)+'/10 gösterge · '+tfNames[tf];
-  await new Promise(resolve=>setTimeout(resolve,0));
-  if(version!==requestVersion)return;
-  const series=calc(d[0],rows),hits=divergences(prices,series);
-  for(const hit of hits){
-   if(hit.b.i<rows.length-9)continue;
-   state.aggregate.push({id:d[0],name:d[1],group:d[2],type:hit.type,side:hit.type.toLocaleLowerCase('tr-TR').includes('pozitif')?'bull':'bear',time:rows[hit.b.i].t,index:hit.b.i,tf});
+async function calculate(options={}){
+ const force=options.force===true;
+ if(scanRunning&&!force){$('oscScanStatus').textContent='Tarama devam ediyor · yeni istek mevcut taramayı bölmedi';return;}
+ if(activeScanController){activeScanController.abort();activeScanController=null;}
+ const controller=new AbortController(),version=++requestVersion,symbol=state.symbol;
+ activeScanController=controller;scanRunning=true;
+ $('oscLoading').textContent='Binance verileri alınıyor · 5 zaman dilimi hazırlanıyor…';
+ $('oscScanStatus').textContent='Veri bağlantısı kuruluyor · '+symbol;
+ $('oscRefresh').disabled=true;
+ $('oscFeed').innerHTML='<div class="osc-feed-empty"><strong>'+symbol+' için tarama hazırlanıyor</strong><span>5 zaman diliminden veri alınıyor…</span></div>';
+ try{
+  try{startLive(symbol);}catch(liveError){console.warn('Canlı WebSocket bağlantısı kurulamadı; geçmiş veri taraması devam ediyor:',liveError);}
+  let completed=0;
+  const settled=await Promise.all(timeframes.map(async tf=>{
+   const tfController=new AbortController(),timeout=setTimeout(()=>tfController.abort(),18000);
+   const abortParent=()=>tfController.abort();
+   controller.signal.addEventListener('abort',abortParent,{once:true});
+   try{
+    const url='/api/klines?symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(tf)+'&limit=500';
+    const res=await fetch(url,{cache:'no-store',signal:tfController.signal});
+    if(!res.ok){const detail=await res.text().catch(()=> '');throw Error('HTTP '+res.status+(detail?' · '+detail.slice(0,140):''));}
+    const raw=await res.json();
+    if(!Array.isArray(raw)||raw.length<100)throw Error('Yetersiz mum verisi ('+(Array.isArray(raw)?raw.length:0)+')');
+    const rows=raw.map(x=>({t:Number(x[0]),o:Number(x[1]),h:Number(x[2]),l:Number(x[3]),c:Number(x[4]),v:Number(x[5]),tb:Number(x[9])}));
+    if(rows.some(x=>![x.t,x.o,x.h,x.l,x.c,x.v].every(Number.isFinite)))throw Error('Mum verisinde geçersiz sayısal değer var');
+    completed++;
+    if(version===requestVersion)$('oscScanStatus').textContent='Veri alındı · '+completed+'/5 zaman dilimi';
+    return {tf,rows};
+   }catch(error){return {tf,error};}
+   finally{clearTimeout(timeout);controller.signal.removeEventListener('abort',abortParent);}
+  }));
+  if(version!==requestVersion||controller.signal.aborted)return;
+  const batches=settled.filter(x=>x.rows).map(x=>[x.tf,x.rows]);
+  const failed=settled.filter(x=>x.error);
+  if(!batches.length)throw Error('Hiçbir zaman diliminden mum verisi alınamadı: '+failed.map(x=>x.tf+' '+x.error.message).join(' | '));
+  state.rowsByTf=Object.fromEntries(batches);
+  const signalMap=new Map(),indicatorErrors=[];
+  let step=0;
+  for(let ti=0;ti<batches.length;ti++){
+   const [tf,rows]=batches[ti],prices=rows.map(x=>x.c);
+   for(let di=0;di<defs.length;di++){
+    const d=defs[di];step++;
+    $('oscFeed').innerHTML='<div class="osc-feed-empty"><strong>'+tfNames[tf]+' taranıyor</strong><span>'+d[1]+' hesaplanıyor · '+step+'/'+(batches.length*defs.length)+' işlem</span></div>';
+    $('oscScanStatus').textContent='Hesaplama · '+tfNames[tf]+' · '+d[1]+' · '+step+'/'+(batches.length*defs.length);
+    await new Promise(resolve=>setTimeout(resolve,0));
+    if(version!==requestVersion||controller.signal.aborted)return;
+    try{
+     const series=calc(d[0],rows),hits=divergences(prices,series);
+     for(const hit of hits){
+      if(hit.b.i<rows.length-9)continue;
+      const side=hit.type.toLocaleLowerCase('tr-TR').includes('pozitif')?'bull':'bear';
+      const item={id:d[0],name:d[1],group:d[2],type:hit.type,side,time:rows[hit.b.i].t,index:hit.b.i,tf};
+      const key=tf+'|'+d[0]+'|'+side,previous=signalMap.get(key);
+      if(!previous||item.time>previous.time)signalMap.set(key,item);
+     }
+    }catch(error){indicatorErrors.push(tfNames[tf]+' / '+d[1]+': '+String(error.message||error));}
+   }
+  }
+  if(version!==requestVersion||controller.signal.aborted)return;
+  state.aggregate=[...signalMap.values()].sort((a,b)=>b.time-a.time);
+  state.rows=state.rowsByTf[state.tf]||state.rowsByTf['15m']||batches[0][1];
+  syncMarketLabel();
+  state.series=calc(state.selected,state.rows);
+  state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
+  try{renderSelected();}catch(error){indicatorErrors.push('Grafik: '+String(error.message||error));}
+  try{renderAggregate();}catch(error){indicatorErrors.push('Akış listesi: '+String(error.message||error));}
+  try{renderResearch();}catch(error){indicatorErrors.push('Araştırma paneli: '+String(error.message||error));}
+  loadMarketContext(symbol);
+  const partial=failed.length>0,details=failed.map(x=>x.tf+': '+x.error.message);
+  $('oscLoading').textContent=(partial?'Kısmi tarama':'Tarama tamamlandı')+' · '+symbol+' · '+state.aggregate.length+' güncel uyumsuzluk';
+  const statusParts=[batches.length+'/5 zaman dilimi',defs.length+'/10 gösterge'];
+  if(partial)statusParts.push('Eksik: '+details.join(', '));
+  if(indicatorErrors.length)statusParts.push('Hesaplama uyarısı: '+indicatorErrors.slice(0,3).join(' · '));
+  $('oscScanStatus').textContent=statusParts.join(' · ');
+ }catch(error){
+  if(version===requestVersion){
+   $('oscLoading').textContent='Tarama tamamlanamadı · '+String(error.message||error);
+   $('oscScanStatus').textContent='HATA · '+String(error.message||error);
+   $('oscFeed').innerHTML='<div class="osc-feed-empty"><strong>Tarama tamamlanamadı</strong><span>'+String(error.message||error)+'</span></div>';
+  }
+ }finally{
+  if(version===requestVersion){
+   scanRunning=false;activeScanController=null;$('oscRefresh').disabled=false;
   }
  }
-}
-state.aggregate.sort((a,b)=>b.time-a.time);
-state.rows=state.rowsByTf[state.tf]||state.rowsByTf['15m']||[];
-syncMarketLabel();
-state.series=calc(state.selected,state.rows);
-state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
-$('oscLoading').textContent='Tarama tamamlandı · '+symbol+' · '+state.aggregate.length+' güncel uyumsuzluk tespiti';
-$('oscScanStatus').textContent='5/5 zaman dilimi · 10/10 gösterge tarandı';
-syncMarketLabel();
-loadMarketContext(symbol);
-try{renderSelected();}catch(e){$('oscLoading').textContent='Mum verisi geldi; grafik çizim hatası: '+e.message;}
-try{renderAggregate();}catch(e){$('oscScanStatus').textContent='Uyumsuzluk listesi hatası: '+e.message;}
-try{renderResearch();}catch(e){$('oscScanStatus').textContent='Gösterge hesaplama hatası: '+e.message;}
-}catch(e){
- if(version===requestVersion){$('oscLoading').textContent='Tarama durdu: '+e.message;$('oscScanStatus').textContent='HATA · '+e.message;}
-}finally{if(version===requestVersion)$('oscRefresh').disabled=false;}
 }
 function syncMarketLabel(){
 const label=state.symbol.replace('USDT',' / USDT');
@@ -640,6 +671,7 @@ renderAggregate();
 }
 function setSymbol(next){
 if(!['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','LINKUSDT','AVAXUSDT','HBARUSDT'].includes(String(next).toUpperCase()))return;
+if(state.symbol===next.toUpperCase())return;
 state.symbol=next.toUpperCase();
 $('oscSymbol').value=state.symbol;
 $('symbol').value=state.symbol;
@@ -650,18 +682,19 @@ $('oscLoading').textContent=state.symbol+' için Binance verileri yükleniyor…
 calculate();
 }
 function openLab(){
+const alreadyOpen=$('oscLab').classList.contains('show');
 state.symbol=$('symbol').value.toUpperCase();
 $('oscSymbol').value=state.symbol;
 $('oscLab').classList.add('show');
 syncMarketLabel();
-calculate();
+if(!alreadyOpen)calculate();
 }
 $('oscLabBtn').onclick=openLab;
-$('oscClose').onclick=()=>{$('oscLab').classList.remove('show');closeLive();};
+$('oscClose').onclick=()=>{$('oscLab').classList.remove('show');requestVersion++;if(activeScanController)activeScanController.abort();activeScanController=null;scanRunning=false;$('oscRefresh').disabled=false;closeLive();};
 $('oscSymbol').addEventListener('change',e=>setSymbol(e.target.value));
 document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeframe(btn.dataset.tf)));
 $('symbol').addEventListener('change',()=>{if($('oscLab').classList.contains('show'))setSymbol($('symbol').value);});
-$('oscRefresh').onclick=calculate;
+$('oscRefresh').onclick=()=>calculate({force:true});
 let liveSockets=[],liveRetry=[],liveTimer=null,slowTimer=null,liveSymbol=null,liveSpot=null,liveMark=null;
 function closeLive(){
  liveSockets.forEach(ws=>{try{ws.close();}catch{}});
@@ -719,7 +752,7 @@ function startLive(symbol){
  if(liveTimer)clearInterval(liveTimer);
  if(slowTimer)clearInterval(slowTimer);
  liveTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show'))loadMarketContext(symbol);},30000);
- slowTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show'))calculate();},60000);
+ slowTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show')&&!scanRunning)calculate();},60000);
 }
 renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory').addEventListener('change',renderList);
 })();
