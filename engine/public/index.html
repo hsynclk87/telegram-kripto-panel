@@ -210,6 +210,24 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 }
 @media(min-width:761px) and (max-width:1050px){#oscLab .osc-layout{grid-template-columns:minmax(0,1.2fr) minmax(270px,.8fr)!important}#oscLab .osc-toolbar{grid-template-columns:190px minmax(220px,1fr) 100px!important}}
 
+
+/* Live market context and model diagnostics */
+.research-panel{max-width:1320px;margin:16px auto 28px;padding:16px;background:linear-gradient(145deg,#101d2b,#0a1420);border:1px solid #263b50;border-radius:14px;color:#e8eef5}
+.research-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}
+.research-head b{font-size:12px;letter-spacing:.13em}
+.research-head small{font-size:9px;color:#8197ad}
+.research-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.research-metric{min-width:0;padding:12px;background:#0a1724;border:1px solid #23384d;border-radius:10px}
+.research-metric small{display:block;color:#8097ad;font-size:9px;letter-spacing:.09em;font-weight:800}
+.research-metric strong{display:block;margin-top:7px;color:#edf4fb;font-size:19px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.research-metric span{display:block;margin-top:4px;color:#8da2b8;font-size:9px;line-height:1.4}
+.research-positive{color:#39d8a4!important}.research-negative{color:#ff647b!important}
+.research-subhead{font-size:10px;font-weight:850;letter-spacing:.13em;color:#a8bacb;margin:17px 0 9px}
+.research-foot{font-size:9px;color:#7e94aa;line-height:1.6;margin-top:12px}
+.research-badges{display:flex;flex-wrap:wrap;gap:7px}
+.research-badge{padding:7px 9px;border-radius:7px;background:#132638;border:1px solid #2a4057;color:#c5d5e5;font-size:10px}
+@media(max-width:680px){.research-panel{padding:12px;margin:12px 0 20px}.research-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.research-metric{padding:10px}.research-metric strong{font-size:17px}.research-head{align-items:flex-start;flex-direction:column}}
+
 </style>
 </head>
 <body>
@@ -246,6 +264,36 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 <div id="oscSignals" class="osc-signals"></div>
 </div>
 <div class="osc-card"><div class="osc-library-head"><b>GÖSTERGE KÜTÜPHANESİ</b><span class="osc-library-count">33 ŞABLON</span></div><div class="osc-library-tools"><input id="oscSearch" type="search" placeholder="Gösterge ara…" aria-label="Gösterge ara"><select id="oscCategory" aria-label="Kategori filtrele"><option value="all">Tüm kategoriler</option><option>Momentum</option><option>Para Akışı</option><option>Hacim</option><option>Trend</option><option>Volatilite</option><option>Piyasa Akışı</option></select></div><div id="oscList"></div></div>
+</div>
+
+<div class="research-panel" id="researchPanel">
+  <div class="research-head"><b>CANLI PİYASA AKIŞI · ÇOKLU KAYNAK</b><small id="researchUpdated">Veri bekleniyor</small></div>
+  <div class="research-grid">
+    <div class="research-metric"><small>BINANCE SPOT · 24S</small><strong id="ctxSpotPrice">—</strong><span id="ctxSpotChange">Fiyat ve hacim</span></div>
+    <div class="research-metric"><small>FUTURES PREMIUM</small><strong id="ctxPremium">—</strong><span id="ctxFuturesChange">Spot / vadeli fiyat farkı</span></div>
+    <div class="research-metric"><small>AÇIK POZİSYON · 1S</small><strong id="ctxOi">—</strong><span id="ctxOiChange">Son 30 saatlik seri</span></div>
+    <div class="research-metric"><small>FUNDING</small><strong id="ctxFunding">—</strong><span id="ctxFundingHint">Son fonlama oranı</span></div>
+    <div class="research-metric"><small>BYBIT MARK / INDEX</small><strong id="ctxBybitMark">—</strong><span id="ctxBybitFunding">Bybit lineer piyasa</span></div>
+    <div class="research-metric"><small>ORDER BOOK DENGESİ</small><strong id="ctxBook">—</strong><span id="ctxBookHint">İlk 20 kademe · Binance + Bybit</span></div>
+    <div class="research-metric"><small>SPOT TAKER ALIMI</small><strong id="ctxTaker">—</strong><span>Son 20 kapanmış mum · hacim vekili</span></div>
+    <div class="research-metric"><small>COINGECKO · PİYASA</small><strong id="ctxMarketCap">—</strong><span id="ctxCgVolume">Piyasa değeri ve 24s hacim</span></div>
+  </div>
+  <div class="research-foot" id="ctxSourceStatus">Binance, Binance Futures, Bybit ve CoinGecko bağlantıları bekleniyor. Likidasyon verisi bu kaynaklarda doğrudan sağlanmadığından tahmin edilmeyecek.</div>
+  <div class="research-subhead">GÖSTERGE DURUMU</div><div class="research-badges" id="researchIndicators"></div><div class="research-subhead">KNN · GEÇMİŞ BENZER FİYAT DAVRANIŞLARI</div>
+  <div class="research-grid">
+    <div class="research-metric"><small>YUKARI OLASILIK</small><strong id="knnUp">—</strong><span>En yakın 21 örnek</span></div>
+    <div class="research-metric"><small>AŞAĞI OLASILIK</small><strong id="knnDown">—</strong><span>Benzerlik ağırlıklı sınıflama</span></div>
+    <div class="research-metric"><small>BEKLENEN GETİRİ</small><strong id="knnReturn">—</strong><span>Sonraki 4 mum ortalaması</span></div>
+    <div class="research-metric"><small>MODEL SONUCU</small><strong id="knnDecision">—</strong><span id="knnSamples">Eğitim örnekleri</span></div>
+  </div>
+  <div class="research-subhead">WALK-FORWARD GERİ TEST · AYNI PARİTE / ZAMAN DİLİMİ</div>
+  <div class="research-grid">
+    <div class="research-metric"><small>NET GETİRİ</small><strong id="btReturn">—</strong><span>Komisyon + kayma varsayımı düşülmüş</span></div>
+    <div class="research-metric"><small>KAZANMA ORANI</small><strong id="btWin">—</strong><span id="btTrades">İşlem sayısı</span></div>
+    <div class="research-metric"><small>MAKS. DÜŞÜŞ</small><strong id="btDrawdown">—</strong><span>Örneklem içi equity düşüşü</span></div>
+    <div class="research-metric"><small>MODEL AYARI</small><strong>k = 21</strong><span>180 mum eğitim penceresi · 4 mum vade · işlem maliyeti %0,24</span></div>
+  </div>
+  <div class="research-foot" id="btNote">Bu sonuçlar seçilen zaman dilimindeki mevcut mum örneklemiyle hesaplanır. Gelecek garantisi değildir; küçük örneklem ve rejim değişimi sonuçları bozabilir.</div>
 </div>
 </section>
 <script>
@@ -365,7 +413,395 @@ const grouped=(items)=>timeframes.map(tf=>{const arr=items.filter(x=>x.tf===tf);
 $('oscBullList').innerHTML=grouped(bulls);$('oscBearList').innerHTML=grouped(bears);
 document.querySelectorAll('.osc-aggregate-item[data-indicator]').forEach(btn=>btn.onclick=()=>{state.selected=btn.dataset.indicator;state.tf=btn.dataset.tf;state.rows=state.rowsByTf[state.tf]||[];syncMarketLabel();state.series=calc(state.selected,state.rows);state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);renderSelected();document.querySelector('.osc-layout')?.scrollIntoView({behavior:'smooth',block:'start'});});
 }
-function render(){renderSelected();renderAggregate();}
+
+function researchFeatures(rows){
+ const c=rows.map(x=>x.c),rsi=calc('rsi',rows),rel=calc('relvol',rows),e20=ema(c,20),e50=ema(c,50),atr=calc('atr',rows);
+ return rows.map((x,i)=>{
+  if(i<60||!rsi[i]||!e20[i]||!e50[i]||!atr[i]||!rel[i]||!c[i-16])return null;
+  return [(c[i]/c[i-4]-1)*100,(c[i]/c[i-16]-1)*100,rsi[i],Math.min(5,rel[i]),(e20[i]/e50[i]-1)*100,(atr[i]/c[i])*100];
+ });
+}
+function knnPredict(rows,features,index,windowSize=180,k=21){
+ const start=Math.max(60,index-windowSize),samples=[];
+ for(let j=start;j<=index-4;j++){
+  const f=features[j];if(!f)continue;
+  const future=(rows[j+4].c/rows[j].c-1)*100;
+  if(Number.isFinite(future))samples.push({f,y:future});
+ }
+ const target=features[index];if(!target||samples.length<k)return null;
+ const means=target.map((_,d)=>samples.reduce((s,x)=>s+x.f[d],0)/samples.length);
+ const stds=target.map((_,d)=>Math.sqrt(samples.reduce((s,x)=>s+(x.f[d]-means[d])**2,0)/samples.length)||1);
+ const ranked=samples.map(x=>({y:x.y,d:Math.sqrt(x.f.reduce((s,v,d)=>s+((v-target[d])/stds[d])**2,0))})).sort((a,b)=>a.d-b.d).slice(0,k);
+ const weights=ranked.map(x=>1/(x.d+.15)),total=weights.reduce((a,b)=>a+b,0);
+ const up=ranked.reduce((s,x,i)=>s+(x.y>0?weights[i]:0),0)/total;
+ const down=ranked.reduce((s,x,i)=>s+(x.y<0?weights[i]:0),0)/total;
+ const expected=ranked.reduce((s,x,i)=>s+x.y*weights[i],0)/total;
+ return {up,down,expected,n:samples.length,neighbors:k,confidence:Math.max(up,down)};
+}
+function runKnnResearch(rows){
+ const features=researchFeatures(rows),last=rows.length-1,current=knnPredict(rows,features,last,180,21);
+ const trades=[];let equity=1,peak=1,maxDD=0;
+ for(let i=190;i<rows.length-4;i+=4){
+  const p=knnPredict(rows,features,i,180,21);if(!p)continue;
+  const side=p.up>=.62?1:p.down>=.62?-1:0;if(!side)continue;
+  const gross=(rows[i+4].c/rows[i].c-1)*side;
+  const net=gross-.0024;
+  equity*=1+net;peak=Math.max(peak,equity);maxDD=Math.max(maxDD,(peak-equity)/peak);
+  trades.push({net,side});
+ }
+ const wins=trades.filter(x=>x.net>0).length;
+ return {current,trades:trades.length,wins,winRate:trades.length?wins/trades.length:0,netReturn:equity-1,maxDD};
+}
+function renderResearch(){
+ const rows=state.rows||[];if(rows.length<100)return;
+ const m=runKnnResearch(rows),fmtPct=x=>((x*100)>=0?'+':'')+(x*100).toFixed(2)+'%';
+ const set=(id,v,cls)=>{const el=$(id);if(!el)return;el.textContent=v;el.classList.remove('research-positive','research-negative');if(cls)el.classList.add(cls);};
+ if(m.current){
+  set('knnUp',(m.current.up*100).toFixed(1)+'%',m.current.up>=.55?'research-positive':'');
+  set('knnDown',(m.current.down*100).toFixed(1)+'%',m.current.down>=.55?'research-negative':'');
+  set('knnReturn',fmtPct(m.current.expected),m.current.expected>=0?'research-positive':'research-negative');
+  set('knnDecision',m.current.up>=.62?'YUKARI':m.current.down>=.62?'AŞAĞI':'NÖTR',m.current.up>=.62?'research-positive':m.current.down>=.62?'research-negative':'');
+  set('knnSamples',m.current.n+' geçmiş örnek · '+m.current.neighbors+' komşu','');
+ }else{set('knnDecision','VERİ AZ','');set('knnSamples','Model için yeterli örnek yok','');}
+ set('btReturn',fmtPct(m.netReturn),m.netReturn>=0?'research-positive':'research-negative');
+ set('btWin',(m.winRate*100).toFixed(1)+'%','');
+ set('btTrades',m.trades+' işlem · '+m.wins+' kazanç','');
+ set('btDrawdown','-'+(m.maxDD*100).toFixed(2)+'%','research-negative');
+ const ind=[['RSI','rsi'],['Stoch RSI','stochrsi'],['MFI','mfi'],['CCI','cci'],['MACD','macd'],['CMF','cmf'],['ADX','adx']];
+ const latest=ind.map(([name,id])=>{const a=calc(id,rows),v=a[a.length-1];return name+': '+(v==null?'—':Number(v).toFixed(2));});
+ const box=$('researchIndicators');if(box)box.innerHTML=latest.map(x=>'<span class="research-badge">'+x+'</span>').join('');
+ const last=rows[rows.length-1],volume=rows.slice(-20).reduce((s,x)=>s+x.v,0),buy=rows.slice(-20).reduce((s,x)=>s+x.tb,0);
+ set('ctxTaker',volume?(buy/volume*100).toFixed(1)+'%':'—',volume&&buy/volume>=.52?'research-positive':'research-negative');
+}
+async function loadMarketContext(symbol){
+ const status=$('ctxSourceStatus');if(status)status.textContent='Piyasa kaynakları sorgulanıyor…';
+ try{
+  const res=await fetch('/api/market-context?symbol='+encodeURIComponent(symbol),{cache:'no-store'});if(!res.ok)throw Error('API '+res.status);
+  const payload=await res.json(),s=payload.sources||{},get=k=>s[k]?.ok?s[k].data:null;
+  const spot=get('spot24h'),fut=get('futures24h'),oi=get('openInterest')||[],fund=get('funding')||[],fb=get('futuresBook'),by=get('bybitTicker')?.result?.list?.[0],bb=get('bybitBook')?.result,cg=get('coingecko')?.[0];
+  const pct=x=>(Number(x)>=0?'+':'')+(Number(x)*100).toFixed(3)+'%',usd=x=>Number(x).toLocaleString('en-US',{maximumFractionDigits:8});
+  const put=(id,v,cls)=>{const el=$(id);if(!el)return;el.textContent=v;el.classList.remove('research-positive','research-negative');if(cls)el.classList.add(cls);};
+  put('ctxSpotPrice',spot?usd(spot.lastPrice):'—');put('ctxSpotChange',spot?Number(spot.priceChangePercent).toFixed(2)+'% · 24s hacim '+usd(Number(spot.quoteVolume)/1e6)+'M USDT':'Spot verisi yok',spot&&Number(spot.priceChangePercent)>=0?'research-positive':'research-negative');
+  const premium=spot&&fut?(Number(fut.lastPrice)/Number(spot.lastPrice)-1)*100:null;
+  put('ctxPremium',premium==null?'—':(premium>=0?'+':'')+premium.toFixed(3)+'%',premium==null?'':premium>=0?'research-positive':'research-negative');
+  put('ctxFuturesChange',fut?'Futures 24s '+Number(fut.priceChangePercent).toFixed(2)+'%':'Futures verisi yok',fut&&Number(fut.priceChangePercent)>=0?'research-positive':'research-negative');
+  const oi0=oi.length?Number(oi[0].sumOpenInterestValue):0,oi1=oi.length?Number(oi[oi.length-1].sumOpenInterestValue):0,oiCh=oi0?(oi1/oi0-1)*100:null;
+  put('ctxOi',oi.length?usd(oi1/1e9)+'B 
+async function calculate(){
+const version=++requestVersion;$('oscLoading').textContent='Binance verileri alınıyor; 5 zaman dilimi ve 33 gösterge taranıyor…';$('oscScanStatus').textContent='5 zaman dilimi taranıyor…';$('oscRefresh').disabled=true;
+try{
+const symbol=state.symbol;
+const batches=await Promise.all(timeframes.map(async tf=>{const url='https://api.binance.com/api/v3/klines?symbol='+symbol+'&interval='+tf+'&limit=500';const res=await fetch(url);if(!res.ok)throw Error(tf+' veri yanıtı: '+res.status);const raw=await res.json();return [tf,raw.filter(x=>Number(x[6])<Date.now()).map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],tb:+x[9]}))];}));
+if(version!==requestVersion)return;
+state.rowsByTf=Object.fromEntries(batches);state.aggregate=[];
+for(const [tf,rows] of batches){
+for(const d of defs){
+const series=calc(d[0],rows),hits=divergences(rows.map(x=>x.c),series);
+for(const hit of hits){
+if(hit.b.i<rows.length-9)continue;
+state.aggregate.push({id:d[0],name:d[1],group:d[2],type:hit.type,side:hit.type.toLocaleLowerCase('tr-TR').includes('pozitif')?'bull':'bear',time:rows[hit.b.i].t,index:hit.b.i,tf});
+}
+}
+}
+state.aggregate.sort((a,b)=>b.time-a.time);
+state.rows=state.rowsByTf[state.tf]||state.rowsByTf['15m']||[];
+syncMarketLabel();
+state.series=calc(state.selected,state.rows);
+state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
+$('oscLoading').textContent='Güncel fiyat bölgesi · '+symbol+' · '+tfNames[state.tf]+' grafiği';$('oscScanStatus').textContent='5/5 zaman dilimi · 33/33 gösterge tarandı';syncMarketLabel();render();
+}catch(e){if(version===requestVersion){$('oscLoading').textContent='Veri alınamadı: '+e.message;$('oscScanStatus').textContent='Tarama başarısız';}}
+finally{if(version===requestVersion)$('oscRefresh').disabled=false;}
+}
+function syncMarketLabel(){
+const label=state.symbol.replace('USDT',' / USDT');
+$('oscActiveMarket').textContent=label;
+$('oscActiveTF').textContent=tfNames[state.tf];
+$('oscTF').textContent=tfNames[state.tf];
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tf===state.tf));
+}
+function setTimeframe(next){
+if(!timeframes.includes(next))return;
+state.tf=next;
+state.rows=state.rowsByTf[next]||[];
+state.series=calc(state.selected,state.rows);
+state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
+syncMarketLabel();
+$('oscLoading').textContent=state.rows.length?'Grafik: '+state.symbol+' · '+tfNames[next]+' · son fiyat bölgesi':'Bu zaman diliminin verisi yükleniyor…';
+renderSelected();
+renderAggregate();
+if(!state.rows.length)calculate();
+}
+function setSymbol(next){
+if(!symbols.includes(next.toLowerCase()))return;
+state.symbol=next.toUpperCase();
+$('oscSymbol').value=state.symbol;
+$('symbol').value=state.symbol;
+$('pair').textContent=state.symbol.replace('USDT',' / USDT');
+render();
+syncMarketLabel();
+$('oscLoading').textContent=state.symbol+' için Binance verileri yükleniyor…';
+calculate();
+}
+function openLab(){
+state.symbol=$('symbol').value.toUpperCase();
+$('oscSymbol').value=state.symbol;
+$('oscLab').classList.add('show');
+syncMarketLabel();
+calculate();
+}
+$('oscLabBtn').onclick=openLab;
+$('oscClose').onclick=()=>$('oscLab').classList.remove('show');
+$('oscSymbol').addEventListener('change',e=>setSymbol(e.target.value));
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeframe(btn.dataset.tf)));
+$('symbol').addEventListener('change',()=>{if($('oscLab').classList.contains('show'))setSymbol($('symbol').value);});
+$('oscRefresh').onclick=calculate;
+renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory').addEventListener('change',renderList);
+})();
+
+</script>
+</body>
+</html>:'—');put('ctxOiChange',oiCh==null?'OI geçmişi yok':(oiCh>=0?'+':'')+oiCh.toFixed(2)+'% · '+oi.length+' saatlik seri',oiCh==null?'':oiCh>=0?'research-positive':'research-negative');
+  const fr=fund.length?Number(fund[fund.length-1].fundingRate):null;
+  put('ctxFunding',fr==null?'—':(fr*100).toFixed(4)+'%',fr==null?'':fr>=0?'research-positive':'research-negative');
+  put('ctxFundingHint',fund.length?'Binance son fonlama · '+new Date(Number(fund[fund.length-1].fundingTime)).toLocaleTimeString('tr-TR'):'Funding verisi yok');
+  put('ctxBybitMark',by?usd(by.markPrice)+' / '+usd(by.indexPrice):'—');
+  put('ctxBybitFunding',by?'Funding '+(Number(by.fundingRate)*100).toFixed(4)+'% · OI '+usd(Number(by.openInterestValue)/1e6)+'M 
+async function calculate(){
+const version=++requestVersion;$('oscLoading').textContent='Binance verileri alınıyor; 5 zaman dilimi ve 33 gösterge taranıyor…';$('oscScanStatus').textContent='5 zaman dilimi taranıyor…';$('oscRefresh').disabled=true;
+try{
+const symbol=state.symbol;
+const batches=await Promise.all(timeframes.map(async tf=>{const url='https://api.binance.com/api/v3/klines?symbol='+symbol+'&interval='+tf+'&limit=500';const res=await fetch(url);if(!res.ok)throw Error(tf+' veri yanıtı: '+res.status);const raw=await res.json();return [tf,raw.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],tb:+x[9]}))];}));
+if(version!==requestVersion)return;
+state.rowsByTf=Object.fromEntries(batches);state.aggregate=[];
+for(const [tf,rows] of batches){
+for(const d of defs){
+const series=calc(d[0],rows),hits=divergences(rows.map(x=>x.c),series);
+for(const hit of hits){
+if(hit.b.i<rows.length-9)continue;
+state.aggregate.push({id:d[0],name:d[1],group:d[2],type:hit.type,side:hit.type.toLocaleLowerCase('tr-TR').includes('pozitif')?'bull':'bear',time:rows[hit.b.i].t,index:hit.b.i,tf});
+}
+}
+}
+state.aggregate.sort((a,b)=>b.time-a.time);
+state.rows=state.rowsByTf[state.tf]||state.rowsByTf['15m']||[];
+syncMarketLabel();
+state.series=calc(state.selected,state.rows);
+state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
+$('oscLoading').textContent='Güncel fiyat bölgesi · '+symbol+' · '+tfNames[state.tf]+' grafiği';$('oscScanStatus').textContent='5/5 zaman dilimi · 33/33 gösterge tarandı';syncMarketLabel();render();
+}catch(e){if(version===requestVersion){$('oscLoading').textContent='Veri alınamadı: '+e.message;$('oscScanStatus').textContent='Tarama başarısız';}}
+finally{if(version===requestVersion)$('oscRefresh').disabled=false;}
+}
+function syncMarketLabel(){
+const label=state.symbol.replace('USDT',' / USDT');
+$('oscActiveMarket').textContent=label;
+$('oscActiveTF').textContent=tfNames[state.tf];
+$('oscTF').textContent=tfNames[state.tf];
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tf===state.tf));
+}
+function setTimeframe(next){
+if(!timeframes.includes(next))return;
+state.tf=next;
+state.rows=state.rowsByTf[next]||[];
+state.series=calc(state.selected,state.rows);
+state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
+syncMarketLabel();
+$('oscLoading').textContent=state.rows.length?'Grafik: '+state.symbol+' · '+tfNames[next]+' · son fiyat bölgesi':'Bu zaman diliminin verisi yükleniyor…';
+renderSelected();
+renderAggregate();
+if(!state.rows.length)calculate();
+}
+function setSymbol(next){
+if(!symbols.includes(next.toLowerCase()))return;
+state.symbol=next.toUpperCase();
+$('oscSymbol').value=state.symbol;
+$('symbol').value=state.symbol;
+$('pair').textContent=state.symbol.replace('USDT',' / USDT');
+render();
+syncMarketLabel();
+$('oscLoading').textContent=state.symbol+' için Binance verileri yükleniyor…';
+calculate();
+}
+function openLab(){
+state.symbol=$('symbol').value.toUpperCase();
+$('oscSymbol').value=state.symbol;
+$('oscLab').classList.add('show');
+syncMarketLabel();
+calculate();
+}
+$('oscLabBtn').onclick=openLab;
+$('oscClose').onclick=()=>$('oscLab').classList.remove('show');
+$('oscSymbol').addEventListener('change',e=>setSymbol(e.target.value));
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeframe(btn.dataset.tf)));
+$('symbol').addEventListener('change',()=>{if($('oscLab').classList.contains('show'))setSymbol($('symbol').value);});
+$('oscRefresh').onclick=calculate;
+renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory').addEventListener('change',renderList);
+})();
+
+</script>
+</body>
+</html>:'Bybit verisi yok');
+  const sumBook=(a,n)=>Array.isArray(a)?a.slice(0,n).reduce((z,x)=>z+Number(x[1]),0):0;
+  const bids=sumBook(bb?.b,20),asks=sumBook(bb?.a,20),ratio=bids+asks?bids/(bids+asks):null;
+  const fbids=sumBook(fb?.bids,20),fasks=sumBook(fb?.asks,20),fRatio=fbids+fasks?fbids/(fbids+fasks):null;
+  put('ctxBook',ratio==null?'—':(ratio*100).toFixed(1)+'% alış',ratio==null?'':ratio>=.55?'research-positive':ratio<=.45?'research-negative':'');
+  put('ctxBookHint',ratio==null?'Order book verisi yok':'Bybit ilk 20 kademe · Binance denge '+(fRatio==null?'—':(fRatio*100).toFixed(1)+'% alış'));
+  put('ctxMarketCap',cg&&cg.market_cap?'
+async function calculate(){
+const version=++requestVersion;$('oscLoading').textContent='Binance verileri alınıyor; 5 zaman dilimi ve 33 gösterge taranıyor…';$('oscScanStatus').textContent='5 zaman dilimi taranıyor…';$('oscRefresh').disabled=true;
+try{
+const symbol=state.symbol;
+const batches=await Promise.all(timeframes.map(async tf=>{const url='https://api.binance.com/api/v3/klines?symbol='+symbol+'&interval='+tf+'&limit=500';const res=await fetch(url);if(!res.ok)throw Error(tf+' veri yanıtı: '+res.status);const raw=await res.json();return [tf,raw.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],tb:+x[9]}))];}));
+if(version!==requestVersion)return;
+state.rowsByTf=Object.fromEntries(batches);state.aggregate=[];
+for(const [tf,rows] of batches){
+for(const d of defs){
+const series=calc(d[0],rows),hits=divergences(rows.map(x=>x.c),series);
+for(const hit of hits){
+if(hit.b.i<rows.length-9)continue;
+state.aggregate.push({id:d[0],name:d[1],group:d[2],type:hit.type,side:hit.type.toLocaleLowerCase('tr-TR').includes('pozitif')?'bull':'bear',time:rows[hit.b.i].t,index:hit.b.i,tf});
+}
+}
+}
+state.aggregate.sort((a,b)=>b.time-a.time);
+state.rows=state.rowsByTf[state.tf]||state.rowsByTf['15m']||[];
+syncMarketLabel();
+state.series=calc(state.selected,state.rows);
+state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
+$('oscLoading').textContent='Güncel fiyat bölgesi · '+symbol+' · '+tfNames[state.tf]+' grafiği';$('oscScanStatus').textContent='5/5 zaman dilimi · 33/33 gösterge tarandı';syncMarketLabel();render();
+}catch(e){if(version===requestVersion){$('oscLoading').textContent='Veri alınamadı: '+e.message;$('oscScanStatus').textContent='Tarama başarısız';}}
+finally{if(version===requestVersion)$('oscRefresh').disabled=false;}
+}
+function syncMarketLabel(){
+const label=state.symbol.replace('USDT',' / USDT');
+$('oscActiveMarket').textContent=label;
+$('oscActiveTF').textContent=tfNames[state.tf];
+$('oscTF').textContent=tfNames[state.tf];
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tf===state.tf));
+}
+function setTimeframe(next){
+if(!timeframes.includes(next))return;
+state.tf=next;
+state.rows=state.rowsByTf[next]||[];
+state.series=calc(state.selected,state.rows);
+state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
+syncMarketLabel();
+$('oscLoading').textContent=state.rows.length?'Grafik: '+state.symbol+' · '+tfNames[next]+' · son fiyat bölgesi':'Bu zaman diliminin verisi yükleniyor…';
+renderSelected();
+renderAggregate();
+if(!state.rows.length)calculate();
+}
+function setSymbol(next){
+if(!symbols.includes(next.toLowerCase()))return;
+state.symbol=next.toUpperCase();
+$('oscSymbol').value=state.symbol;
+$('symbol').value=state.symbol;
+$('pair').textContent=state.symbol.replace('USDT',' / USDT');
+render();
+syncMarketLabel();
+$('oscLoading').textContent=state.symbol+' için Binance verileri yükleniyor…';
+calculate();
+}
+function openLab(){
+state.symbol=$('symbol').value.toUpperCase();
+$('oscSymbol').value=state.symbol;
+$('oscLab').classList.add('show');
+syncMarketLabel();
+calculate();
+}
+$('oscLabBtn').onclick=openLab;
+$('oscClose').onclick=()=>$('oscLab').classList.remove('show');
+$('oscSymbol').addEventListener('change',e=>setSymbol(e.target.value));
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeframe(btn.dataset.tf)));
+$('symbol').addEventListener('change',()=>{if($('oscLab').classList.contains('show'))setSymbol($('symbol').value);});
+$('oscRefresh').onclick=calculate;
+renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory').addEventListener('change',renderList);
+})();
+
+</script>
+</body>
+</html>+usd(cg.market_cap/1e9)+'B':'—');
+  put('ctxCgVolume',cg?'24s hacim 
+async function calculate(){
+const version=++requestVersion;$('oscLoading').textContent='Binance verileri alınıyor; 5 zaman dilimi ve 33 gösterge taranıyor…';$('oscScanStatus').textContent='5 zaman dilimi taranıyor…';$('oscRefresh').disabled=true;
+try{
+const symbol=state.symbol;
+const batches=await Promise.all(timeframes.map(async tf=>{const url='https://api.binance.com/api/v3/klines?symbol='+symbol+'&interval='+tf+'&limit=500';const res=await fetch(url);if(!res.ok)throw Error(tf+' veri yanıtı: '+res.status);const raw=await res.json();return [tf,raw.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5],tb:+x[9]}))];}));
+if(version!==requestVersion)return;
+state.rowsByTf=Object.fromEntries(batches);state.aggregate=[];
+for(const [tf,rows] of batches){
+for(const d of defs){
+const series=calc(d[0],rows),hits=divergences(rows.map(x=>x.c),series);
+for(const hit of hits){
+if(hit.b.i<rows.length-9)continue;
+state.aggregate.push({id:d[0],name:d[1],group:d[2],type:hit.type,side:hit.type.toLocaleLowerCase('tr-TR').includes('pozitif')?'bull':'bear',time:rows[hit.b.i].t,index:hit.b.i,tf});
+}
+}
+}
+state.aggregate.sort((a,b)=>b.time-a.time);
+state.rows=state.rowsByTf[state.tf]||state.rowsByTf['15m']||[];
+syncMarketLabel();
+state.series=calc(state.selected,state.rows);
+state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
+$('oscLoading').textContent='Güncel fiyat bölgesi · '+symbol+' · '+tfNames[state.tf]+' grafiği';$('oscScanStatus').textContent='5/5 zaman dilimi · 33/33 gösterge tarandı';syncMarketLabel();render();
+}catch(e){if(version===requestVersion){$('oscLoading').textContent='Veri alınamadı: '+e.message;$('oscScanStatus').textContent='Tarama başarısız';}}
+finally{if(version===requestVersion)$('oscRefresh').disabled=false;}
+}
+function syncMarketLabel(){
+const label=state.symbol.replace('USDT',' / USDT');
+$('oscActiveMarket').textContent=label;
+$('oscActiveTF').textContent=tfNames[state.tf];
+$('oscTF').textContent=tfNames[state.tf];
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tf===state.tf));
+}
+function setTimeframe(next){
+if(!timeframes.includes(next))return;
+state.tf=next;
+state.rows=state.rowsByTf[next]||[];
+state.series=calc(state.selected,state.rows);
+state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);
+syncMarketLabel();
+$('oscLoading').textContent=state.rows.length?'Grafik: '+state.symbol+' · '+tfNames[next]+' · son fiyat bölgesi':'Bu zaman diliminin verisi yükleniyor…';
+renderSelected();
+renderAggregate();
+if(!state.rows.length)calculate();
+}
+function setSymbol(next){
+if(!symbols.includes(next.toLowerCase()))return;
+state.symbol=next.toUpperCase();
+$('oscSymbol').value=state.symbol;
+$('symbol').value=state.symbol;
+$('pair').textContent=state.symbol.replace('USDT',' / USDT');
+render();
+syncMarketLabel();
+$('oscLoading').textContent=state.symbol+' için Binance verileri yükleniyor…';
+calculate();
+}
+function openLab(){
+state.symbol=$('symbol').value.toUpperCase();
+$('oscSymbol').value=state.symbol;
+$('oscLab').classList.add('show');
+syncMarketLabel();
+calculate();
+}
+$('oscLabBtn').onclick=openLab;
+$('oscClose').onclick=()=>$('oscLab').classList.remove('show');
+$('oscSymbol').addEventListener('change',e=>setSymbol(e.target.value));
+document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeframe(btn.dataset.tf)));
+$('symbol').addEventListener('change',()=>{if($('oscLab').classList.contains('show'))setSymbol($('symbol').value);});
+$('oscRefresh').onclick=calculate;
+renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory').addEventListener('change',renderList);
+})();
+
+</script>
+</body>
+</html>+usd(Number(cg.total_volume)/1e6)+'M · değişim '+Number(cg.price_change_percentage_24h||0).toFixed(2)+'%':'CoinGecko verisi yok');
+  const errors=Object.entries(s).filter(([,v])=>!v.ok).map(([k])=>k);
+  put('researchUpdated','UTC '+new Date(payload.fetchedAt).toLocaleTimeString('tr-TR'));
+  if(status)status.textContent=errors.length?'Kısmi veri · başarısız kaynaklar: '+errors.join(', '):'Tüm kaynaklar yanıt verdi · Binance Spot/Futures · Bybit · CoinGecko. Likidasyon akışı mevcut değil.';
+ }catch(e){if(status)status.textContent='Piyasa verisi alınamadı: '+e.message;}
+}
+
+function render(){renderSelected();renderAggregate();renderResearch();}
 async function calculate(){
 const version=++requestVersion;$('oscLoading').textContent='Binance verileri alınıyor; 5 zaman dilimi ve 33 gösterge taranıyor…';$('oscScanStatus').textContent='5 zaman dilimi taranıyor…';$('oscRefresh').disabled=true;
 try{
