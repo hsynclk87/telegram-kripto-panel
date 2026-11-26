@@ -59,10 +59,20 @@ const server = http.createServer(async (req, res) => {
       return res.end(JSON.stringify({ ok: false, error: "Unsupported symbol, interval, or limit" }));
     }
     try {
-      const data = await jsonGet("https://api.binance.com/api/v3/klines?symbol=" + encodeURIComponent(symbol) + "&interval=" + encodeURIComponent(interval) + "&limit=" + limit);
+      const query = "?symbol=" + encodeURIComponent(symbol) + "&interval=" + encodeURIComponent(interval) + "&limit=" + limit;
+      let data, primaryError;
+      try {
+        data = await jsonGet("https://data-api.binance.vision/api/v3/klines" + query);
+      } catch (firstError) {
+        primaryError = String(firstError.message || firstError);
+        data = await jsonGet("https://api.binance.com/api/v3/klines" + query);
+      }
+      if (!Array.isArray(data) || data.length < 100) throw new Error("Binance yetersiz mum verisi döndürdü: " + (Array.isArray(data) ? data.length : "geçersiz yanıt"));
+      console.log("[klines] ok", symbol, interval, data.length, primaryError ? "fallback=api.binance.com" : "source=data-api.binance.vision");
       res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
       return res.end(JSON.stringify(data));
     } catch (error) {
+      console.error("[klines] failed", symbol, interval, String(error.message || error));
       res.writeHead(502, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
       return res.end(JSON.stringify({ ok: false, error: String(error.message || error) }));
     }
