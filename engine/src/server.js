@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
 const INDEX = resolve(fileURLToPath(new URL("../public/index.html", import.meta.url)));
+const ANALYSIS_CORE = resolve(fileURLToPath(new URL("../public/analysis-core.js", import.meta.url)));
 const ALLOWED = new Set(["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT","LINKUSDT","AVAXUSDT","HBARUSDT"]);
 const CG_IDS = {
   BTCUSDT:"bitcoin", ETHUSDT:"ethereum", SOLUSDT:"solana", BNBUSDT:"binancecoin",
@@ -14,7 +15,11 @@ const CG_IDS = {
 async function jsonGet(url) {
   const response = await fetch(url, { headers: { "User-Agent": "crypto-research-engine/1.0" }, signal: AbortSignal.timeout(10000) });
   if (!response.ok) throw new Error("HTTP " + response.status + " from " + new URL(url).hostname);
-  return response.json();
+  const data = await response.json();
+  if (data && typeof data === "object" && "retCode" in data && Number(data.retCode) !== 0) {
+    throw new Error("Upstream API error: " + String(data.retMsg || data.retCode));
+  }
+  return data;
 }
 async function marketContext(symbol) {
   const q = encodeURIComponent(symbol);
@@ -47,14 +52,25 @@ const server = http.createServer(async (req, res) => {
   }
   if (path === "/health") {
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-    return res.end(JSON.stringify({ ok: true, service: "telegram-live-price-mini-app", modules: ["live-price","oscillators","market-context","knn","walk-forward-backtest"] }));
+    return res.end(JSON.stringify({ ok: true, service: "telegram-live-price-mini-app", modules: ["live-price","oscillators","analysis-core","market-context","knn","sample-model-test"] }));
+  }
+  if (path === "/analysis-core.js") {
+    try {
+      const source = await readFile(ANALYSIS_CORE);
+      res.writeHead(200, { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-store, no-cache, must-revalidate", "X-Content-Type-Options": "nosniff" });
+      return req.method === "HEAD" ? res.end() : res.end(source);
+    } catch (error) {
+      res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
+      return res.end("Analiz motoru yüklenemedi: " + error.message);
+    }
   }
   if (path === "/api/klines") {
     const symbol = String(url.searchParams.get("symbol") || "BTCUSDT").toUpperCase();
     const interval = String(url.searchParams.get("interval") || "15m");
-    const limit = Math.min(500, Math.max(100, Number(url.searchParams.get("limit") || 500)));
+    const requestedLimit = Number(url.searchParams.get("limit") || 500);
+    const limit = requestedLimit;
     const allowedIntervals = new Set(["15m","1h","4h","1d","1w"]);
-    if (!ALLOWED.has(symbol) || !allowedIntervals.has(interval) || !Number.isInteger(limit)) {
+    if (!ALLOWED.has(symbol) || !allowedIntervals.has(interval) || !Number.isInteger(limit) || limit < 100 || limit > 500) {
       res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
       return res.end(JSON.stringify({ ok: false, error: "Unsupported symbol, interval, or limit" }));
     }
