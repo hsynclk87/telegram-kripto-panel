@@ -351,7 +351,7 @@ async function calculate(options={}){
   loadMarketContext(symbol);
   const partial=failed.length>0,details=failed.map(x=>x.tf+': '+x.error.message);
   $('oscLoading').textContent=(partial?'Kısmi tarama':'Tarama tamamlandı')+' · '+symbol+' · '+state.aggregate.length+' güncel uyumsuzluk';
-  const statusParts=[batches.length+'/5 zaman dilimi',defs.length+'/10 gösterge',directionalDefs.length+' yönlü oy'];
+  const statusParts=[batches.length+'/5 zaman dilimi',defs.length+'/10 gösterge',directionalDefs.length+' yönlü oy','otomatik tarama: 15dk mum kapanışında'];
   if(partial)statusParts.push('Eksik: '+details.join(', '));
   if(indicatorErrors.length)statusParts.push('Hesaplama uyarısı: '+indicatorErrors.slice(0,3).join(' · '));
   $('oscScanStatus').textContent=statusParts.join(' · ');
