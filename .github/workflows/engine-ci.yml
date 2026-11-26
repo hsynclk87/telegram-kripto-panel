@@ -10,6 +10,7 @@ on:
   pull_request:
     paths:
       - "engine/**"
+      - "index.html"
       - ".github/workflows/engine-ci.yml"
 
 jobs:
