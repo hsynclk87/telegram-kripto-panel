@@ -87,7 +87,8 @@
   <div class="research-foot" id="btNote">KNN oranları kalibre edilmiş olasılık değildir; benzer geçmiş örneklerin oranıdır. Model testi 500 mumluk örneklemde, 4 mum sabit vade ve %0,24 maliyet varsayımıyla hesaplanır; gerçek emir gerçekleşmesi, spread ve piyasa etkisi modellenmez.</div>
 </div>
 </section>
-<script>
+<script type="module">
+import {defs,directionalIds,directionalDefs,ema,calc,divergences,normalizeKlines} from './analysis-core.js';
 (()=>{'use strict';
 const $=id=>document.getElementById(id),symbols=['btcusdt','ethusdt','solusdt','bnbusdt','xrpusdt','dogeusdt','linkusdt','avaxusdt','hbarusdt'];
 const prices=Object.create(null);let socket=null,retryTimer=null,retryDelay=500,stopped=false,matrixTone='#00e676',lastSelectedPrice=null;
@@ -108,72 +109,8 @@ $('symbol').addEventListener('change',render);render();connect();window.addEvent
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 if(!$('oscLabBtn'))return;
-const defs=[
-['rsi','RSI','Momentum','Yükseliş ve düşüş momentumunu ölçer. 70 üzeri yüksek, 30 altı düşük momentum bölgesidir.'],
-['stochrsi','Stoch RSI','Momentum','RSI momentumunu daha hassas ölçer. 80 üzeri yüksek, 20 altı düşük bölgedir.'],
-['mfi','MFI','Para Akışı','Hacim destekli para akışını ölçer. 80 üzeri alım, 20 altı satış baskısının aşırılaşabileceğini gösterir.'],
-['cci','CCI','Momentum','Fiyatın ortalamadan sapmasını ölçer. +100 üzeri güçlü pozitif, -100 altı negatif momentumdur.'],
-['obv','OBV','Hacim','Yükseliş ve düşüş mumlarının hacmini biriktirerek hacim yönünü gösterir.'],
-['macd','MACD Histogram','Trend','MACD ve sinyal çizgisi arasındaki farkla momentum değişimini izler.'],
-['cmf','Chaikin Money Flow','Para Akışı','Hacim ve mum kapanış konumundan alım/satım akışını ölçer. Sıfır üstü pozitif, altı negatiftir.'],
-['adx','ADX','Trend','Trendin gücünü ölçer; 25 üzeri belirgin trend, 20 altı zayıf trend kabul edilir.'],
-['vwap','VWAP Sapması','Fiyat Referansı','Fiyatın seans VWAP değerine göre yüzde konumunu gösterir.'],
-['atr','ATR','Volatilite','Piyasanın ortalama gerçek hareket aralığını ölçer; yön sinyali değildir.']
-];
-const directionalIds=new Set(['rsi','stochrsi','mfi','cci','obv','macd','cmf','vwap']);
-const directionalDefs=defs.filter(x=>directionalIds.has(x[0])); 
-const state={rows:[],rowsByTf:{},selected:'rsi',tf:'15m',feedTf:'all',symbol:'BTCUSDT',series:[],divs:[],aggregate:[]};let requestVersion=0,activeScanController=null,scanRunning=false; const timeframes=['15m','1h','4h','1d','1w']; const tfNames={'15m':'15 DAKİKA','1h':'1 SAAT','4h':'4 SAAT','1d':'1 GÜN','1w':'1 HAFTA'};
-const ema=(a,p)=>{let out=Array(a.length).fill(null),k=2/(p+1),v=null;for(let i=0;i<a.length;i++){if(a[i]==null)continue;v=v==null?a[i]:a[i]*k+v*(1-k);out[i]=v;}return out;};
-const sma=(a,p)=>a.map((_,i)=>i+1<p?null:a.slice(i-p+1,i+1).every(v=>v!=null)?a.slice(i-p+1,i+1).reduce((x,y)=>x+y,0)/p:null);
-const calc=(id,r)=>{const c=r.map(x=>x.c),h=r.map(x=>x.h),l=r.map(x=>x.l),v=r.map(x=>x.v),n=c.length,chg=c.map((x,i)=>i?x-c[i-1]:null),tr=r.map((x,i)=>i?Math.max(x.h-x.l,Math.abs(x.h-r[i-1].c),Math.abs(x.l-r[i-1].c)):x.h-x.l),pos=chg.map(x=>x==null?null:Math.max(x,0)),neg=chg.map(x=>x==null?null:Math.max(-x,0));
-const roll=(a,p,fn)=>a.map((_,i)=>i+1<p?null:fn(a.slice(i-p+1,i+1)));
-const ratio=(a,b)=>a.map((x,i)=>x==null||b[i]==null||b[i]===0?null:x/b[i]);
-const diff=(a,b)=>a.map((x,i)=>x==null||b[i]==null?null:x-b[i]);
-const rsi=(a,p=14)=>{let out=Array(a.length).fill(null),g=0,d=0;for(let i=1;i<a.length;i++){const x=a[i]-a[i-1];if(i<=p){g+=Math.max(x,0);d+=Math.max(-x,0);if(i===p)out[i]=d===0?100:100-100/(1+g/d);}else{g=(g*(p-1)+Math.max(x,0))/p;d=(d*(p-1)+Math.max(-x,0))/p;out[i]=d===0?100:100-100/(1+g/d);}}return out;};
-const rsi14=rsi(c),typ=c.map((x,i)=>(h[i]+l[i]+x)/3),tpS=sma(typ,20),mad=typ.map((x,i)=>i<19?null:typ.slice(i-19,i+1).reduce((s,y)=>s+Math.abs(y-tpS[i]),0)/20);
-let out;
-switch(id){
-case'rsi':out=rsi14;break;
-case'stochrsi':{const lo=roll(rsi14,14,a=>Math.min(...a)),hi=roll(rsi14,14,a=>Math.max(...a));out=ratio(diff(rsi14,lo),diff(hi,lo)).map(x=>x==null?null:x*100);break;}
-case'mfi':{const mf=typ.map((x,i)=>i?x*v[i]:0),p=mf.map((x,i)=>i&&typ[i]>typ[i-1]?x:0),m=mf.map((x,i)=>i&&typ[i]<typ[i-1]?x:0),ps=roll(p,14,a=>a.reduce((s,x)=>s+x,0)),ms=roll(m,14,a=>a.reduce((s,x)=>s+x,0));out=ps.map((x,i)=>x==null?null:ms[i]===0?100:100-100/(1+x/ms[i]));break;}
-case'cci':out=typ.map((x,i)=>tpS[i]==null||mad[i]===0?null:(x-tpS[i])/(.015*mad[i]));break;
-case'obv':{out=Array(n).fill(null);out[0]=v[0];for(let i=1;i<n;i++)out[i]=out[i-1]+(c[i]>c[i-1]?v[i]:c[i]<c[i-1]?-v[i]:0);break;}
-case'williams':{const hh=roll(h,14,a=>Math.max(...a)),ll=roll(l,14,a=>Math.min(...a));out=c.map((x,i)=>hh[i]==null||hh[i]===ll[i]?null:-100*(hh[i]-x)/(hh[i]-ll[i]));break;}
-case'macd':{const m=diff(ema(c,12),ema(c,26));out=diff(m,ema(m,9));break;}
-case'cmf':{const mfv=r.map((x,i)=>x.h===x.l?0:((2*x.c-x.h-x.l)/(x.h-x.l))*x.v);const a=roll(mfv,20,x=>x.reduce((s,y)=>s+y,0)),b=roll(v,20,x=>x.reduce((s,y)=>s+y,0));out=ratio(a,b);break;}
-case'adl':{out=Array(n).fill(null);let s=0;for(let i=0;i<n;i++){s+=(h[i]===l[i]?0:((2*c[i]-h[i]-l[i])/(h[i]-l[i]))*v[i]);out[i]=s;}break;}
-case'force':out=ema(chg.map((x,i)=>x==null?null:x*v[i]),13);break;
-case'roc':out=c.map((x,i)=>i<12?null:c[i-12]===0?null:(x/c[i-12]-1)*100);break;
-case'momentum':out=c.map((x,i)=>i<10?null:x-c[i-10]);break;
-case'cmo':{const up=roll(pos,14,a=>a.reduce((s,x)=>s+(x||0),0)),dn=roll(neg,14,a=>a.reduce((s,x)=>s+(x||0),0));out=up.map((x,i)=>x==null?null:(x+dn[i]===0?0:100*(x-dn[i])/(x+dn[i])));break;}
-case'tsi':{const a=ema(ema(chg,25),13),b=ema(ema(chg.map(x=>x==null?null:Math.abs(x)),25),13);out=ratio(a,b).map(x=>x==null?null:x*100);break;}
-case'trix':{const e=ema(ema(ema(c,15),15),15);out=e.map((x,i)=>i&&e[i-1]?100*(x/e[i-1]-1):null);break;}
-case'ppo':{const a=ema(c,12),b=ema(c,26);out=a.map((x,i)=>b[i]?100*(x-b[i])/b[i]:null);break;}
-case'ultimate':{const bp=r.map((x,i)=>x.c-Math.min(x.l,i?r[i-1].c:x.l)),rr=r.map((x,i)=>x.h-Math.max(x.l,i?r[i-1].c:x.l));const av=p=>ratio(roll(bp,p,a=>a.reduce((s,x)=>s+x,0)),roll(rr,p,a=>a.reduce((s,x)=>s+x,0)));const a=av(7),b=av(14),d=av(28);out=a.map((x,i)=>x==null||b[i]==null||d[i]==null?null:100*(4*x+2*b[i]+d[i])/7);break;}
-case'aroon':{const up=roll(h,25,a=>a.lastIndexOf(Math.max(...a))),dn=roll(l,25,a=>a.lastIndexOf(Math.min(...a)));out=up.map((x,i)=>x==null?null:100*(x-dn[i])/24);break;}
-case'adx':{const plus=Array(n).fill(0),minus=Array(n).fill(0);for(let i=1;i<n;i++){const up=h[i]-h[i-1],down=l[i-1]-l[i];if(up>down&&up>0)plus[i]=up;if(down>up&&down>0)minus[i]=down;}const wilderSum=a=>{const z=Array(n).fill(null);let sum=0,prev=null;for(let i=0;i<n;i++){if(i<14){sum+=a[i];if(i===13){prev=sum;z[i]=prev;}}else{prev=prev-prev/14+a[i];z[i]=prev;}}return z;};const trm=wilderSum(tr),p=wilderSum(plus),m=wilderSum(minus),dx=p.map((x,i)=>x==null||!trm[i]?null:100*Math.abs(x-m[i])/(x+m[i]||1)),adx=Array(n).fill(null);let seed=0,count=0,prev=null;for(let i=0;i<n;i++){if(dx[i]==null)continue;if(prev==null){seed+=dx[i];count++;if(count===14){prev=seed/14;adx[i]=prev;}}else{prev=(prev*13+dx[i])/14;adx[i]=prev;}}out=adx;break;}
-case'vortex':{const vp=r.map((x,i)=>i?Math.abs(x.h-r[i-1].l):0),vm=r.map((x,i)=>i?Math.abs(x.l-r[i-1].h):0),a=roll(vp,14,x=>x.reduce((s,y)=>s+y,0)),b=roll(vm,14,x=>x.reduce((s,y)=>s+y,0)),t=roll(tr,14,x=>x.reduce((s,y)=>s+y,0));out=a.map((x,i)=>x==null?null:(x-b[i])/(t[i]||1));break;}
-case'bbp':case'bandwidth':{const mid=sma(c,20),sd=roll(c,20,a=>Math.sqrt(a.reduce((s,x)=>s+(x-a.reduce((p,q)=>p+q,0)/a.length)**2,0)/20));out=c.map((x,i)=>mid[i]==null?null:id==='bbp'?(x-(mid[i]-2*sd[i]))/(4*sd[i]||1):4*sd[i]/mid[i]*100);break;}
-case'atr':{out=Array(n).fill(null);let seed=0,prev=null;for(let i=0;i<n;i++){if(i<14){seed+=tr[i];if(i===13){prev=seed/14;out[i]=prev;}}else{prev=(prev*13+tr[i])/14;out[i]=prev;}}break;}
-case'chop':{const sum=roll(tr,14,a=>a.reduce((s,x)=>s+x,0)),hh=roll(h,14,a=>Math.max(...a)),ll=roll(l,14,a=>Math.min(...a));out=sum.map((x,i)=>x==null?null:100*Math.log10(x/(hh[i]-ll[i]||1))/Math.log10(14));break;}
-case'eom':out=sma(r.map((x,i)=>i?(x.h+x.l-r[i-1].h-r[i-1].l)/2*(x.h===x.l?0:x.v/(x.h-x.l)):null),14);break;
-case'volosc':{const a=sma(v,5),b=sma(v,20);out=a.map((x,i)=>x==null||!b[i]?null:100*(x-b[i])/b[i]);break;}
-case'pvt':{out=Array(n).fill(null);out[0]=0;for(let i=1;i<n;i++)out[i]=out[i-1]+(c[i-1]?v[i]*(c[i]-c[i-1])/c[i-1]:0);break;}
-case'nvi':case'pvi':{out=Array(n).fill(null);out[0]=1000;for(let i=1;i<n;i++){const cond=id==='nvi'?v[i]<v[i-1]:v[i]>v[i-1];out[i]=out[i-1]*(cond&&c[i-1]?1+(c[i]-c[i-1])/c[i-1]:1);}break;}
-case'vwap':{out=Array(n).fill(null);const interval=n>1?r[1].t-r[0].t:0;if(interval>=86400000){const pv=typ.map((x,i)=>x*v[i]),pvSum=roll(pv,20,a=>a.reduce((s,x)=>s+x,0)),volSum=roll(v,20,a=>a.reduce((s,x)=>s+x,0));out=c.map((x,i)=>pvSum[i]==null||!volSum[i]?null:(x/(pvSum[i]/volSum[i])-1)*100);}else{let pv=0,vol=0,day=null;for(let i=0;i<n;i++){const d=new Date(r[i].t).toISOString().slice(0,10);if(d!==day){day=d;pv=0;vol=0;}pv+=typ[i]*v[i];vol+=v[i];out[i]=vol?(c[i]/(pv/vol)-1)*100:null;}}break;}
-case'relvol':{const a=sma(v,20);out=v.map((x,i)=>a[i]?x/a[i]:null);break;}
-case'bop':out=r.map(x=>x.h===x.l?0:(x.c-x.o)/(x.h-x.l));break;
-case'cvd':{out=Array(n).fill(null);let s=0;for(let i=0;i<n;i++){s+=(2*r[i].tb-r[i].v);out[i]=s;}break;}
-default:out=rsi14;
-}
-return out;};
-function pivots(a,type){const out=[];for(let i=3;i<a.length-3;i++){const value=a[i];if(!Number.isFinite(value))continue;let ok=true;for(let j=i-3;j<=i+3;j++){if(j===i||!Number.isFinite(a[j]))continue;if(type==='low'?a[j]<=value:a[j]>=value){ok=false;break;}}if(ok)out.push({i,v:value});}return out;}
-function divergences(price,osc){
- const pl=pivots(price,'low'),ph=pivots(price,'high'),ol=pivots(osc,'low'),oh=pivots(osc,'high'),out=[];
- const nearest=(arr,index)=>{let lo=0,hi=arr.length;while(lo<hi){const mid=(lo+hi)>>1;if(arr[mid].i<index)lo=mid+1;else hi=mid;}let best=null,dist=4;for(let k=Math.max(0,lo-1);k<Math.min(arr.length,lo+2);k++){const d=Math.abs(arr[k].i-index);if(d<=3&&d<dist){best=arr[k];dist=d;}}return best;};
- function pair(pp,oo,low){for(let k=1;k<pp.length;k++){const a=pp[k-1],b=pp[k];if(b.i-a.i<5||b.i-a.i>80)continue;const x=nearest(oo,a.i),y=nearest(oo,b.i);if(!x||!y||x.i>=y.i)continue;const regular=low?(b.v<a.v&&y.v>x.v):(b.v>a.v&&y.v<x.v),hidden=low?(b.v>a.v&&y.v<x.v):(b.v<a.v&&y.v>x.v);if(regular||hidden)out.push({a,b,type:low?(regular?'Pozitif':'Gizli pozitif'):(regular?'Negatif':'Gizli negatif'),confirmed:true});}}
- pair(pl,ol,true);pair(ph,oh,false);return out.sort((a,b)=>b.b.i-a.b.i);
-}
+const state={rows:[],rowsByTf:{},selected:'rsi',tf:'15m',feedTf:'all',symbol:'BTCUSDT',series:[],divs:[],aggregate:[]};let requestVersion=0,activeScanController=null,scanRunning=false,marketContextRequest=0; const timeframes=['15m','1h','4h','1d','1w']; const tfNames={'15m':'15 DAKİKA','1h':'1 SAAT','4h':'4 SAAT','1d':'1 GÜN','1w':'1 HAFTA'};
+
 function draw(){const canvas=$('oscCanvas'),ctx=canvas.getContext('2d'),w=canvas.clientWidth,h=canvas.clientHeight,dpr=devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);const offset=state.rows.length-Math.min(120,state.rows.length),rows=state.rows.slice(-120),vals=state.series.slice(-120),valid=vals.filter(x=>x!=null&&Number.isFinite(x));if(!rows.length||!valid.length){ctx.fillStyle='#8da3ba';ctx.fillText('Gösterge verisi bekleniyor',20,30);return;}const pad={l:12,r:12,t:18,b:22},pw=w-pad.l-pad.r,ph=(h-pad.t-pad.b)*.43,oh=(h-pad.t-pad.b)*.39,top=pad.t,bottom=top+ph+30;const pmin=Math.min(...rows.map(x=>x.l)),pmax=Math.max(...rows.map(x=>x.h)),vmin=Math.min(...valid),vmax=Math.max(...valid),px=i=>pad.l+i/(rows.length-1)*pw,py=v=>top+(pmax-v)/(pmax-pmin||1)*ph,oy=v=>bottom+(vmax-v)/(vmax-vmin||1)*oh;ctx.strokeStyle='#203447';ctx.lineWidth=1;for(let k=0;k<4;k++){const y=top+k*ph/3;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();}const cw=Math.max(2,pw/rows.length*.62);rows.forEach((x,i)=>{const xx=px(i),up=x.c>=x.o,col=up?'#20d99b':'#ff5268';ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xx,py(x.h));ctx.lineTo(xx,py(x.l));ctx.stroke();const y=Math.min(py(x.o),py(x.c)),bh=Math.max(1,Math.abs(py(x.o)-py(x.c)));ctx.fillRect(xx-cw/2,y,cw,bh);});ctx.fillStyle='#8da3ba';ctx.font='10px Arial';ctx.fillText('FİYAT · MUM',pad.l,11);ctx.fillText('GÖSTERGE · '+(defs.find(x=>x[0]===state.selected)?.[1]||''),pad.l,bottom-7);ctx.beginPath();vals.forEach((v,i)=>{if(v==null)return;const y=oy(v);if(i===0)ctx.moveTo(px(i),y);else ctx.lineTo(px(i),y);});ctx.strokeStyle='#42b9ff';ctx.lineWidth=2;ctx.stroke();state.divs.slice(0,8).forEach(d=>{const i=d.b.i-offset,j=d.a.i-offset;if(i<0||j<0||i>=rows.length||j>=rows.length)return;const bullish=d.type.toLowerCase().includes('pozitif'),col=bullish?'#20d99b':'#ff5268';ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px(j),py(state.rows[d.a.i].c));ctx.lineTo(px(i),py(state.rows[d.b.i].c));ctx.stroke();ctx.beginPath();ctx.moveTo(px(j),oy(state.series[d.a.i]));ctx.lineTo(px(i),oy(state.series[d.b.i]));ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.arc(px(i),oy(state.series[d.b.i]),4,0,Math.PI*2);ctx.fill();});ctx.fillStyle='#8da3ba';ctx.fillText(new Date(rows[0].t).toLocaleString('tr-TR'),pad.l,h-4);ctx.fillText(new Date(rows[rows.length-1].t).toLocaleString('tr-TR'),w-125,h-4);}
 function renderList(){const q=($('oscSearch')?.value||'').trim().toLocaleLowerCase('tr-TR'),cat=$('oscCategory')?.value||'all';const items=defs.filter(x=>(cat==='all'||x[2]===cat)&&(!q||(x[1]+' '+x[2]+' '+x[3]).toLocaleLowerCase('tr-TR').includes(q)));$('oscList').innerHTML=items.map(x=>'<button class="osc-item '+(x[0]===state.selected?'active':'')+'" data-id="'+x[0]+'" data-index="'+String(defs.indexOf(x)+1).padStart(2,'0')+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')||'<div class="osc-empty">Bu filtrede gösterge bulunamadı.</div>';$('oscList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{state.selected=b.dataset.id;state.series=calc(state.selected,state.rows);state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);renderSelected();});}
 function renderSelected(){const d=defs.find(x=>x[0]===state.selected);$('oscName').textContent=d[1];$('oscGroup').textContent=d[2];$('oscExplain').textContent=d[3];$('oscTF').textContent=tfNames[state.tf];draw();renderList();}
@@ -366,8 +303,7 @@ async function calculate(options={}){
     if(!res.ok){const detail=await res.text().catch(()=> '');throw Error('HTTP '+res.status+(detail?' · '+detail.slice(0,140):''));}
     const raw=await res.json();
     if(!Array.isArray(raw)||raw.length<100)throw Error('Yetersiz mum verisi ('+(Array.isArray(raw)?raw.length:0)+')');
-    const rows=raw.map(x=>({t:Number(x[0]),o:Number(x[1]),h:Number(x[2]),l:Number(x[3]),c:Number(x[4]),v:Number(x[5]),tb:Number(x[9])}));
-    if(rows.some(x=>![x.t,x.o,x.h,x.l,x.c,x.v].every(Number.isFinite)))throw Error('Mum verisinde geçersiz sayısal değer var');
+    const rows=normalizeKlines(raw);
     completed++;
     if(version===requestVersion)$('oscScanStatus').textContent='Veri alındı · '+completed+'/5 zaman dilimi';
     return {tf,rows};
@@ -394,9 +330,9 @@ async function calculate(options={}){
      if(!directionalIds.has(d[0]))continue;
      const hits=divergences(prices,series);
      for(const hit of hits){
-      if(hit.b.i<rows.length-9)continue;
+      if(hit.b.i<rows.length-7)continue;
       const side=hit.type.toLocaleLowerCase('tr-TR').includes('pozitif')?'bull':'bear';
-      const item={id:d[0],name:d[1],group:d[2],type:hit.type,side,time:rows[hit.b.i].t,index:hit.b.i,tf};
+      const item={id:d[0],name:d[1],group:d[2],type:hit.type,side,time:rows[hit.b.i].closeTime,index:hit.b.i,tf};
       const key=tf+'|'+d[0]+'|'+side,previous=signalMap.get(key);
       if(!previous||item.time>previous.time)signalMap.set(key,item);
      }
@@ -415,7 +351,7 @@ async function calculate(options={}){
   loadMarketContext(symbol);
   const partial=failed.length>0,details=failed.map(x=>x.tf+': '+x.error.message);
   $('oscLoading').textContent=(partial?'Kısmi tarama':'Tarama tamamlandı')+' · '+symbol+' · '+state.aggregate.length+' güncel uyumsuzluk';
-  const statusParts=[batches.length+'/5 zaman dilimi',defs.length+'/10 gösterge'];
+  const statusParts=[batches.length+'/5 zaman dilimi',defs.length+'/10 gösterge',directionalDefs.length+' yönlü oy'];
   if(partial)statusParts.push('Eksik: '+details.join(', '));
   if(indicatorErrors.length)statusParts.push('Hesaplama uyarısı: '+indicatorErrors.slice(0,3).join(' · '));
   $('oscScanStatus').textContent=statusParts.join(' · ');
