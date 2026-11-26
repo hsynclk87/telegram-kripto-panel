@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "engine/**"
+      - "index.html"
       - ".github/workflows/engine-ci.yml"
   pull_request:
     paths:
@@ -37,3 +38,4 @@ jobs:
           curl --fail --silent http://127.0.0.1:8080/health
           curl --fail --silent http://127.0.0.1:8080/ | grep -q "MATRIX"
           curl --fail --silent http://127.0.0.1:8080/analysis-core.js | grep -q "normalizeKlines"
+          curl --fail --silent -D - -o /dev/null -H "Origin: https://hsynclk87.github.io" http://127.0.0.1:8080/analysis-core.js | grep -qi "Access-Control-Allow-Origin: https://hsynclk87.github.io"
