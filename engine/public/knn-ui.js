@@ -3,8 +3,8 @@ const API="/api/knn";
 const $=s=>document.querySelector(s),fmt=(v,d=2)=>v==null?"—":(Number(v)*100).toFixed(d)+"%",num=(v,d=2)=>v==null?"—":Number(v).toLocaleString("tr-TR",{maximumFractionDigits:d}),date=v=>new Date(v).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
 const symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT","LINKUSDT","AVAXUSDT","HBARUSDT"];
 const css=`
-#knnOpen{position:relative;z-index:40;pointer-events:auto;touch-action:manipulation;cursor:pointer;display:block;margin:10px auto 0;background:#101e2b;border:1px solid #3c6e87;color:#bce8f4;border-radius:11px;padding:12px 20px;font-size:12px;font-weight:800;letter-spacing:.08em}
-#knnPanel{display:none;position:fixed;inset:0;z-index:30;overflow:auto;background:#080e16;color:#e8eff7;padding:env(safe-area-inset-top) 14px max(28px,env(safe-area-inset-bottom));font-family:Inter,system-ui,Arial,sans-serif;text-shadow:none}
+#knnOpen{position:fixed;z-index:2147483646;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);pointer-events:auto;touch-action:manipulation;cursor:pointer;display:block;margin:0;white-space:nowrap;background:#101e2b;border:1px solid #3c6e87;color:#bce8f4;border-radius:11px;padding:12px 20px;font-size:12px;font-weight:800;letter-spacing:.08em}
+#knnPanel{display:none;position:fixed;inset:0;z-index:2147483647;overflow:auto;background:#080e16;color:#e8eff7;padding:env(safe-area-inset-top) 14px max(28px,env(safe-area-inset-bottom));font-family:Inter,system-ui,Arial,sans-serif;text-shadow:none}
 #knnPanel.show{display:block}#knnPanel *{box-sizing:border-box}
 .knn-wrap{max-width:1080px;margin:auto}.knn-head{position:sticky;top:0;z-index:4;display:flex;justify-content:space-between;align-items:center;padding:13px 0;background:rgba(8,14,22,.96);border-bottom:1px solid #243446;backdrop-filter:blur(14px)}
 .knn-head b{font-size:13px;letter-spacing:.16em}.knn-head button,.knn-btn{background:#152536;border:1px solid #344b60;color:#dce9f4;border-radius:9px;padding:10px 13px;font-weight:750;font-size:11px}
@@ -87,9 +87,20 @@ async function run(){
  catch(e){status("HATA: "+e.message)}
  finally{busy=false;$("#knnRun").disabled=false}
 }
-button.type="button";button.style.position="relative";button.style.zIndex="40";button.style.pointerEvents="auto";
-button.onclick=()=>{panel.classList.add("show");panel.style.display="block";panel.style.pointerEvents="auto";const sym=$("#symbol")?.value||"BTCUSDT";if(symbols.includes(sym))$("#knnSymbol").value=sym;run()};
-document.addEventListener("click",e=>{if(e.target&&e.target.closest&&e.target.closest("#knnOpen")){e.preventDefault();e.stopPropagation();panel.classList.add("show");panel.style.display="block";const sym=$("#symbol")?.value||"BTCUSDT";if(symbols.includes(sym))$("#knnSymbol").value=sym;run()}},true);
+button.type="button";
+button.style.position="fixed";button.style.zIndex="2147483646";button.style.pointerEvents="auto";button.style.touchAction="manipulation";
+let lastOpenAt=0;
+function openKnn(e){
+ if(e){e.preventDefault();e.stopPropagation();}
+ const now=Date.now();if(now-lastOpenAt<500)return;lastOpenAt=now;
+ panel.classList.add("show");panel.style.display="block";panel.style.zIndex="2147483647";
+ const sym=$("#symbol")?.value||"BTCUSDT";if(symbols.includes(sym))$("#knnSymbol").value=sym;
+ run();
+}
+button.onclick=openKnn;
+button.addEventListener("pointerup",openKnn,{capture:true});
+button.addEventListener("touchend",openKnn,{capture:true,passive:false});
+document.addEventListener("click",e=>{if(e.target&&e.target.closest&&e.target.closest("#knnOpen"))openKnn(e)},true);
 $("#knnClose").addEventListener("click",()=>panel.classList.remove("show"));
 $("#knnRun").addEventListener("click",run);
 $("#knnDistance").addEventListener("click",()=>{distance=distance==="lorentzian"?"euclidean":"lorentzian";$("#knnDistance").textContent=distance.toUpperCase();run()});
