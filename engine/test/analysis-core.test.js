@@ -10,7 +10,7 @@ function syntheticRows(length=220){
   const low=Math.min(open,close)-.8-Math.abs(Math.cos(i))*.2;
   const volume=1000+(i%17)*37;
   const quoteVolume=volume*close;
-  return {t:i*900000,o:open,h:high,l:low,c:close,v:volume,closeTime:i*900000+899999,quoteVolume,trades:100+i,tb:volume*.54,takerBuyQuoteVolume:quoteVolume*.54};
+  return {t:(i+1)*900000,o:open,h:high,l:low,c:close,v:volume,closeTime:(i+1)*900000+899999,quoteVolume,trades:100+i,tb:volume*.54,takerBuyQuoteVolume:quoteVolume*.54};
  });
 }
 function rawKline(row){return [row.t,String(row.o),String(row.h),String(row.l),String(row.c),String(row.v),row.closeTime,String(row.quoteVolume),String(row.trades),String(row.tb),String(row.takerBuyQuoteVolume),String(row.quoteVolume-row.takerBuyQuoteVolume)];}
