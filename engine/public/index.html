@@ -278,8 +278,8 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 <div class="osc-summary">
 <div class="osc-stat"><small>POZİTİF UYUMSUZLUK</small><strong id="oscBullCount">—</strong><span>Alıcı yönlü</span></div>
 <div class="osc-stat"><small>NEGATİF UYUMSUZLUK</small><strong id="oscBearCount">—</strong><span>Satıcı yönlü</span></div>
-<div class="osc-stat"><small>TOPLAM TESPİT</small><strong id="oscTotalCount">—</strong><span>10 temel gösterge</span></div></div>
-<div class="osc-card osc-aggregate"><div class="osc-aggregate-head"><div><b>UYUMSUZLUK AKIŞI</b><small>Göstergeler aynı yön ve zaman diliminde birleştirilir · En yeni tespit üstte</small></div><span class="osc-chip" id="oscAggregateTF">CANLI TARAMA</span></div>
+<div class="osc-stat"><small>TOPLAM TESPİT</small><strong id="oscTotalCount">—</strong><span>8 yönlü · 2 bağlam göstergesi</span></div></div>
+<div class="osc-card osc-aggregate"><div class="osc-aggregate-head"><div><b>UYUMSUZLUK AKIŞI</b><small>8 yönlü gösterge uyumsuzluk üretir; ADX ve ATR trend/volatilite bağlamıdır · En yeni tespit üstte</small></div><span class="osc-chip" id="oscAggregateTF">CANLI TARAMA</span></div>
 <div class="osc-feed-legend"><span><i class="bull-dot"></i> Pozitif · fiyat dip yaparken gösterge güçleniyor</span><span><i class="bear-dot"></i> Negatif · fiyat tepe yaparken gösterge zayıflıyor</span></div>
 <div id="oscFeed" class="osc-feed"><div class="osc-feed-empty">Tarama başlatılıyor…</div></div></div>
 <div class="osc-layout" aria-hidden="true" style="display:none">
@@ -349,7 +349,9 @@ const defs=[
 ['adx','ADX','Trend','Trendin gücünü ölçer; 25 üzeri belirgin trend, 20 altı zayıf trend kabul edilir.'],
 ['vwap','VWAP Sapması','Fiyat Referansı','Fiyatın seans VWAP değerine göre yüzde konumunu gösterir.'],
 ['atr','ATR','Volatilite','Piyasanın ortalama gerçek hareket aralığını ölçer; yön sinyali değildir.']
-]; 
+];
+const directionalIds=new Set(['rsi','stochrsi','mfi','cci','obv','macd','cmf','vwap']);
+const directionalDefs=defs.filter(x=>directionalIds.has(x[0])); 
 const state={rows:[],rowsByTf:{},selected:'rsi',tf:'15m',feedTf:'all',symbol:'BTCUSDT',series:[],divs:[],aggregate:[]};let requestVersion=0,activeScanController=null,scanRunning=false; const timeframes=['15m','1h','4h','1d','1w']; const tfNames={'15m':'15 DAKİKA','1h':'1 SAAT','4h':'4 SAAT','1d':'1 GÜN','1w':'1 HAFTA'};
 const ema=(a,p)=>{let out=Array(a.length).fill(null),k=2/(p+1),v=null;for(let i=0;i<a.length;i++){if(a[i]==null)continue;v=v==null?a[i]:a[i]*k+v*(1-k);out[i]=v;}return out;};
 const sma=(a,p)=>a.map((_,i)=>i+1<p?null:a.slice(i-p+1,i+1).every(v=>v!=null)?a.slice(i-p+1,i+1).reduce((x,y)=>x+y,0)/p:null);
@@ -379,16 +381,16 @@ case'trix':{const e=ema(ema(ema(c,15),15),15);out=e.map((x,i)=>i&&e[i-1]?100*(x/
 case'ppo':{const a=ema(c,12),b=ema(c,26);out=a.map((x,i)=>b[i]?100*(x-b[i])/b[i]:null);break;}
 case'ultimate':{const bp=r.map((x,i)=>x.c-Math.min(x.l,i?r[i-1].c:x.l)),rr=r.map((x,i)=>x.h-Math.max(x.l,i?r[i-1].c:x.l));const av=p=>ratio(roll(bp,p,a=>a.reduce((s,x)=>s+x,0)),roll(rr,p,a=>a.reduce((s,x)=>s+x,0)));const a=av(7),b=av(14),d=av(28);out=a.map((x,i)=>x==null||b[i]==null||d[i]==null?null:100*(4*x+2*b[i]+d[i])/7);break;}
 case'aroon':{const up=roll(h,25,a=>a.lastIndexOf(Math.max(...a))),dn=roll(l,25,a=>a.lastIndexOf(Math.min(...a)));out=up.map((x,i)=>x==null?null:100*(x-dn[i])/24);break;}
-case'adx':{const plus=r.map((x,i)=>i?Math.max(x.h-r[i-1].h,0):0),minus=r.map((x,i)=>i?Math.max(r[i-1].l-x.l,0):0),trm=roll(tr,14,a=>a.reduce((s,x)=>s+x,0)),p=roll(plus,14,a=>a.reduce((s,x)=>s+x,0)),m=roll(minus,14,a=>a.reduce((s,x)=>s+x,0));const dx=p.map((x,i)=>x==null||trm[i]===0?null:100*Math.abs(x-m[i])/(x+m[i]||1));out=sma(dx,14);break;}
+case'adx':{const plus=Array(n).fill(0),minus=Array(n).fill(0);for(let i=1;i<n;i++){const up=h[i]-h[i-1],down=l[i-1]-l[i];if(up>down&&up>0)plus[i]=up;if(down>up&&down>0)minus[i]=down;}const wilderSum=a=>{const z=Array(n).fill(null);let sum=0,prev=null;for(let i=0;i<n;i++){if(i<14){sum+=a[i];if(i===13){prev=sum;z[i]=prev;}}else{prev=prev-prev/14+a[i];z[i]=prev;}}return z;};const trm=wilderSum(tr),p=wilderSum(plus),m=wilderSum(minus),dx=p.map((x,i)=>x==null||!trm[i]?null:100*Math.abs(x-m[i])/(x+m[i]||1)),adx=Array(n).fill(null);let seed=0,count=0,prev=null;for(let i=0;i<n;i++){if(dx[i]==null)continue;if(prev==null){seed+=dx[i];count++;if(count===14){prev=seed/14;adx[i]=prev;}}else{prev=(prev*13+dx[i])/14;adx[i]=prev;}}out=adx;break;}
 case'vortex':{const vp=r.map((x,i)=>i?Math.abs(x.h-r[i-1].l):0),vm=r.map((x,i)=>i?Math.abs(x.l-r[i-1].h):0),a=roll(vp,14,x=>x.reduce((s,y)=>s+y,0)),b=roll(vm,14,x=>x.reduce((s,y)=>s+y,0)),t=roll(tr,14,x=>x.reduce((s,y)=>s+y,0));out=a.map((x,i)=>x==null?null:(x-b[i])/(t[i]||1));break;}
 case'bbp':case'bandwidth':{const mid=sma(c,20),sd=roll(c,20,a=>Math.sqrt(a.reduce((s,x)=>s+(x-a.reduce((p,q)=>p+q,0)/a.length)**2,0)/20));out=c.map((x,i)=>mid[i]==null?null:id==='bbp'?(x-(mid[i]-2*sd[i]))/(4*sd[i]||1):4*sd[i]/mid[i]*100);break;}
-case'atr':out=sma(tr,14);break;
+case'atr':{out=Array(n).fill(null);let seed=0,prev=null;for(let i=0;i<n;i++){if(i<14){seed+=tr[i];if(i===13){prev=seed/14;out[i]=prev;}}else{prev=(prev*13+tr[i])/14;out[i]=prev;}}break;}
 case'chop':{const sum=roll(tr,14,a=>a.reduce((s,x)=>s+x,0)),hh=roll(h,14,a=>Math.max(...a)),ll=roll(l,14,a=>Math.min(...a));out=sum.map((x,i)=>x==null?null:100*Math.log10(x/(hh[i]-ll[i]||1))/Math.log10(14));break;}
 case'eom':out=sma(r.map((x,i)=>i?(x.h+x.l-r[i-1].h-r[i-1].l)/2*(x.h===x.l?0:x.v/(x.h-x.l)):null),14);break;
 case'volosc':{const a=sma(v,5),b=sma(v,20);out=a.map((x,i)=>x==null||!b[i]?null:100*(x-b[i])/b[i]);break;}
 case'pvt':{out=Array(n).fill(null);out[0]=0;for(let i=1;i<n;i++)out[i]=out[i-1]+(c[i-1]?v[i]*(c[i]-c[i-1])/c[i-1]:0);break;}
 case'nvi':case'pvi':{out=Array(n).fill(null);out[0]=1000;for(let i=1;i<n;i++){const cond=id==='nvi'?v[i]<v[i-1]:v[i]>v[i-1];out[i]=out[i-1]*(cond&&c[i-1]?1+(c[i]-c[i-1])/c[i-1]:1);}break;}
-case'vwap':{out=Array(n).fill(null);let pv=0,vol=0,day=null;for(let i=0;i<n;i++){const d=new Date(r[i].t).toISOString().slice(0,10);if(d!==day){day=d;pv=0;vol=0;}pv+=typ[i]*v[i];vol+=v[i];out[i]=vol?(c[i]/(pv/vol)-1)*100:null;}break;}
+case'vwap':{out=Array(n).fill(null);const interval=n>1?r[1].t-r[0].t:0;if(interval>=86400000){const pv=typ.map((x,i)=>x*v[i]),pvSum=roll(pv,20,a=>a.reduce((s,x)=>s+x,0)),volSum=roll(v,20,a=>a.reduce((s,x)=>s+x,0));out=c.map((x,i)=>pvSum[i]==null||!volSum[i]?null:(x/(pvSum[i]/volSum[i])-1)*100);}else{let pv=0,vol=0,day=null;for(let i=0;i<n;i++){const d=new Date(r[i].t).toISOString().slice(0,10);if(d!==day){day=d;pv=0;vol=0;}pv+=typ[i]*v[i];vol+=v[i];out[i]=vol?(c[i]/(pv/vol)-1)*100:null;}}break;}
 case'relvol':{const a=sma(v,20);out=v.map((x,i)=>a[i]?x/a[i]:null);break;}
 case'bop':out=r.map(x=>x.h===x.l?0:(x.c-x.o)/(x.h-x.l));break;
 case'cvd':{out=Array(n).fill(null);let s=0;for(let i=0;i<n;i++){s+=(2*r[i].tb-r[i].v);out[i]=s;}break;}
@@ -423,7 +425,7 @@ function renderAggregate(){
  const cards=[...groups.values()].sort((a,b)=>b.time-a.time).map(g=>{
   const positive=g.side==='bull',names=g.items.map(x=>'<span class="osc-indicator-tag">'+x.name+'</span>').join('');
   const types=[...new Set(g.items.map(x=>x.type))].join(' · ');
-  return '<article class="osc-feed-card '+(positive?'is-bull':'is-bear')+'"><div class="osc-feed-card-top"><span class="osc-direction">'+(positive?'POZİTİF UYUMSUZLUK':'NEGATİF UYUMSUZLUK')+'</span><span class="osc-feed-tf">'+tfNames[g.tf]+'</span></div><div class="osc-feed-card-main"><strong>'+g.items.length+' gösterge aynı yönde</strong><small>'+types+'</small></div><div class="osc-indicator-tags">'+names+'</div><div class="osc-feed-card-foot"><span>'+new Date(g.time).toLocaleString('tr-TR')+'</span><span>'+g.items.length+' / 10 gösterge</span></div></article>';
+  return '<article class="osc-feed-card '+(positive?'is-bull':'is-bear')+'"><div class="osc-feed-card-top"><span class="osc-direction">'+(positive?'POZİTİF UYUMSUZLUK':'NEGATİF UYUMSUZLUK')+'</span><span class="osc-feed-tf">'+tfNames[g.tf]+'</span></div><div class="osc-feed-card-main"><strong>'+g.items.length+' gösterge aynı yönde</strong><small>'+types+'</small></div><div class="osc-indicator-tags">'+names+'</div><div class="osc-feed-card-foot"><span>'+new Date(g.time).toLocaleString('tr-TR')+'</span><span>'+g.items.length+' / '+directionalDefs.length+' yönlü gösterge</span></div></article>';
  }).join('');
  $('oscFeed').innerHTML=cards||'<div class="osc-feed-empty"><strong>Bu filtrede güncel uyumsuzluk bulunamadı.</strong><span>Bu, göstergelerin aynı anda uyumsuzluk üretmediği anlamına gelir; tek başına alım veya satım sinyali değildir.</span></div>';
 }
@@ -618,7 +620,9 @@ async function calculate(options={}){
     await new Promise(resolve=>setTimeout(resolve,0));
     if(version!==requestVersion||controller.signal.aborted)return;
     try{
-     const series=calc(d[0],rows),hits=divergences(prices,series);
+     const series=calc(d[0],rows);
+     if(!directionalIds.has(d[0]))continue;
+     const hits=divergences(prices,series);
      for(const hit of hits){
       if(hit.b.i<rows.length-9)continue;
       const side=hit.type.toLocaleLowerCase('tr-TR').includes('pozitif')?'bull':'bear';
