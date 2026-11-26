@@ -6,20 +6,20 @@ const renderPath=new URL("../public/index.html",import.meta.url);
 const pagesPath=new URL("../../index.html",import.meta.url);
 const render=readFileSync(renderPath,"utf8");
 const pages=readFileSync(pagesPath,"utf8");
-const ids=[...render.matchAll(/\\bid="([^"]+)"/g)].map(match=>match[1]);
+const ids=[...render.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]);
 const idSet=new Set(ids);
 const duplicates=ids.filter((id,index)=>ids.indexOf(id)!==index);
-const references=[...render.matchAll(/\\$\\(['"]([^'"]+)['"]\\)/g)].map(match=>match[1]);
+const references=[...render.matchAll(/\$\(['"]([^'"]+)['"]\)/g)].map(match=>match[1]);
 const missing=[...new Set(references.filter(id=>!idSet.has(id)))];
 if(duplicates.length)throw new Error("Duplicate HTML IDs: "+duplicates.join(", "));
 if(missing.length)throw new Error("JavaScript references missing HTML IDs: "+missing.join(", "));
 if((render.match(/<style>/g)||[]).length!==1)throw new Error("Expected one consolidated stylesheet");
 console.log("DOM ID and stylesheet audit: OK");
 for(const [name,html] of [["Render",render],["GitHub Pages",pages]]){
- const matches=[...html.matchAll(/<script type="module">([\\s\\S]*?)<\\/script>/g)];
+ const matches=[...html.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)];
  if(matches.length!==2)throw new Error(name+" expected two isolated JavaScript modules, found "+matches.length);
  for(let i=0;i<matches.length;i++){
-  const temp=join(tmpdir(),"matrix-mini-app-"+name.toLowerCase().replace(/\\s+/g,"-")+"-"+i+".mjs");
+  const temp=join(tmpdir(),"matrix-mini-app-"+name.toLowerCase().replace(/\s+/g,"-")+"-"+i+".mjs");
   writeFileSync(temp,matches[i][1]);
   const result=spawnSync(process.execPath,["--check",temp],{stdio:"inherit"});
   try{unlinkSync(temp);}catch{}
