@@ -3,7 +3,7 @@ const API="/api/knn";
 const $=s=>document.querySelector(s),fmt=(v,d=2)=>v==null?"—":(Number(v)*100).toFixed(d)+"%",num=(v,d=2)=>v==null?"—":Number(v).toLocaleString("tr-TR",{maximumFractionDigits:d}),date=v=>new Date(v).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
 const symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT","LINKUSDT","AVAXUSDT","HBARUSDT"];
 const css=`
-#knnOpen{position:fixed;z-index:2147483646;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);pointer-events:auto;touch-action:manipulation;cursor:pointer;display:block;margin:0;white-space:nowrap;background:#101e2b;border:1px solid #3c6e87;color:#bce8f4;border-radius:11px;padding:12px 20px;font-size:12px;font-weight:800;letter-spacing:.08em}
+#knnOpen{position:fixed;z-index:2147483646;left:50%;top:calc(14px + env(safe-area-inset-top));bottom:auto;transform:translateX(-50%);pointer-events:auto;touch-action:manipulation;cursor:pointer;display:block;margin:0;white-space:nowrap;background:#101e2b;border:1px solid #3c6e87;color:#bce8f4;border-radius:11px;padding:12px 20px;font-size:12px;font-weight:800;letter-spacing:.08em}
 #knnPanel{display:none;position:fixed;inset:0;z-index:2147483647;overflow:auto;background:#080e16;color:#e8eff7;padding:env(safe-area-inset-top) 14px max(28px,env(safe-area-inset-bottom));font-family:Inter,system-ui,Arial,sans-serif;text-shadow:none}
 #knnPanel.show{display:block}#knnPanel *{box-sizing:border-box}
 .knn-wrap{max-width:1080px;margin:auto}.knn-head{position:sticky;top:0;z-index:4;display:flex;justify-content:space-between;align-items:center;padding:13px 0;background:rgba(8,14,22,.96);border-bottom:1px solid #243446;backdrop-filter:blur(14px)}
@@ -98,8 +98,10 @@ function openKnn(e){
  run();
 }
 button.onclick=openKnn;
-button.addEventListener("pointerup",openKnn,{capture:true});
-button.addEventListener("touchend",openKnn,{capture:true,passive:false});
+button.addEventListener("pointerdown",openKnn,{capture:true});
+button.addEventListener("touchstart",openKnn,{capture:true,passive:false});
+document.addEventListener("pointerdown",e=>{if(e.target&&e.target.closest&&e.target.closest("#knnOpen"))openKnn(e)},true);
+document.addEventListener("touchstart",e=>{if(e.target&&e.target.closest&&e.target.closest("#knnOpen"))openKnn(e)}, {capture:true,passive:false});
 document.addEventListener("click",e=>{if(e.target&&e.target.closest&&e.target.closest("#knnOpen"))openKnn(e)},true);
 $("#knnClose").addEventListener("click",()=>panel.classList.remove("show"));
 $("#knnRun").addEventListener("click",run);
