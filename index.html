@@ -89,7 +89,6 @@
 </section>
 <script type="module">
 import {defs,directionalIds,directionalDefs,ema,calc,divergences,normalizeKlines,clusterSignals} from 'https://telegram-kripto-analysis-engine.onrender.com/analysis-core.js';
-const API_ORIGIN='https://telegram-kripto-analysis-engine.onrender.com';
 (()=>{'use strict';
 const $=id=>document.getElementById(id),escapeHtml=value=>String(value).replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])),symbols=['btcusdt','ethusdt','solusdt','bnbusdt','xrpusdt','dogeusdt','linkusdt','avaxusdt','hbarusdt'];
 const prices=Object.create(null);let socket=null,retryTimer=null,retryDelay=500,stopped=false,matrixTone='#00e676',lastSelectedPrice=null;
