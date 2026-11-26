@@ -2,20 +2,39 @@ import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { analyzeKnn } from "./knn.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
 const INDEX = resolve(fileURLToPath(new URL("../public/index.html", import.meta.url)));
 
 const server = http.createServer(async (req, res) => {
-  const path = new URL(req.url || "/", "http://localhost").pathname;
+  const url = new URL(req.url || "/", "http://localhost");
+  const path = url.pathname;
   if (req.method !== "GET" && req.method !== "HEAD") {
     res.writeHead(405, { "Content-Type": "text/plain; charset=utf-8" });
     return res.end("Method Not Allowed");
   }
   if (path === "/health") {
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-    return res.end(JSON.stringify({ ok: true, service: "telegram-live-price-mini-app" }));
+    return res.end(JSON.stringify({ ok: true, service: "telegram-live-price-mini-app", modules: ["knn-market-intelligence"] }));
+  }
+  if (path === "/api/knn" && req.method === "GET") {
+    try {
+      const result = await analyzeKnn({
+        symbol: url.searchParams.get("symbol") || "BTCUSDT",
+        timeframe: url.searchParams.get("timeframe") || "15m",
+        k: url.searchParams.get("k") || 10,
+        horizon: url.searchParams.get("horizon") || 5,
+        distanceType: url.searchParams.get("distance") || "lorentzian",
+        history: url.searchParams.get("history") || 2500
+      });
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+      return res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ error: error.message || "KNN analysis failed" }));
+    }
   }
   if (path !== "/" && path !== "/index.html") {
     res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
