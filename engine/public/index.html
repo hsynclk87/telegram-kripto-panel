@@ -425,7 +425,7 @@ function knnPredict(rows,features,index,windowSize=180,k=21){
  const start=Math.max(60,index-windowSize),samples=[];
  for(let j=start;j<=index-4;j++){
   const f=features[j];if(!f)continue;
-  const future=(rows[j+4].c/rows[j].c-1)*100;
+  const future=(rows[j+4].c/rows[j].c-1);
   if(Number.isFinite(future))samples.push({f,y:future});
  }
  const target=features[index];if(!target||samples.length<k)return null;
@@ -529,6 +529,7 @@ syncMarketLabel();
 $('oscLoading').textContent=state.rows.length?'Grafik: '+state.symbol+' · '+tfNames[next]+' · son fiyat bölgesi':'Bu zaman diliminin verisi yükleniyor…';
 renderSelected();
 renderAggregate();
+renderResearch();
 if(!state.rows.length)calculate();
 }
 function setSymbol(next){
