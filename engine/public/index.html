@@ -115,28 +115,30 @@ function draw(){const canvas=$('oscCanvas'),ctx=canvas.getContext('2d'),w=canvas
 function renderList(){const q=($('oscSearch')?.value||'').trim().toLocaleLowerCase('tr-TR'),cat=$('oscCategory')?.value||'all';const items=defs.filter(x=>(cat==='all'||x[2]===cat)&&(!q||(x[1]+' '+x[2]+' '+x[3]).toLocaleLowerCase('tr-TR').includes(q)));$('oscList').innerHTML=items.map(x=>'<button class="osc-item '+(x[0]===state.selected?'active':'')+'" data-id="'+x[0]+'" data-index="'+String(defs.indexOf(x)+1).padStart(2,'0')+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')||'<div class="osc-empty">Bu filtrede gösterge bulunamadı.</div>';$('oscList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{state.selected=b.dataset.id;state.series=calc(state.selected,state.rows);state.divs=divergences(state.rows.map(x=>x.c),state.series).filter(d=>d.b.i>=state.rows.length-9);renderSelected();});}
 function renderSelected(){const d=defs.find(x=>x[0]===state.selected);$('oscName').textContent=d[1];$('oscGroup').textContent=d[2];$('oscExplain').textContent=d[3];$('oscTF').textContent=tfNames[state.tf];draw();renderList();}
 function renderAggregate(){
- const all=state.aggregate.slice().sort((a,b)=>b.time-a.time);
+ const all=state.aggregate.slice().sort((a,b)=>b.index-a.index);
  const visible=state.feedTf==='all'?all:all.filter(x=>x.tf===state.feedTf);
- const bulls=visible.filter(x=>x.side==='bull'),bears=visible.filter(x=>x.side==='bear');
- $('oscBullCount').textContent=bulls.length;$('oscBearCount').textContent=bears.length;$('oscTotalCount').textContent=visible.length;
- $('oscBullLabel').textContent=bulls.length+' tespit';$('oscBearLabel').textContent=bears.length+' tespit';
+ const groups=[];
+ for(const item of visible){
+  let group=groups.find(g=>g.tf===item.tf&&g.side===item.side&&Math.abs(g.anchorIndex-item.index)<=3);
+  if(!group){group={tf:item.tf,side:item.side,anchorIndex:item.index,time:item.time,items:[]};groups.push(group);}
+  if(!group.items.some(x=>x.id===item.id))group.items.push(item);
+  group.time=Math.max(group.time,item.time);
+ }
+ groups.sort((a,b)=>b.time-a.time);
+ const bulls=groups.filter(x=>x.side==='bull'),bears=groups.filter(x=>x.side==='bear');
+ $('oscBullCount').textContent=bulls.length;$('oscBearCount').textContent=bears.length;$('oscTotalCount').textContent=groups.length;
+ const bullLabel=$('oscBullLabel'),bearLabel=$('oscBearLabel');
+ if(bullLabel)bullLabel.textContent=bulls.length+' grup';if(bearLabel)bearLabel.textContent=bears.length+' grup';
  $('oscAggregateTF').textContent=state.feedTf==='all'?'TÜM ZAMAN DİLİMLERİ':tfNames[state.feedTf];
  document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tf===state.feedTf));
- const groups=new Map();
- for(const item of visible){
-  const key=item.tf+'|'+item.side;
-  if(!groups.has(key))groups.set(key,{tf:item.tf,side:item.side,time:item.time,items:[]});
-  const g=groups.get(key);g.time=Math.max(g.time,item.time);
-  if(!g.items.some(x=>x.id===item.id))g.items.push(item);
- }
- const cards=[...groups.values()].sort((a,b)=>b.time-a.time).map(g=>{
+ const cards=groups.map(g=>{
   const positive=g.side==='bull',names=g.items.map(x=>'<span class="osc-indicator-tag">'+x.name+'</span>').join('');
-  const types=[...new Set(g.items.map(x=>x.type))].join(' · ');
-  return '<article class="osc-feed-card '+(positive?'is-bull':'is-bear')+'"><div class="osc-feed-card-top"><span class="osc-direction">'+(positive?'POZİTİF UYUMSUZLUK':'NEGATİF UYUMSUZLUK')+'</span><span class="osc-feed-tf">'+tfNames[g.tf]+'</span></div><div class="osc-feed-card-main"><strong>'+g.items.length+' gösterge aynı yönde</strong><small>'+types+'</small></div><div class="osc-indicator-tags">'+names+'</div><div class="osc-feed-card-foot"><span>'+new Date(g.time).toLocaleString('tr-TR')+'</span><span>'+g.items.length+' / '+directionalDefs.length+' yönlü gösterge</span></div></article>';
+  const types=[...new Set(g.items.map(x=>x.type))].join(' · '),count=g.items.length;
+  const headline=count>=2?count+' / '+directionalDefs.length+' gösterge aynı salınımı doğruluyor':'Tek gösterge tespiti · ek teyit yok';
+  return '<article class="osc-feed-card '+(positive?'is-bull':'is-bear')+'"><div class="osc-feed-card-top"><span class="osc-direction">'+(positive?'POZİTİF UYUMSUZLUK':'NEGATİF UYUMSUZLUK')+'</span><span class="osc-feed-tf">'+tfNames[g.tf]+'</span></div><div class="osc-feed-card-main"><strong>'+headline+'</strong><small>'+types+' · pivotlar en fazla 3 mum aralıklı</small></div><div class="osc-indicator-tags">'+names+'</div><div class="osc-feed-card-foot"><span>'+new Date(g.time).toLocaleString('tr-TR')+'</span><span>'+count+' / '+directionalDefs.length+' yönlü gösterge</span></div></article>';
  }).join('');
- $('oscFeed').innerHTML=cards||'<div class="osc-feed-empty"><strong>Bu filtrede güncel uyumsuzluk bulunamadı.</strong><span>Bu, göstergelerin aynı anda uyumsuzluk üretmediği anlamına gelir; tek başına alım veya satım sinyali değildir.</span></div>';
+ $('oscFeed').innerHTML=cards||'<div class="osc-feed-empty"><strong>Bu filtrede güncel uyumsuzluk bulunamadı.</strong><span>Yalnızca kapanmış mumlarla teyit edilen pivotlar gösterilir. Boş sonuç, veri hatası anlamına gelmez.</span></div>';
 }
-
 function researchFeatures(rows){
  const c=rows.map(x=>x.c),rsi=calc('rsi',rows),rel=calc('relvol',rows),e20=ema(c,20),e50=ema(c,50),atr=calc('atr',rows);
  return rows.map((x,i)=>{
@@ -176,7 +178,8 @@ function runKnnResearch(rows){
  return {current,trades:trades.length,wins,winRate:trades.length?wins/trades.length:0,netReturn:equity-1,maxDD};
 }
 function renderResearch(){
- const rows=state.rows||[];if(rows.length<100)return;
+ const rows=(state.feedTf!=='all'&&state.rowsByTf[state.feedTf])?state.rowsByTf[state.feedTf]:(state.rowsByTf['15m']||state.rows||[]);
+ if(rows.length<100)return;
  const specs=[
   ['RSI','rsi',v=>v>55?1:v<45?-1:0],
   ['Stoch RSI','stochrsi',v=>v>60?1:v<40?-1:0],
@@ -185,22 +188,17 @@ function renderResearch(){
   ['OBV','obv',(v,a)=>v>a[a.length-6]?1:v<a[a.length-6]?-1:0],
   ['MACD','macd',v=>v>0?1:v<0?-1:0],
   ['CMF','cmf',v=>v>.05?1:v<-.05?-1:0],
-  ['ADX','adx',v=>v>=25?0:0],
-  ['VWAP','vwap',v=>v>.05?1:v<-.05?-1:0]
+  ['VWAP / VWMA','vwap',v=>v>.05?1:v<-.05?-1:0]
  ];
  const votes=specs.map(([name,id,fn])=>{const a=calc(id,rows),v=a[a.length-1];return {name,id,value:v,side:v==null?0:fn(v,a)};});
- const atr=calc('atr',rows).at(-1),price=rows.at(-1).c;
  const buy=votes.filter(x=>x.side>0).length,sell=votes.filter(x=>x.side<0).length,neutral=votes.length-buy-sell;
- const adx=calc('adx',rows).at(-1);
- const score=Math.round(50+(buy-sell)/votes.length*50);
- const bounded=Math.max(0,Math.min(100,score));
- const angle=-90+bounded*1.8;
+ const bounded=Math.round(50+(buy-sell)/specs.length*50),angle=-90+bounded*1.8;
+ const adx=calc('adx',rows).at(-1),atr=calc('atr',rows).at(-1),price=rows.at(-1).c;
  const needle=$('gaugeNeedle');if(needle)needle.style.transform='translateX(-50%) rotate('+angle+'deg)';
  const gv=$('gaugeValue');if(gv)gv.textContent=bounded+'/100';
- const gs=$('gaugeState');if(gs){gs.textContent=bounded>=65?'ALICI ÜSTÜN':bounded<=35?'SATICI ÜSTÜN':'DENGELİ';gs.style.color=bounded>=65?'#4ee0ae':bounded<=35?'#ff7180':'#e3c66b';}
- const caption=$('gaugeCaption');if(caption)caption.textContent=(bounded>=65?'Alım yönlü kanıtlar baskın.':bounded<=35?'Satış yönlü kanıtlar baskın.':'Alıcı ve satıcı kanıtları dengeli.')+' ADX '+(adx==null?'—':adx.toFixed(1))+' · ATR '+(atr==null?'—':(atr/price*100).toFixed(2)+'%')+'. Tek başına işlem sinyali değildir.';
+ const gs=$('gaugeState');if(gs){gs.textContent=bounded>=65?'ALICI AĞIRLIKLI':bounded<=35?'SATICI AĞIRLIKLI':'DENGELİ';gs.style.color=bounded>=65?'#65dfb5':bounded<=35?'#f18a98':'#e1c47a';}
+ const caption=$('gaugeCaption');if(caption)caption.textContent=(state.feedTf==='all'?'15 dakika referansında':tfNames[state.feedTf]+' referansında')+' · '+buy+' alıcı / '+sell+' satıcı / '+neutral+' nötr oy. ADX '+(Number.isFinite(adx)?adx.toFixed(1):'—')+' · ATR '+(Number.isFinite(atr)&&price>0?(atr/price*100).toFixed(2)+'%':'—')+'. Denge puanı olasılık değildir.';
  const gb=$('gaugeBull');if(gb)gb.textContent='ALICI '+buy;const gn=$('gaugeNeutral');if(gn)gn.textContent='NÖTR '+neutral;const gr=$('gaugeBear');if(gr)gr.textContent='SATICI '+sell;
-
  const m=runKnnResearch(rows),fmtPct=x=>((x*100)>=0?'+':'')+(x*100).toFixed(2)+'%';
  const set=(id,v,cls)=>{const el=$(id);if(!el)return;el.textContent=v;el.classList.remove('research-positive','research-negative');if(cls)el.classList.add(cls);};
  if(m.current){
@@ -214,10 +212,10 @@ function renderResearch(){
  set('btWin',(m.winRate*100).toFixed(1)+'%','');
  set('btTrades',m.trades+' işlem · '+m.wins+' kazanç','');
  set('btDrawdown','-'+(m.maxDD*100).toFixed(2)+'%','research-negative');
- const ind=[['RSI','rsi'],['Stoch RSI','stochrsi'],['MFI','mfi'],['CCI','cci'],['OBV','obv'],['MACD','macd'],['CMF','cmf'],['ADX','adx'],['VWAP','vwap'],['ATR','atr']];
- const latest=ind.map(([name,id])=>{const a=calc(id,rows),v=a[a.length-1];return name+': '+(v==null?'—':Number(v).toFixed(2));});
+ const ind=[['RSI','rsi'],['Stoch RSI','stochrsi'],['MFI','mfi'],['CCI','cci'],['OBV','obv'],['MACD','macd'],['CMF','cmf'],['ADX','adx'],['VWAP / VWMA','vwap'],['ATR','atr']];
+ const latest=ind.map(([name,id])=>{const v=calc(id,rows).at(-1);return name+': '+(Number.isFinite(v)?(Math.abs(v)>=1000000?(v/1000000).toFixed(2)+'M':Math.abs(v)>=1000?(v/1000).toFixed(2)+'K':v.toFixed(2)):'—');});
  const box=$('researchIndicators');if(box)box.innerHTML=latest.map(x=>'<span class="research-badge">'+x+'</span>').join('');
- const last=rows[rows.length-1],volume=rows.slice(-20).reduce((s,x)=>s+x.v,0),takerBuy=rows.slice(-20).reduce((s,x)=>s+x.tb,0);
+ const volume=rows.slice(-20).reduce((sum,x)=>sum+x.quoteVolume,0),takerBuy=rows.slice(-20).reduce((sum,x)=>sum+x.takerBuyQuoteVolume,0);
  set('ctxTaker',volume?(takerBuy/volume*100).toFixed(1)+'%':'—',volume&&takerBuy/volume>=.52?'research-positive':'research-negative');
 }
 async function loadMarketContext(symbol){
@@ -376,8 +374,9 @@ document.querySelectorAll('.osc-tf-btn').forEach(btn=>btn.classList.toggle('acti
 }
 function setTimeframe(next){
 if(next!=='all'&&!timeframes.includes(next))return;
-state.feedTf=next;
-renderAggregate();
+state.feedTf=next;state.tf=next==='all'?'15m':next;
+state.rows=state.rowsByTf[state.tf]||state.rowsByTf['15m']||state.rows;
+syncMarketLabel();renderAggregate();renderResearch();
 }
 function setSymbol(next){
 if(!['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','LINKUSDT','AVAXUSDT','HBARUSDT'].includes(String(next).toUpperCase()))return;
