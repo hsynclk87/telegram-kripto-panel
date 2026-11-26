@@ -241,10 +241,10 @@ select{appearance:none;background:#101c2a;color:#eaf2fc;border:1px solid #2b4057
 <option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option><option value="LINKUSDT">LINK / USDT</option><option value="AVAXUSDT">AVAX / USDT</option><option value="HBARUSDT">HBAR / USDT</option>
 </select>
 <div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>
-<button id="oscLabBtn">GÖSTERGE LABORATUVARI</button>
+<button id="oscLabBtn" type="button" onclick="document.getElementById('oscLab').classList.add('show')" style="position:relative;z-index:10;pointer-events:auto">GÖSTERGE LABORATUVARI</button>
 </main>
 <section id="oscLab" aria-label="Gösterge ve uyumsuzluk laboratuvarı">
-<div class="osc-head"><strong>OSCILLATOR LAB</strong><button id="oscClose">KAPAT ✕</button></div>
+<div class="osc-head"><strong>OSCILLATOR LAB</strong><button id="oscClose" type="button" onclick="document.getElementById('oscLab').classList.remove('show')">KAPAT ✕</button></div>
 <div class="osc-controls osc-toolbar">
 <label class="osc-pair-control">PARİTE<select id="oscSymbol" aria-label="Analiz paritesi"><option value="BTCUSDT">BTC / USDT</option><option value="ETHUSDT">ETH / USDT</option><option value="SOLUSDT">SOL / USDT</option><option value="BNBUSDT">BNB / USDT</option><option value="XRPUSDT">XRP / USDT</option><option value="DOGEUSDT">DOGE / USDT</option><option value="LINKUSDT">LINK / USDT</option><option value="AVAXUSDT">AVAX / USDT</option><option value="HBARUSDT">HBAR / USDT</option></select></label>
 <div class="osc-time-control"><span>ZAMAN DİLİMİ</span><div class="osc-time-switch" role="group" aria-label="Grafik zaman dilimi"><button type="button" class="osc-tf-btn active" data-tf="15m">15D</button><button type="button" class="osc-tf-btn" data-tf="1h">1S</button><button type="button" class="osc-tf-btn" data-tf="4h">4S</button><button type="button" class="osc-tf-btn" data-tf="1d">1G</button><button type="button" class="osc-tf-btn" data-tf="1w">1H</button></div></div>
