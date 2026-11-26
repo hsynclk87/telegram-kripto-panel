@@ -473,7 +473,7 @@ function renderResearch(){
  set('btWin',(m.winRate*100).toFixed(1)+'%','');
  set('btTrades',m.trades+' işlem · '+m.wins+' kazanç','');
  set('btDrawdown','-'+(m.maxDD*100).toFixed(2)+'%','research-negative');
- const ind=[['RSI','rsi'],['Stoch RSI','stochrsi'],['MFI','mfi'],['CCI','cci'],['MACD','macd'],['CMF','cmf'],['ADX','adx']];
+ const ind=[['RSI','rsi'],['Stoch RSI','stochrsi'],['MFI','mfi'],['CCI','cci'],['OBV','obv'],['MACD','macd'],['CMF','cmf'],['ADX','adx'],['VWAP','vwap'],['ATR','atr']];
  const latest=ind.map(([name,id])=>{const a=calc(id,rows),v=a[a.length-1];return name+': '+(v==null?'—':Number(v).toFixed(2));});
  const box=$('researchIndicators');if(box)box.innerHTML=latest.map(x=>'<span class="research-badge">'+x+'</span>').join('');
  const last=rows[rows.length-1],volume=rows.slice(-20).reduce((s,x)=>s+x.v,0),buy=rows.slice(-20).reduce((s,x)=>s+x.tb,0);
@@ -664,7 +664,7 @@ function startLive(symbol){
  if(liveTimer)clearInterval(liveTimer);
  if(slowTimer)clearInterval(slowTimer);
  liveTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show'))loadMarketContext(symbol);},30000);
- // Teknik göstergeler yalnızca kullanıcı yenilediğinde veya sembol/zaman dilimi değiştiğinde hesaplanır.
+ slowTimer=setInterval(()=>{if(liveSymbol===symbol&&$('oscLab').classList.contains('show'))calculate();},60000);
 }
 renderList();$('oscSearch').addEventListener('input',renderList);$('oscCategory').addEventListener('change',renderList);
 })();
