@@ -44,11 +44,11 @@
 <div class="osc-time-control"><span>AKIŞ FİLTRESİ · ZAMAN DİLİMİ</span><div class="osc-time-switch" role="group" aria-label="Uyumsuzluk zaman dilimi filtresi"><button type="button" class="osc-tf-btn active" data-tf="all">TÜMÜ</button><button type="button" class="osc-tf-btn" data-tf="15m">15D</button><button type="button" class="osc-tf-btn" data-tf="1h">1S</button><button type="button" class="osc-tf-btn" data-tf="4h">4S</button><button type="button" class="osc-tf-btn" data-tf="1d">1G</button><button type="button" class="osc-tf-btn" data-tf="1w">1H</button></div></div>
 <button id="oscRefresh" type="button">YENİLE ↻</button><span id="oscScanStatus">10 temel gösterge taranacak</span></div>
 <div class="osc-market-line"><div><small>AKTİF ANALİZ</small><strong id="oscActiveMarket">BTC / USDT</strong></div><span id="oscActiveTF">15 DAKİKA</span></div>
-<div class="osc-gauge-card"><div class="gauge-heading"><b>GÖSTERGE YÖN DENGESİ</b><span id="gaugeState">HESAPLANIYOR</span></div><div class="gauge-wrap"><div class="gauge-arc"><div class="gauge-inner"></div><div class="gauge-needle" id="gaugeNeedle"></div><div class="gauge-hub"></div></div><div class="gauge-value" id="gaugeValue">—</div><div class="gauge-scale"><span>GÜÇLÜ SATIŞ</span><span>NÖTR</span><span>GÜÇLÜ ALIŞ</span></div></div><div class="gauge-caption" id="gaugeCaption">Sekiz yönlü gösterge eşit oyla değerlendirilir. Bu değer olasılık veya başarı oranı değildir.</div><div class="gauge-votes"><span id="gaugeBull">ALICI 0</span><span id="gaugeNeutral">NÖTR 0</span><span id="gaugeBear">SATICI 0</span></div></div>
+<div class="osc-gauge-card"><div class="gauge-heading"><b>GÖSTERGE YÖN DENGESİ</b><span id="gaugeState">HESAPLANIYOR</span></div><div class="gauge-wrap"><div class="gauge-arc"><div class="gauge-inner"></div><div class="gauge-needle" id="gaugeNeedle"></div><div class="gauge-hub"></div></div><div class="gauge-value" id="gaugeValue">—</div><div class="gauge-scale"><span>SATICI AĞIRLIKLI</span><span>DENGELİ</span><span>ALICI AĞIRLIKLI</span></div></div><div class="gauge-caption" id="gaugeCaption">Sekiz yönlü gösterge eşit oyla değerlendirilir. Bu değer olasılık veya başarı oranı değildir.</div><div class="gauge-votes"><span id="gaugeBull">ALICI 0</span><span id="gaugeNeutral">NÖTR 0</span><span id="gaugeBear">SATICI 0</span></div></div>
 <div class="osc-summary">
 <div class="osc-stat"><small>POZİTİF UYUMSUZLUK</small><strong id="oscBullCount">—</strong><span id="oscBullLabel">Alıcı yönlü</span></div>
 <div class="osc-stat"><small>NEGATİF UYUMSUZLUK</small><strong id="oscBearCount">—</strong><span id="oscBearLabel">Satıcı yönlü</span></div>
-<div class="osc-stat"><small>TOPLAM TESPİT</small><strong id="oscTotalCount">—</strong><span>8 yönlü · 2 bağlam göstergesi</span></div></div>
+<div class="osc-stat"><small>TOPLAM TESPİT</small><strong id="oscTotalCount">—</strong><span>Birleştirilmiş pivot grupları</span></div></div>
 <div class="osc-card osc-aggregate"><div class="osc-aggregate-head"><div><b>UYUMSUZLUK AKIŞI</b><small>8 yönlü gösterge · Aynı zaman diliminde ve en fazla 3 mum yakınlığındaki pivotlar birlikte gruplanır</small></div><span class="osc-chip" id="oscAggregateTF">CANLI TARAMA</span></div>
 <div class="osc-feed-legend"><span><i class="bull-dot"></i> Pozitif · fiyat dip yaparken gösterge güçleniyor</span><span><i class="bear-dot"></i> Negatif · fiyat tepe yaparken gösterge zayıflıyor</span></div>
 <div id="oscFeed" class="osc-feed"><div class="osc-feed-empty">Tarama başlatılıyor…</div></div></div>
@@ -90,7 +90,7 @@
 <script type="module">
 import {defs,directionalIds,directionalDefs,ema,calc,divergences,normalizeKlines,clusterSignals} from './analysis-core.js';
 (()=>{'use strict';
-const $=id=>document.getElementById(id),symbols=['btcusdt','ethusdt','solusdt','bnbusdt','xrpusdt','dogeusdt','linkusdt','avaxusdt','hbarusdt'];
+const $=id=>document.getElementById(id),escapeHtml=value=>String(value).replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])),symbols=['btcusdt','ethusdt','solusdt','bnbusdt','xrpusdt','dogeusdt','linkusdt','avaxusdt','hbarusdt'];
 const prices=Object.create(null);let socket=null,retryTimer=null,retryDelay=500,stopped=false,matrixTone='#00e676',lastSelectedPrice=null;
 const canvas=$('matrix'),ctx=canvas.getContext('2d');let drops=[],fontSize=15,columns=0;
 const glyphs='アカサタナハマヤラワ012345789ABCDEFGHIJKLMNOPQRSTUVWXYZ$+-*<>アイウエオカキクケコ';
@@ -128,8 +128,8 @@ function renderAggregate(){
  const cards=groups.map(g=>{
   const positive=g.side==='bull',names=g.items.map(x=>'<span class="osc-indicator-tag">'+x.name+'</span>').join('');
   const types=[...new Set(g.items.map(x=>x.type))].join(' · '),count=g.items.length;
-  const headline=count>=2?count+' / '+directionalDefs.length+' gösterge aynı salınımı doğruluyor':'Tek gösterge tespiti · ek teyit yok';
-  return '<article class="osc-feed-card '+(positive?'is-bull':'is-bear')+'"><div class="osc-feed-card-top"><span class="osc-direction">'+(positive?'POZİTİF UYUMSUZLUK':'NEGATİF UYUMSUZLUK')+'</span><span class="osc-feed-tf">'+tfNames[g.tf]+'</span></div><div class="osc-feed-card-main"><strong>'+headline+'</strong><small>'+types+' · pivotlar en fazla 3 mum aralıklı</small></div><div class="osc-indicator-tags">'+names+'</div><div class="osc-feed-card-foot"><span>'+new Date(g.time).toLocaleString('tr-TR')+'</span><span>'+count+' / '+directionalDefs.length+' yönlü gösterge</span></div></article>';
+  const headline=count>=2?count+' / '+directionalDefs.length+' gösterge aynı salınımda eşleşiyor':'Tek gösterge tespiti · ek teyit yok';
+  return '<article class="osc-feed-card '+(positive?'is-bull':'is-bear')+'"><div class="osc-feed-card-top"><span class="osc-direction">'+(positive?'POZİTİF UYUMSUZLUK':'NEGATİF UYUMSUZLUK')+'</span><span class="osc-feed-tf">'+tfNames[g.tf]+'</span></div><div class="osc-feed-card-main"><strong>'+headline+'</strong><small>'+types+' · kapanmış mum · aynı yönde · pivot aralığı en fazla 3 mum</small></div><div class="osc-indicator-tags">'+names+'</div><div class="osc-feed-card-foot"><span>'+new Date(g.time).toLocaleString('tr-TR')+'</span><span>'+count+' / '+directionalDefs.length+' yönlü gösterge</span></div></article>';
  }).join('');
  $('oscFeed').innerHTML=cards||'<div class="osc-feed-empty"><strong>Bu filtrede güncel uyumsuzluk bulunamadı.</strong><span>Yalnızca kapanmış mumlarla teyit edilen pivotlar gösterilir. Boş sonuç, veri hatası anlamına gelmez.</span></div>';
 }
@@ -358,7 +358,7 @@ async function calculate(options={}){
   if(version===requestVersion){
    $('oscLoading').textContent='Tarama tamamlanamadı · '+String(error.message||error);
    $('oscScanStatus').textContent='HATA · '+String(error.message||error);
-   $('oscFeed').innerHTML='<div class="osc-feed-empty"><strong>Tarama tamamlanamadı</strong><span>'+String(error.message||error)+'</span></div>';
+   $('oscFeed').innerHTML='<div class="osc-feed-empty"><strong>Tarama tamamlanamadı</strong><span>'+escapeHtml(error.message||error)+'</span></div>';
   }
  }finally{
   if(version===requestVersion){
