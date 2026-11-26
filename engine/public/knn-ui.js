@@ -30,7 +30,7 @@ const css=`
 @media(max-width:560px){#knnPanel{padding-left:11px;padding-right:11px}.knn-controls{grid-template-columns:1fr 1fr}.knn-hero{grid-template-columns:1fr}.knn-grid{grid-template-columns:1fr}.knn-neighbors{grid-template-columns:1fr 1fr}.knn-signal strong{font-size:23px}}
 `;
 const style=document.createElement("style");style.textContent=css;document.head.appendChild(style);
-const button=$("#knnOpen")||document.createElement("button");button.id="knnOpen";button.textContent="KNN MARKET INTELLIGENCE";const main=$("main");if(main&&!button.isConnected)main.appendChild(button);
+const button=$("#knnOpen")||document.createElement("button");button.id="knnOpen";button.textContent="KNN MARKET INTELLIGENCE";button.type="button";button.setAttribute("aria-label","KNN Market Intelligence panelini aç");/* Ana kapsayıcının stacking context katmanından çıkar: fixed buton doğrudan body altında olmalı. */if(button.parentElement!==document.body)document.body.appendChild(button);
 const panel=document.createElement("section");panel.id="knnPanel";panel.innerHTML=`
 <div class="knn-wrap">
 <header class="knn-head"><b>KNN MARKET INTELLIGENCE</b><button id="knnClose">KAPAT ✕</button></header>
