@@ -1,5 +1,5 @@
 (()=>{"use strict";
-const API="/api/knn";
+const API="/api/knn";\nwindow.__KNN_UI_LOADED__=true;
 const $=s=>document.querySelector(s),fmt=(v,d=2)=>v==null?"—":(Number(v)*100).toFixed(d)+"%",num=(v,d=2)=>v==null?"—":Number(v).toLocaleString("tr-TR",{maximumFractionDigits:d}),date=v=>new Date(v).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
 const symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT","LINKUSDT","AVAXUSDT","HBARUSDT"];
 const css=`
@@ -97,12 +97,9 @@ function openKnn(e){
  const sym=$("#symbol")?.value||"BTCUSDT";if(symbols.includes(sym))$("#knnSymbol").value=sym;
  run();
 }
-button.onclick=openKnn;
-button.addEventListener("pointerdown",openKnn,{capture:true});
-button.addEventListener("touchstart",openKnn,{capture:true,passive:false});
-document.addEventListener("pointerdown",e=>{if(e.target&&e.target.closest&&e.target.closest("#knnOpen"))openKnn(e)},true);
-document.addEventListener("touchstart",e=>{if(e.target&&e.target.closest&&e.target.closest("#knnOpen"))openKnn(e)}, {capture:true,passive:false});
-document.addEventListener("click",e=>{if(e.target&&e.target.closest&&e.target.closest("#knnOpen"))openKnn(e)},true);
+window.openKnnPanel=openKnn;
+button.removeAttribute("onclick");
+button.addEventListener("click",openKnn,{passive:false});
 $("#knnClose").addEventListener("click",()=>panel.classList.remove("show"));
 $("#knnRun").addEventListener("click",run);
 $("#knnDistance").addEventListener("click",()=>{distance=distance==="lorentzian"?"euclidean":"lorentzian";$("#knnDistance").textContent=distance.toUpperCase();run()});
