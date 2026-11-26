@@ -481,7 +481,28 @@ async function loadMarketContext(symbol){
  try{
   const res=await fetch('/api/market-context?symbol='+encodeURIComponent(symbol),{cache:'no-store'});
   if(!res.ok)throw Error('API '+res.status);
-  const payload=await res.json(),s=payload.sources||{},get=k=>s[k]?.ok?s[k].data:null;
+  const payload=await res.json(),s=payload.sources||{};
+  const cgIds={BTCUSDT:'bitcoin',ETHUSDT:'ethereum',SOLUSDT:'solana',BNBUSDT:'binancecoin',XRPUSDT:'ripple',DOGEUSDT:'dogecoin',LINKUSDT:'chainlink',AVAXUSDT:'avalanche-2',HBARUSDT:'hedera-hashgraph'};
+  const q=encodeURIComponent(symbol);
+  const direct={
+   spot24h:'https://api.binance.com/api/v3/ticker/24hr?symbol='+q,
+   futures24h:'https://fapi.binance.com/fapi/v1/ticker/24hr?symbol='+q,
+   openInterest:'https://fapi.binance.com/futures/data/openInterestHist?symbol='+q+'&period=1h&limit=30',
+   funding:'https://fapi.binance.com/fapi/v1/fundingRate?symbol='+q+'&limit=10',
+   longShortRatio:'https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol='+q+'&period=1h&limit=30',
+   topLongShort:'https://fapi.binance.com/futures/data/topLongShortAccountRatio?symbol='+q+'&period=1h&limit=30',
+   takerRatio:'https://fapi.binance.com/futures/data/takerlongshortRatio?symbol='+q+'&period=1h&limit=30',
+   futuresBook:'https://fapi.binance.com/fapi/v1/depth?symbol='+q+'&limit=100',
+   bybitTicker:'https://api.bybit.com/v5/market/tickers?category=linear&symbol='+q,
+   bybitBook:'https://api.bybit.com/v5/market/orderbook?category=linear&symbol='+q+'&limit=50',
+   coingecko:'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+encodeURIComponent(cgIds[symbol]||'bitcoin')+'&sparkline=false'
+  };
+  await Promise.all(Object.entries(direct).map(async([key,url])=>{
+   if(s[key]?.ok)return;
+   try{const rr=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(7000)});if(!rr.ok)throw Error('HTTP '+rr.status);const data=await rr.json();if(key.startsWith('bybit')&&data.retCode!==0)throw Error(data.retMsg||'Bybit error');s[key]={ok:true,data,via:'browser-fallback'};}
+   catch(error){s[key]={ok:false,error:String(error.message||error)};}
+  }));
+  const get=k=>s[k]?.ok?s[k].data:null;
   const spot=get('spot24h'),fut=get('futures24h'),oi=get('openInterest')||[],fund=get('funding')||[],fb=get('futuresBook');
   const by=get('bybitTicker')?.result?.list?.[0],bb=get('bybitBook')?.result,cg=get('coingecko')?.[0];
   const fmt=x=>Number(x).toLocaleString('en-US',{maximumFractionDigits:8});
