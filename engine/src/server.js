@@ -6,6 +6,34 @@ import { fileURLToPath } from "node:url";
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
 const INDEX = resolve(fileURLToPath(new URL("../public/index.html", import.meta.url)));
+const ALLOWED = new Set(["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT","LINKUSDT","AVAXUSDT","HBARUSDT"]);
+const CG_IDS = {
+  BTCUSDT:"bitcoin", ETHUSDT:"ethereum", SOLUSDT:"solana", BNBUSDT:"binancecoin",
+  XRPUSDT:"ripple", DOGEUSDT:"dogecoin", LINKUSDT:"chainlink", AVAXUSDT:"avalanche-2", HBARUSDT:"hedera-hashgraph"
+};
+async function jsonGet(url) {
+  const response = await fetch(url, { headers: { "User-Agent": "crypto-research-engine/1.0" }, signal: AbortSignal.timeout(10000) });
+  if (!response.ok) throw new Error("HTTP " + response.status + " from " + new URL(url).hostname);
+  return response.json();
+}
+async function marketContext(symbol) {
+  const q = encodeURIComponent(symbol);
+  const jobs = {
+    spot24h: jsonGet("https://api.binance.com/api/v3/ticker/24hr?symbol=" + q),
+    futures24h: jsonGet("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=" + q),
+    openInterest: jsonGet("https://fapi.binance.com/futures/data/openInterestHist?symbol=" + q + "&period=1h&limit=30"),
+    funding: jsonGet("https://fapi.binance.com/fapi/v1/fundingRate?symbol=" + q + "&limit=10"),
+    futuresBook: jsonGet("https://fapi.binance.com/fapi/v1/depth?symbol=" + q + "&limit=100"),
+    bybitTicker: jsonGet("https://api.bybit.com/v5/market/tickers?category=linear&symbol=" + q),
+    bybitBook: jsonGet("https://api.bybit.com/v5/market/orderbook?category=linear&symbol=" + q + "&limit=50"),
+    coingecko: jsonGet("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=" + encodeURIComponent(CG_IDS[symbol]) + "&sparkline=false")
+  };
+  const entries = await Promise.all(Object.entries(jobs).map(async ([key, promise]) => {
+    try { return [key, { ok: true, data: await promise }]; }
+    catch (error) { return [key, { ok: false, error: String(error.message || error) }]; }
+  }));
+  return Object.fromEntries(entries);
+}
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", "http://localhost");
