@@ -553,24 +553,25 @@ const filtered=rows.filter(x=>signalFilter==='ALL'||norm(x)===signalFilter);
 const buys=rows.filter(x=>norm(x)==='AL').length,sells=rows.filter(x=>norm(x)==='SAT').length;
 content.innerHTML='<div class="af-section"><b>ALTFINS · KRİPTO SİNYALLERİ</b><small>'+rows.length+' kripto sinyali</small></div><div class="af-dashboard"><div class="af-card"><small>AL SİNYALİ</small><strong class="af-up">'+buys+'</strong><p>AltFINS tarafından üretilen</p></div><div class="af-card"><small>SAT SİNYALİ</small><strong class="af-down">'+sells+'</strong><p>AltFINS tarafından üretilen</p></div><div class="af-card"><small>TOPLAM KRİPTO SİNYALİ</small><strong>'+rows.length+'</strong><p>API yanıtındaki kayıtlar</p></div><div class="af-card"><small>VERİ KAYNAĞI</small><strong>ALTFINS</strong><p>Yalnızca kripto varlıklar</p></div></div><div class="af-note warn">AltFINS ücretsiz API sinyal akışı 24 saate kadar gecikmeli olabilir. Sinyal tarihi AltFINS tespit zamanıdır. Fiyat, aynı dakikanın Binance 1 dakikalık mum açılışıdır; yaklaşık referans değeridir, kesin gerçekleşen emir fiyatı değildir.</div><div class="af-actions"><button class="af-action '+(signalFilter==='ALL'?'primary':'')+'" data-signal-filter="ALL">TÜMÜ</button><button class="af-action '+(signalFilter==='AL'?'primary':'')+'" data-signal-filter="AL">SADECE AL</button><button class="af-action '+(signalFilter==='SAT'?'primary':'')+'" data-signal-filter="SAT">SADECE SAT</button><button class="af-action" id="afReload">YENİLE</button></div>'+(filtered.length?'<div class="af-list">'+filtered.map((x,i)=>{const d=norm(x),bull=d==='AL',stamp=x.timestamp||'',id='afSignalPrice'+i;return '<article class="af-row"><div class="af-row-top"><strong>'+esc(x.symbol||x.coinSymbol||'COIN')+' · '+esc(x.signalName||x.signalKey||x.name||'AltFINS sinyali')+'</strong><span class="af-pill '+(bull?'up':d==='SAT'?'down':'')+'">'+d+'</span></div><p><b>NEDEN '+(bull?'AL':d==='SAT'?'SAT':'SİNYAL')+'?</b> '+esc(reasonFor(x))+'</p><p>Sinyal tarihi: <b>'+esc(stamp?new Date(stamp).toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'}):'—')+'</b><br>Sinyal anındaki yaklaşık fiyat: <b id="'+id+'">HESAPLANIYOR…</b><br>O dakikanın aralığı (yüksek / düşük): <span id="'+id+'Range">—</span><br>Güncel fiyat snapshotı: <b>'+esc(fmt(x.lastPrice))+'</b> · Güncel 24s değişim: <b>'+esc(fmt(x.priceChange))+'</b></p><div class="af-signal-context" id="afSignalContext'+i+'"><small>4 SAAT + 1 GÜN TEKNİK TEYİT</small><span>GÖSTERGELER YÜKLENİYOR…</span></div></article>';}).join('')+'</div>':empty('Bu filtrede sinyal yok','AltFINS API yanıtında bu yönde kripto sinyali bulunamadı.'));
 async function loadSignalContext(items){
-const symbols=[...new Set(items.map(x=>String(x.symbol||'').toUpperCase().replace(/USDT$/,'')).filter(Boolean))].slice(0,50);
-if(!symbols.length)return;
+const symbols=[...new Set(items.map(x=>String(x.symbol||x.coinSymbol||'').toUpperCase().replace(/USDT$/,'').trim()).filter(Boolean))].slice(0,50);
+if(!symbols.length){items.forEach((x,i)=>{const el=$('afSignalContext'+i);if(el)el.innerHTML='<small>TEKNİK TEYİT</small><span>Sinyal kaydında coin sembolü bulunamadı.</span>';});return;}
 try{
 const [d1,h4]=await Promise.all([
 api('signalContext',{method:'POST',body:{symbols},params:{interval:'DAILY',size:'100'}}),
 api('signalContext',{method:'POST',body:{symbols},params:{interval:'HOURS4',size:'100'}})
 ]);
-const rows=v=>{const z=v?.data??v;return arr(z?.content??z?.results??z);};
-const flatten=x=>({...x,...(x?.additionalData||{}),...(x?.data||{})});
-const map1=new Map(rows(d1).map(x=>{const z=flatten(x);return [String(z.symbol||'').toUpperCase(),z];}));
-const map4=new Map(rows(h4).map(x=>{const z=flatten(x);return [String(z.symbol||'').toUpperCase(),z];}));
+const rows=v=>{let z=v;for(let n=0;n<4&&z&&!Array.isArray(z);n++){if(Array.isArray(z.content))return z.content;if(Array.isArray(z.items))return z.items;if(Array.isArray(z.results))return z.results;if(Array.isArray(z.rows))return z.rows;z=z.data??z.result??z.response;}return Array.isArray(z)?z:arr(z);};
+const flatten=x=>({...x,...(x?.additionalData||{}),...(x?.data||{}),...(x?.metrics||{})});
+const normSym=x=>String(x?.symbol||x?.symbolName||x?.coinSymbol||x?.assetSymbol||'').toUpperCase().replace(/USDT$/,'').trim();
+const map1=new Map(rows(d1).map(x=>{const z=flatten(x);return [normSym(z),z];}).filter(([k])=>k));
+const map4=new Map(rows(h4).map(x=>{const z=flatten(x);return [normSym(z),z];}).filter(([k])=>k));
 const num=v=>{if(v==null||v==='')return null;const n=Number(String(v).replace(/,/g,''));return Number.isFinite(n)?n:null;};
 const trend=v=>{const s=String(v??'').toUpperCase();return /UP|BULL|POSITIVE|BULLISH/.test(s)?1:/DOWN|BEAR|NEGATIVE|BEARISH/.test(s)?-1:0;};
 const bool=v=>{if(v===true||v===1)return true;if(v===false||v===0||v==null)return false;return /TRUE|YES|BULL|BEAR|UP|DOWN|DIVERGENCE|HIGH|LOW/i.test(String(v));};
 items.forEach((x,i)=>{
 const el=$('afSignalContext'+i);if(!el)return;
-const sym=String(x.symbol||'').toUpperCase(),a=map1.get(sym),b=map4.get(sym);
-if(!a&&!b){el.innerHTML='<small>TEKNİK TEYİT</small><span>Bu coin için AltFINS gösterge satırı dönmedi.</span>';return;}
+const sym=String(x.symbol||x.coinSymbol||'').toUpperCase().replace(/USDT$/,'').trim(),a=map1.get(sym),b=map4.get(sym);
+if(!a&&!b){el.innerHTML='<small>TEKNİK TEYİT</small><span>AltFINS yanıt verdi ancak '+esc(sym)+' için gösterge satırı eşleşmedi. Yanıt şeması kontrol edilmeli.</span>';return;}
 const raw=String(x.direction||x.signalDirection||'').toUpperCase(),dir=raw.includes('BULL')?1:raw.includes('BEAR')?-1:0;
 if(!dir){el.innerHTML='<small>TEKNİK TEYİT</small><span>Sinyal yönü belirlenemedi; puanlama yapılmadı.</span>';return;}
 const checks=[],groups={trend:[],momentum:[],volume:[],structure:[]};
