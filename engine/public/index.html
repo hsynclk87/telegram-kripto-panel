@@ -560,35 +560,64 @@ const [d1,h4]=await Promise.all([
 api('signalContext',{method:'POST',body:{symbols},params:{interval:'DAILY',size:'100'}}),
 api('signalContext',{method:'POST',body:{symbols},params:{interval:'HOURS4',size:'100'}})
 ]);
-const rows=v=>arr(v?.data??v);
-const map1=new Map(rows(d1).map(x=>[String(x.symbol||'').toUpperCase(),x.additionalData||x]));
-const map4=new Map(rows(h4).map(x=>[String(x.symbol||'').toUpperCase(),x.additionalData||x]));
+const rows=v=>{const z=v?.data??v;return arr(z?.content??z?.results??z);};
+const flatten=x=>({...x,...(x?.additionalData||{}),...(x?.data||{})});
+const map1=new Map(rows(d1).map(x=>{const z=flatten(x);return [String(z.symbol||'').toUpperCase(),z];}));
+const map4=new Map(rows(h4).map(x=>{const z=flatten(x);return [String(z.symbol||'').toUpperCase(),z];}));
 const num=v=>{if(v==null||v==='')return null;const n=Number(String(v).replace(/,/g,''));return Number.isFinite(n)?n:null;};
-const trend=v=>{const s=String(v??'').toUpperCase();return /UP|BULL|POSITIVE/.test(s)?1:/DOWN|BEAR|NEGATIVE/.test(s)?-1:0;};
+const trend=v=>{const s=String(v??'').toUpperCase();return /UP|BULL|POSITIVE|BULLISH/.test(s)?1:/DOWN|BEAR|NEGATIVE|BEARISH/.test(s)?-1:0;};
+const bool=v=>{if(v===true||v===1)return true;if(v===false||v===0||v==null)return false;return /TRUE|YES|BULL|BEAR|UP|DOWN|DIVERGENCE|HIGH|LOW/i.test(String(v));};
 items.forEach((x,i)=>{
 const el=$('afSignalContext'+i);if(!el)return;
 const sym=String(x.symbol||'').toUpperCase(),a=map1.get(sym),b=map4.get(sym);
-if(!a&&!b){el.innerHTML='<small>TEKNİK TEYİT</small><span>AltFINS gösterge verisi bu coin için dönmedi.</span>';return;}
-const direction=String(x.direction||'').toUpperCase(),dir=direction.includes('BULL')?1:direction.includes('BEAR')?-1:0,checks=[];
-if(!dir){el.innerHTML='<small>TEKNİK TEYİT</small><span>Sinyal yönü belirsiz olduğu için puanlama yapılmadı.</span>';return;}
-const add=(name,points,detail)=>checks.push({name,points,detail});
-const t1=trend(a?.SHORT_TERM_TREND),t4=trend(b?.SHORT_TERM_TREND),tm=trend(a?.MEDIUM_TERM_TREND),tl=trend(a?.LONG_TERM_TREND);
-if(t4)add('4s trend',t4===dir?10:0,t4===dir?'Sinyal yönüyle aynı':'Sinyale ters');
-if(t1)add('1g kısa trend',t1===dir?10:0,t1===dir?'Sinyal yönüyle aynı':'Sinyale ters');
-if(tm)add('Orta trend',tm===dir?10:0,tm===dir?'Uyumlu':'Uyumsuz');
-if(tl)add('Uzun trend',tl===dir?10:0,tl===dir?'Uyumlu':'Uyumsuz');
-const rsi=num(a?.RSI14);if(rsi!==null){const ok=dir===1?rsi>=50&&rsi<=70:rsi>=30&&rsi<=50;add('RSI 14',ok?10:0,'RSI '+fmt(rsi)+(rsi>70?' · aşırı alım':rsi<30?' · aşırı satım':''));}
-const macd=num(a?.MACD),ms=num(a?.MACD_SIGNAL_LINE);if(macd!==null&&ms!==null)add('MACD',((macd-ms)*dir)>0?10:0,macd>ms?'MACD sinyal çizgisinin üstünde':'MACD sinyal çizgisinin altında');
-const adx=num(a?.ADX);if(adx!==null)add('ADX',adx>=20?10:0,'ADX '+fmt(adx)+(adx>=20?' · trend gücü var':' · trend zayıf'));
-const rv=num(a?.VOLUME_RELATIVE);if(rv!==null)add('Göreli hacim',rv>=1.2?10:0,fmt(rv)+'x ortalama hacim');
-const obv=trend(a?.OBV_TREND);if(obv)add('OBV akışı',obv===dir?10:0,obv===dir?'Hacim akışı destekliyor':'Hacim akışı ters');
-const score=checks.length?Math.round(checks.reduce((n,c)=>n+c.points,0)/checks.length/10*100):null;
-const aligned=checks.filter(c=>c.points>0).length,opposed=checks.filter(c=>/ters|uyumsuz/.test(c.detail)).length;
-const support=num(a?.SUPPORT),resistance=num(a?.RESISTANCE),price=num(a?.LAST_PRICE)||num(x.lastPrice),dist=v=>price&&v?((price-v)/price*100):null;
-const sr=support&&resistance?'<small>DESTEK '+fmt(support)+' ('+(dist(support)?.toFixed(2)??'—')+'%) · DİRENÇ '+fmt(resistance)+' ('+(dist(resistance)?.toFixed(2)??'—')+'%)</small>':'';
-const atr=num(a?.ATR);let plan='';if(price&&atr>0){const stop=dir===1?(support&&price-support<=atr*2?support-atr*.2:price-atr*1.5):(resistance&&resistance-price<=atr*2?resistance+atr*.2:price+atr*1.5);const risk=Math.abs(price-stop),t1=price+dir*risk,t2=price+dir*risk*2;plan='<small>HESAPLANAN REFERANS PLAN · GİRİŞ '+fmt(price)+' · STOP '+fmt(stop)+' · HEDEF 1 '+fmt(t1)+' · HEDEF 2 '+fmt(t2)+' · R/R 1:1 / 1:2</small><small>Plan güncel fiyat ve ATR/destek-dirençten hesaplanır; AltFINS’in verdiği emir seviyesi değildir.</small>';}
+if(!a&&!b){el.innerHTML='<small>TEKNİK TEYİT</small><span>Bu coin için AltFINS gösterge satırı dönmedi.</span>';return;}
+const raw=String(x.direction||x.signalDirection||'').toUpperCase(),dir=raw.includes('BULL')?1:raw.includes('BEAR')?-1:0;
+if(!dir){el.innerHTML='<small>TEKNİK TEYİT</small><span>Sinyal yönü belirlenemedi; puanlama yapılmadı.</span>';return;}
+const checks=[],groups={trend:[],momentum:[],volume:[],structure:[]};
+const add=(group,name,ok,detail)=>groups[group].push({name,ok:!!ok,detail});
+const val=(key)=>num(a?.[key]??b?.[key]);
+const tv=(key)=>trend(a?.[key]??b?.[key]);
+const t4=trend(b?.SHORT_TERM_TREND),t1=trend(a?.SHORT_TERM_TREND),tm=trend(a?.MEDIUM_TERM_TREND),tl=trend(a?.LONG_TERM_TREND),e26=trend(a?.EMA26_TREND),e13=trend(a?.EMA13_TREND),s5=trend(a?.SMA5_TREND);
+if(t4)add('trend','4s trend',t4===dir,t4===dir?'Yön uyumlu':'Sinyale ters');
+if(t1)add('trend','1g kısa trend',t1===dir,t1===dir?'Yön uyumlu':'Sinyale ters');
+if(tm)add('trend','Orta trend',tm===dir,tm===dir?'Yön uyumlu':'Sinyale ters');
+if(tl)add('trend','Uzun trend',tl===dir,tl===dir?'Yön uyumlu':'Sinyale ters');
+if(e26)add('trend','EMA26 trendi',e26===dir,e26===dir?'Yukarı/aşağı yön destekli':'EMA26 ters yönde');
+if(e13)add('trend','EMA13 trendi',e13===dir,e13===dir?'Yön destekli':'EMA13 ters yönde');
+if(s5)add('trend','SMA5 trendi',s5===dir,s5===dir?'Kısa trend destekli':'Kısa trend ters');
+const rsi=val('RSI14'),rsi25=val('RSI25')??val('IR_RSI25');
+if(rsi!==null)add('momentum','RSI 14',dir===1?rsi>=50&&rsi<75:rsi<=50&&rsi>25,'RSI '+fmt(rsi));
+if(rsi25!==null)add('momentum','RSI 25',dir===1?rsi25>=50&&rsi25<75:rsi25<=50&&rsi25>25,'RSI25 '+fmt(rsi25));
+const macd=val('MACD'),ms=val('MACD_SIGNAL_LINE'),mh=val('MACD_HISTOGRAM');
+if(macd!==null&&ms!==null)add('momentum','MACD kesişimi',(macd-ms)*dir>0,macd>ms?'MACD sinyal çizgisinin üstünde':'MACD sinyal çizgisinin altında');
+if(mh!==null)add('momentum','MACD histogramı',mh*dir>0,'Histogram '+fmt(mh));
+for(const key of ['STOCH','STOCH_SLOW','STOCH_RSI']){const n=val(key);if(n!==null)add('momentum',key,dir===1?n>=20&&n<85:n<=80&&n>15,key+' '+fmt(n));}
+const cci=val('CCI20')??val('IR_CCI20');if(cci!==null)add('momentum','CCI20',dir===1?cci>0:cci<0,'CCI '+fmt(cci));
+const will=val('WILLIAMS')??val('IR_WILLIAMS');if(will!==null)add('momentum','Williams %R',dir===1?will>-80&&will<-15:will<-20&&will>-85,'Williams '+fmt(will));
+const mom=val('MOM');if(mom!==null)add('momentum','Momentum',mom*dir>0,'MOM '+fmt(mom));
+const adx=val('ADX');if(adx!==null)add('momentum','ADX trend gücü',adx>=20,'ADX '+fmt(adx));
+const rv=val('VOLUME_RELATIVE');if(rv!==null)add('volume','Göreli hacim',rv>=1.2,fmt(rv)+'x ortalama hacim');
+const obvt=trend(a?.OBV_TREND??b?.OBV_TREND),obv=val('OBV');
+if(obvt)add('volume','OBV trendi',obvt===dir,obvt===dir?'Hacim akışı uyumlu':'Hacim akışı ters');
+if(obv!==null)add('volume','OBV değeri',true,'OBV '+fmt(obv)+' · mutlak değer tek başına yön göstermez');
+const p=val('LAST_PRICE')??num(x.lastPrice),sup=val('SUPPORT'),res=val('RESISTANCE'),atr=val('ATR'),lo=val('BOLLINGER_BAND_LOWER'),up=val('BOLLINGER_BAND_UPPER');
+if(p!==null&&sup!==null)add('structure','Destek mesafesi',dir===1?p>=sup:p<=sup,'Destek '+fmt(sup)+' · '+(((p-sup)/p)*100).toFixed(2)+'%');
+if(p!==null&&res!==null)add('structure','Direnç mesafesi',dir===-1?p<=res:p>=res,'Direnç '+fmt(res));
+const newHigh=bool(a?.IR_NEW_HIGH_CREATED),newLow=bool(a?.IR_NEW_LOW_CREATED);
+if(newHigh||newLow)add('structure','Yeni tepe/dip',dir===1?newHigh:newLow,dir===1?'Yeni yüksek oluşumu':'Yeni düşük oluşumu');
+const div=a?.RSI_DIVERGENCE;if(div!=null&&String(div)!=='')add('structure','RSI uyumsuzluğu',/BULL|BULLISH|POSITIVE/i.test(String(div))?dir===1:/BEAR|BEARISH|NEGATIVE/i.test(String(div))?dir===-1:false,'RSI divergence: '+String(div));
+const groupsOut=Object.entries(groups).filter(([,v])=>v.length);
+const groupScores=groupsOut.map(([name,v])=>({name,score:v.filter(c=>c.ok).length/v.length*100,items:v}));
+const score=groupScores.length?Math.round(groupScores.reduce((n,g)=>n+g.score,0)/groupScores.length):null;
+const positives=groupsOut.flatMap(([,v])=>v.filter(c=>c.ok)).length,negatives=groupsOut.flatMap(([,v])=>v.filter(c=>!c.ok)).length;
+const groupLabel={trend:'TREND',momentum:'MOMENTUM',volume:'HACİM / AKIŞ',structure:'FİYAT YAPISI'};
+const groupHtml=groupsOut.map(([g,v])=>'<small>'+groupLabel[g]+' · '+v.filter(c=>c.ok).length+'/'+v.length+'</small><span>'+v.map(c=>'<i>'+esc(c.name)+': '+esc(c.detail)+(c.ok?' ✓':' ✕')+'</i>').join(' · ')+'</span>').join('');
+const fmtDist=v=>p&&v!==null?(((p-v)/p)*100).toFixed(2)+'%':'—';
+const sr=(sup!==null||res!==null)?'<small>DESTEK '+(sup===null?'—':fmt(sup)+' ('+fmtDist(sup)+')')+' · DİRENÇ '+(res===null?'—':fmt(res)+' ('+fmtDist(res)+')')+'</small>':'';
+let plan='';if(p!==null&&atr!==null&&atr>0&&dir){const stop=dir===1?(sup!==null&&p-sup<=atr*2?sup-atr*.2:p-atr*1.5):(res!==null&&res-p<=atr*2?res+atr*.2:p+atr*1.5);const risk=Math.abs(p-stop),t1=p+dir*risk,t2=p+dir*risk*2;plan='<small>HESAPLANAN REFERANS · FİYAT '+fmt(p)+' · STOP '+fmt(stop)+' · HEDEF 1 '+fmt(t1)+' · HEDEF 2 '+fmt(t2)+' · R/R 1:1 / 1:2</small><small>Bu seviyeler güncel fiyat ve ATR/destek-dirençten hesaplanır; AltFINS emir seviyesi değildir.</small>';}
 const label=score===null?'VERİ YETERSİZ':score>=75?'GÜÇLÜ TEKNİK TEYİT':score>=60?'ORTA TEKNİK TEYİT':score>=45?'ZAYIF TEYİT':'TEYİT YOK';
-el.innerHTML='<small>4 SAAT + 1 GÜN TEKNİK TEYİT</small><b>'+label+(score===null?'':' · '+score+'/100')+'</b><span>'+checks.map(c=>'<i>'+esc(c.name)+': '+esc(c.detail)+'</i>').join(' · ')+'</span>'+sr+plan+'<small>Olumlu teyit '+aligned+' / '+checks.length+' · Ters koşul '+opposed+' · Güncel AltFINS göstergeleri.</small>';
+const extra=(atr!==null?'ATR '+fmt(atr):'')+(val('TR_VS_ATR')!==null?' · TR/ATR '+fmt(val('TR_VS_ATR')):'')+(val('LOW_52W')!==null?' · 52h dip '+fmt(val('LOW_52W')):'')+(val('DAYS_SINCE_ATH')!==null?' · ATH’den '+fmt(val('DAYS_SINCE_ATH'))+' gün':'');
+el.innerHTML='<small>4 SAAT + 1 GÜN TEKNİK TEYİT</small><b>'+label+(score===null?'':' · '+score+'/100')+'</b>'+groupHtml+sr+(extra?'<small>'+esc(extra)+'</small>':'')+plan+'<small>Olumlu koşul '+positives+' · Olumsuz koşul '+negatives+' · Gösterge grupları eşit ağırlıklıdır; aynı gruptaki benzer osilatörler toplam skoru tek başına şişirmez.</small>';
 });
 }catch(e){items.forEach((x,i)=>{const el=$('afSignalContext'+i);if(el)el.innerHTML='<small>TEKNİK TEYİT ALINAMADI</small><span>'+esc(e.message||'AltFINS göstergeleri erişilemiyor.')+'</span>';});}
 }
