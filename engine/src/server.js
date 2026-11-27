@@ -59,7 +59,7 @@ const server = http.createServer(async (req, res) => {
   }
   const url = new URL(req.url || "/", "http://localhost");
   const path = url.pathname;
-  if (req.method !== "GET" && req.method !== "HEAD") {
+  if (req.method !== "GET" && req.method !== "HEAD" && req.method !== "POST") {
     res.writeHead(405, { "Content-Type": "text/plain; charset=utf-8" });
     return res.end("Method Not Allowed");
   }
@@ -85,27 +85,76 @@ const server = http.createServer(async (req, res) => {
       return res.end(JSON.stringify({ ok: false, code: "ALTFINS_KEY_MISSING", error: "Render ortamında ALTFINS_API_KEY tanımlı değil." }));
     }
     const headers = { "X-API-KEY": apiKey, "Accept": "application/json", "User-Agent": "telegram-market-mini-app/1.0" };
+    const symbol = String(url.searchParams.get("symbol") || "BTC").toUpperCase().replace(/USDT$/, "");
+    const interval = String(url.searchParams.get("interval") || "DAILY").toUpperCase();
+    const page = Math.max(0, Math.min(100, Number(url.searchParams.get("page") || 0)));
+    const size = Math.max(1, Math.min(100, Number(url.searchParams.get("size") || 50)));
+    const allowedIntervals = new Set(["MINUTES15","HOURLY","HOURS4","HOURS12","DAILY"]);
+    if (!/^[A-Z0-9._-]{2,24}$/.test(symbol) || !allowedIntervals.has(interval)) {
+      res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, error: "Geçersiz sembol veya zaman dilimi." }));
+    }
+    let body = {};
+    if (req.method === "POST") {
+      try {
+        let raw = "";
+        for await (const chunk of req) { raw += chunk; if (raw.length > 100000) throw new Error("Request body too large"); }
+        body = raw ? JSON.parse(raw) : {};
+      } catch (error) {
+        res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+        return res.end(JSON.stringify({ ok: false, error: "Geçersiz JSON gövdesi: " + String(error.message || error) }));
+      }
+    }
+    let endpoint, options = { headers, signal: AbortSignal.timeout(25000) };
+    const get = path => { endpoint = "https://altfins.com/api/v2/public/" + path; };
+    const post = (path, payload) => {
+      endpoint = "https://altfins.com/api/v2/public/" + path;
+      options = { ...options, method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(payload) };
+    };
+    const defaultDisplay = ["MARKET_CAP","PRICE_CHANGE_1D","PRICE_CHANGE_1W","VOLUME","DOLLAR_VOLUME","VOLUME_RELATIVE","RSI9","RSI14","RSI25","STOCH","STOCH_RSI","CCI20","ADX","MACD","MACD_SIGNAL_LINE","MACD_HISTOGRAM","WILLIAMS","OBV","OBV_TREND","ATR","VWMA20","SMA20","SMA50","SMA200","EMA9","EMA26","EMA50","EMA200","SHORT_TERM_TREND","MEDIUM_TERM_TREND","LONG_TERM_TREND","SUPPORT","RESISTANCE","RSI_DIVERGENCE","IR_NEW_HIGH_CREATED","IR_NEW_LOW_CREATED"];
     try {
-      let endpoint, options = { headers, signal: AbortSignal.timeout(20000) };
-      if (view === "quota") {
-        endpoint = "https://altfins.com/api/v2/public/monthly-available-permits";
-      } else if (view === "setups") {
-        endpoint = "https://altfins.com/api/v2/public/ai-trade-setup/search-requests?size=100";
-      } else if (view === "signals") {
-        endpoint = "https://altfins.com/api/v2/public/signals-feed/search-requests?size=30&assetType=CRYPTO";
-        options = { ...options, method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: "{}" };
+      if (view === "quota") get("monthly-available-permits");
+      else if (view === "symbols") get("symbols");
+      else if (view === "intervals") get("intervals");
+      else if (view === "signalKeys") get("signals-feed/signal-keys");
+      else if (view === "valueTypes") get("screener-data/value-types");
+      else if (view === "analyticsTypes") get("analytics/types");
+      else if (view === "setups") { endpoint = "https://altfins.com/api/v2/public/ai-trade-setup/search-requests?size=" + size; }
+      else if (view === "signals") post("signals-feed/search-requests?page=" + page + "&size=" + size + "&assetType=CRYPTO", body);
+      else if (view === "screener") {
+        const payload = { symbols: [], timeInterval: interval, displayType: defaultDisplay, supportResistanceLookBackIntervals: "5", coinTypeFilter: "REGULAR", tradingTypeFilter: ["SPOT"] };
+        if (body.mode === "oversold") payload.numericFilters = [{ numericFilterType: "RSI14", lteFilter: 35 }];
+        if (body.mode === "overbought") payload.numericFilters = [{ numericFilterType: "RSI14", gteFilter: 65 }];
+        if (body.mode === "volume") payload.numericFilters = [{ numericFilterType: "VOLUME_RELATIVE", gteFilter: 1.5 }];
+        if (body.mode === "bullish") payload.signalFilters = [{ signalFilterType: "SHORT_TERM_TREND", signalFilterValue: "UP" }];
+        if (body.mode === "bearish") payload.signalFilters = [{ signalFilterType: "SHORT_TERM_TREND", signalFilterValue: "DOWN" }];
+        post("screener-data/search-requests?page=" + page + "&size=" + size + "&sort=MARKET_CAP,desc", payload);
+      } else if (view === "snapshot") post("ohlcv/snapshot-requests", { symbols: [symbol], timeInterval: interval });
+      else if (view === "history") post("ohlcv/history-requests?page=" + page + "&size=" + size + "&sort=time,desc", { symbol, timeInterval: interval, ...(url.searchParams.get("from") ? { from: url.searchParams.get("from") } : {}), ...(url.searchParams.get("to") ? { to: url.searchParams.get("to") } : {}) });
+      else if (view === "analytics") {
+        const analyticsType = String(url.searchParams.get("type") || "RSI14").toUpperCase();
+        if (!/^[A-Z0-9_]{2,60}$/.test(analyticsType)) throw new Error("Geçersiz gösterge türü");
+        post("analytics/search-requests?page=" + page + "&size=" + size + "&sort=time,desc", { symbol, timeInterval: interval, analyticsType, ...(url.searchParams.get("from") ? { from: url.searchParams.get("from") } : {}), ...(url.searchParams.get("to") ? { to: url.searchParams.get("to") } : {}) });
+      } else if (view === "technical") {
+        endpoint = "https://altfins.com/api/v2/public/technical-analysis/data?size=" + size + "&page=" + page + "&symbol=" + encodeURIComponent(symbol);
+      } else if (view === "news") post("news-summary/search-requests?page=" + page + "&size=" + size, body);
+      else if (view === "newsDetail") {
+        const messageId = Number(url.searchParams.get("messageId")), sourceId = Number(url.searchParams.get("sourceId"));
+        if (!Number.isSafeInteger(messageId) || !Number.isInteger(sourceId)) throw new Error("Haber kimliği geçersiz");
+        endpoint = "https://altfins.com/api/v2/public/news-summary/find-summary?MessageId=" + messageId + "&SourceId=" + sourceId;
+        options = { ...options, method: "POST" };
       } else {
         res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-        return res.end(JSON.stringify({ ok: false, error: "Unsupported AltFINS view" }));
+        return res.end(JSON.stringify({ ok: false, error: "Desteklenmeyen AltFINS görünümü." }));
       }
       const upstream = await fetch(endpoint, options);
       const raw = await upstream.text();
       let data;
-      try { data = JSON.parse(raw); } catch { data = { message: raw.slice(0, 500) }; }
+      try { data = JSON.parse(raw); } catch { data = { message: raw.slice(0, 700) }; }
       if (!upstream.ok) {
         const message = String(data?.message || data?.error || data?.detail || ("AltFINS HTTP " + upstream.status));
         res.writeHead(upstream.status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-        return res.end(JSON.stringify({ ok: false, status: upstream.status, error: message }));
+        return res.end(JSON.stringify({ ok: false, status: upstream.status, view, error: message }));
       }
       res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
       return res.end(JSON.stringify({ ok: true, view, fetchedAt: new Date().toISOString(), data }));
