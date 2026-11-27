@@ -142,8 +142,9 @@ const server = http.createServer(async (req, res) => {
       else if (view === "analyticsTypes") get("analytics/types");
       else if (view === "setups") { endpoint = "https://altfins.com/api/v2/public/ai-trade-setup/search-requests?size=" + size; }
       else if (view === "signals") post("signals-feed/search-requests?page=" + page + "&size=" + size + "&assetType=CRYPTO", body);
-      else if (view === "screener") {
-        const payload = { symbols: [], timeInterval: interval, displayType: defaultDisplay, supportResistanceLookBackIntervals: "5", coinTypeFilter: "REGULAR", tradingTypeFilter: ["SPOT"] };
+      else if (view === "screener" || view === "signalContext") {
+        const requestedSymbols = Array.isArray(body.symbols) ? body.symbols.map(x => String(x).toUpperCase().replace(/USDT$/, "")).filter(x => /^[A-Z0-9._-]{2,24}$/.test(x)).slice(0, 100) : [];
+        const payload = { symbols: view === "signalContext" ? requestedSymbols : [], timeInterval: interval, displayType: view === "signalContext" ? ["LAST_PRICE","PRICE_CHANGE_1D","PRICE_CHANGE_1W","VOLUME","DOLLAR_VOLUME","VOLUME_RELATIVE","RSI14","RSI25","STOCH_RSI","ADX","MACD","MACD_SIGNAL_LINE","MACD_HISTOGRAM","OBV_TREND","ATR","VWMA20","SMA20","SMA50","SMA200","EMA12","EMA26","EMA50","EMA200","SHORT_TERM_TREND","MEDIUM_TERM_TREND","LONG_TERM_TREND","SUPPORT","RESISTANCE"] : defaultDisplay, supportResistanceLookBackIntervals: "5", coinTypeFilter: "REGULAR", tradingTypeFilter: ["SPOT"] };
         if (body.mode === "oversold") payload.numericFilters = [{ numericFilterType: "RSI14", lteFilter: 35 }];
         if (body.mode === "overbought") payload.numericFilters = [{ numericFilterType: "RSI14", gteFilter: 65 }];
         if (body.mode === "volume") payload.numericFilters = [{ numericFilterType: "VOLUME_RELATIVE", gteFilter: 1.5 }];
