@@ -111,7 +111,7 @@ const server = http.createServer(async (req, res) => {
       endpoint = "https://altfins.com/api/v2/public/" + path;
       options = { ...options, method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(payload) };
     };
-    const defaultDisplay = ["MARKET_CAP","PRICE_CHANGE_1D","PRICE_CHANGE_1W","VOLUME","DOLLAR_VOLUME","VOLUME_RELATIVE","RSI9","RSI14","RSI25","STOCH","STOCH_RSI","CCI20","ADX","MACD","MACD_SIGNAL_LINE","MACD_HISTOGRAM","WILLIAMS","OBV","OBV_TREND","ATR","VWMA20","SMA20","SMA50","SMA200","EMA9","EMA26","EMA50","EMA200","SHORT_TERM_TREND","MEDIUM_TERM_TREND","LONG_TERM_TREND" ,"IR_NEW_HIGH_CREATED","IR_NEW_LOW_CREATED"];
+    const defaultDisplay = ["MARKET_CAP","PRICE_CHANGE_1D","PRICE_CHANGE_1W","VOLUME","DOLLAR_VOLUME","VOLUME_RELATIVE","RSI9","RSI14","RSI25","STOCH","STOCH_RSI","CCI20","ADX","MACD","MACD_SIGNAL_LINE","WILLIAMS","OBV","OBV_TREND","ATR","VWMA20","SMA20","SMA50","SMA200","EMA9","EMA26","EMA50","EMA200","SHORT_TERM_TREND","MEDIUM_TERM_TREND","LONG_TERM_TREND" ,"IR_NEW_HIGH_CREATED","IR_NEW_LOW_CREATED"];
     try {
       if (view === "quota") get("monthly-available-permits");
       else if (view === "symbols") get("symbols");
