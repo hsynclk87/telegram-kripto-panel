@@ -77,6 +77,43 @@ const server = http.createServer(async (req, res) => {
       return res.end("Analiz motoru yüklenemedi: " + error.message);
     }
   }
+  if (path === "/api/altfins") {
+    const apiKey = process.env.ALTFINS_API_KEY;
+    const view = String(url.searchParams.get("view") || "quota");
+    if (!apiKey) {
+      res.writeHead(503, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, code: "ALTFINS_KEY_MISSING", error: "Render ortamında ALTFINS_API_KEY tanımlı değil." }));
+    }
+    const headers = { "X-API-KEY": apiKey, "Accept": "application/json", "User-Agent": "telegram-market-mini-app/1.0" };
+    try {
+      let endpoint, options = { headers, signal: AbortSignal.timeout(20000) };
+      if (view === "quota") {
+        endpoint = "https://altfins.com/api/v2/public/monthly-available-permits";
+      } else if (view === "setups") {
+        endpoint = "https://altfins.com/api/v2/public/ai-trade-setup/search-requests?size=100";
+      } else if (view === "signals") {
+        endpoint = "https://altfins.com/api/v2/public/signals-feed/search-requests?size=30&assetType=CRYPTO";
+        options = { ...options, method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: "{}" };
+      } else {
+        res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+        return res.end(JSON.stringify({ ok: false, error: "Unsupported AltFINS view" }));
+      }
+      const upstream = await fetch(endpoint, options);
+      const raw = await upstream.text();
+      let data;
+      try { data = JSON.parse(raw); } catch { data = { message: raw.slice(0, 500) }; }
+      if (!upstream.ok) {
+        const message = String(data?.message || data?.error || data?.detail || ("AltFINS HTTP " + upstream.status));
+        res.writeHead(upstream.status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+        return res.end(JSON.stringify({ ok: false, status: upstream.status, error: message }));
+      }
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+      return res.end(JSON.stringify({ ok: true, view, fetchedAt: new Date().toISOString(), data }));
+    } catch (error) {
+      res.writeHead(502, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, error: String(error.message || error) }));
+    }
+  }
   if (path === "/api/klines") {
     const symbol = String(url.searchParams.get("symbol") || "BTCUSDT").toUpperCase();
     const interval = String(url.searchParams.get("interval") || "15m");
