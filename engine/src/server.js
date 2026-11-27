@@ -94,6 +94,27 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
       return res.end(JSON.stringify({ ok: false, error: "Geçersiz sembol veya zaman dilimi." }));
     }
+    if (view === "signalPrice") {
+      const ts = Date.parse(String(url.searchParams.get("timestamp") || ""));
+      if (!Number.isFinite(ts)) {
+        res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+        return res.end(JSON.stringify({ ok: false, error: "Geçersiz sinyal zamanı." }));
+      }
+      try {
+        const pair = symbol + "USDT";
+        const minute = Math.floor(ts / 60000) * 60000;
+        const kurl = "https://api.binance.com/api/v3/klines?symbol=" + encodeURIComponent(pair) + "&interval=1m&startTime=" + minute + "&limit=1";
+        const kr = await fetch(kurl, { headers: { "User-Agent": "crypto-market-mini-app/1.0" }, signal: AbortSignal.timeout(10000) });
+        const kd = await kr.json();
+        if (!kr.ok || !Array.isArray(kd) || !kd.length) throw new Error("Binance tarihsel 1 dakikalık mum verisi bulunamadı.");
+        const k = kd[0];
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+        return res.end(JSON.stringify({ ok: true, symbol: pair, timestamp: new Date(ts).toISOString(), candleTime: new Date(Number(k[0])).toISOString(), open: k[1], high: k[2], low: k[3], close: k[4], price: k[1], priceMethod: "1m candle open" }));
+      } catch (error) {
+        res.writeHead(502, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+        return res.end(JSON.stringify({ ok: false, error: String(error.message || error) }));
+      }
+    }
     let body = {};
     if (req.method === "POST") {
       try {
