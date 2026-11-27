@@ -173,6 +173,11 @@ const server = http.createServer(async (req, res) => {
       const raw = await upstream.text();
       let data;
       try { data = JSON.parse(raw); } catch { data = { message: raw.slice(0, 700) }; }
+      if (view === "signalContext") {
+        const d = data && typeof data === "object" ? data : {};
+        const rows = Array.isArray(d) ? d : (d.content || d.items || d.results || d.data || []);
+        console.log("[altfins signalContext]", "http=" + upstream.status, "keys=" + Object.keys(d).slice(0,20).join(","), "rows=" + (Array.isArray(rows) ? rows.length : "nested"), "sampleKeys=" + (rows && rows[0] && typeof rows[0] === "object" ? Object.keys(rows[0]).slice(0,35).join(",") : "none"));
+      }
       if (!upstream.ok) {
         const message = String(data?.message || data?.error || data?.detail || ("AltFINS HTTP " + upstream.status));
         res.writeHead(upstream.status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
