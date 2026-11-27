@@ -580,7 +580,7 @@ const tv=(key)=>trend(a?.[key]??b?.[key]);
 const t4=trend(b?.SHORT_TERM_TREND),t1=trend(a?.SHORT_TERM_TREND),tm=trend(a?.MEDIUM_TERM_TREND),tl=trend(a?.LONG_TERM_TREND),e26=trend(a?.EMA26_TREND),e13=trend(a?.EMA13_TREND),s5=trend(a?.SMA5_TREND);
 if(t4)add('trend','4s trend',t4===dir,t4===dir?'Yön uyumlu':'Sinyale ters');
 if(t1)add('trend','1g kısa trend',t1===dir,t1===dir?'Yön uyumlu':'Sinyale ters');
-if(tm)add('trend','Orta trend',tm===dir,tm===dir?'Yön uyumlu':'Sinyale ters');
+if(tm)add('trend','Orta trend',tm===dir,tm===dir?'Yön uyumlu':'Sinyale ters');\nconst mtc=trend(a?.MEDIUM_TERM_TREND_CHANGE);if(mtc)add('trend','Orta trend değişimi',mtc===dir,mtc===dir?'Değişim sinyal yönünde':'Değişim ters yönde');
 if(tl)add('trend','Uzun trend',tl===dir,tl===dir?'Yön uyumlu':'Sinyale ters');
 if(e26)add('trend','EMA26 trendi',e26===dir,e26===dir?'Yukarı/aşağı yön destekli':'EMA26 ters yönde');
 if(e13)add('trend','EMA13 trendi',e13===dir,e13===dir?'Yön destekli':'EMA13 ters yönde');
@@ -599,7 +599,7 @@ const adx=val('ADX');if(adx!==null)add('momentum','ADX trend gücü',adx>=20,'AD
 const rv=val('VOLUME_RELATIVE');if(rv!==null)add('volume','Göreli hacim',rv>=1.2,fmt(rv)+'x ortalama hacim');
 const obvt=trend(a?.OBV_TREND??b?.OBV_TREND),obv=val('OBV');
 if(obvt)add('volume','OBV trendi',obvt===dir,obvt===dir?'Hacim akışı uyumlu':'Hacim akışı ters');
-if(obv!==null)add('volume','OBV değeri',true,'OBV '+fmt(obv)+' · mutlak değer tek başına yön göstermez');
+
 const p=val('LAST_PRICE')??num(x.lastPrice),sup=val('SUPPORT'),res=val('RESISTANCE'),atr=val('ATR'),lo=val('BOLLINGER_BAND_LOWER'),up=val('BOLLINGER_BAND_UPPER');
 if(p!==null&&sup!==null)add('structure','Destek mesafesi',dir===1?p>=sup:p<=sup,'Destek '+fmt(sup)+' · '+(((p-sup)/p)*100).toFixed(2)+'%');
 if(p!==null&&res!==null)add('structure','Direnç mesafesi',dir===-1?p<=res:p>=res,'Direnç '+fmt(res));
@@ -616,7 +616,7 @@ const fmtDist=v=>p&&v!==null?(((p-v)/p)*100).toFixed(2)+'%':'—';
 const sr=(sup!==null||res!==null)?'<small>DESTEK '+(sup===null?'—':fmt(sup)+' ('+fmtDist(sup)+')')+' · DİRENÇ '+(res===null?'—':fmt(res)+' ('+fmtDist(res)+')')+'</small>':'';
 let plan='';if(p!==null&&atr!==null&&atr>0&&dir){const stop=dir===1?(sup!==null&&p-sup<=atr*2?sup-atr*.2:p-atr*1.5):(res!==null&&res-p<=atr*2?res+atr*.2:p+atr*1.5);const risk=Math.abs(p-stop),t1=p+dir*risk,t2=p+dir*risk*2;plan='<small>HESAPLANAN REFERANS · FİYAT '+fmt(p)+' · STOP '+fmt(stop)+' · HEDEF 1 '+fmt(t1)+' · HEDEF 2 '+fmt(t2)+' · R/R 1:1 / 1:2</small><small>Bu seviyeler güncel fiyat ve ATR/destek-dirençten hesaplanır; AltFINS emir seviyesi değildir.</small>';}
 const label=score===null?'VERİ YETERSİZ':score>=75?'GÜÇLÜ TEKNİK TEYİT':score>=60?'ORTA TEKNİK TEYİT':score>=45?'ZAYIF TEYİT':'TEYİT YOK';
-const extra=(atr!==null?'ATR '+fmt(atr):'')+(val('TR_VS_ATR')!==null?' · TR/ATR '+fmt(val('TR_VS_ATR')):'')+(val('LOW_52W')!==null?' · 52h dip '+fmt(val('LOW_52W')):'')+(val('DAYS_SINCE_ATH')!==null?' · ATH’den '+fmt(val('DAYS_SINCE_ATH'))+' gün':'');
+const boll=lo!==null&&up!==null&&p!==null?' · Bollinger '+(p<lo?'alt bandın altında':p>up?'üst bandın üstünde':'bant içinde'):'';const extra=(atr!==null?'ATR '+fmt(atr):'')+(val('TR_VS_ATR')!==null?' · TR/ATR '+fmt(val('TR_VS_ATR')):'')+(val('LOW_52W')!==null?' · 52h dip '+fmt(val('LOW_52W')):'')+(val('DAYS_SINCE_ATH')!==null?' · ATH’den '+fmt(val('DAYS_SINCE_ATH'))+' gün':'')+(obv!==null?' · OBV '+fmt(obv):'')+boll;
 el.innerHTML='<small>4 SAAT + 1 GÜN TEKNİK TEYİT</small><b>'+label+(score===null?'':' · '+score+'/100')+'</b>'+groupHtml+sr+(extra?'<small>'+esc(extra)+'</small>':'')+plan+'<small>Olumlu koşul '+positives+' · Olumsuz koşul '+negatives+' · Gösterge grupları eşit ağırlıklıdır; aynı gruptaki benzer osilatörler toplam skoru tek başına şişirmez.</small>';
 });
 }catch(e){items.forEach((x,i)=>{const el=$('afSignalContext'+i);if(el)el.innerHTML='<small>TEKNİK TEYİT ALINAMADI</small><span>'+esc(e.message||'AltFINS göstergeleri erişilemiyor.')+'</span>';});}
