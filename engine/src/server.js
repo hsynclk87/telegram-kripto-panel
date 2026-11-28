@@ -77,6 +77,57 @@ const server = http.createServer(async (req, res) => {
       return res.end("Analiz motoru yüklenemedi: " + error.message);
     }
   }
+
+  if (path === "/api/coinglass") {
+    const apiKey = process.env.COINGLASS_API_KEY;
+    if (!apiKey) {
+      res.writeHead(503, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, code: "COINGLASS_KEY_MISSING", error: "Render ortamında COINGLASS_API_KEY tanımlı değil." }));
+    }
+    const symbol = String(url.searchParams.get("symbol") || "BTC").toUpperCase().replace(/USDT$/, "");
+    const interval = String(url.searchParams.get("interval") || "4h");
+    const limit = Math.max(1, Math.min(100, Number(url.searchParams.get("limit") || 30)));
+    const allowedCoins = new Set(["BTC","ETH","SOL","BNB","XRP","DOGE","LINK","AVAX","HBAR"]);
+    const allowedIntervals = new Set(["4h","8h","12h","1d","1w"]);
+    if (!allowedCoins.has(symbol) || !allowedIntervals.has(interval) || !Number.isInteger(limit)) {
+      res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, error: "Geçersiz CoinGlass sembolü, interval veya limit." }));
+    }
+    const headers = { "accept": "application/json", "CG-API-KEY": apiKey, "User-Agent": "GHE-PRO-Mini-App/1.0" };
+    const call = async (endpoint, params = {}) => {
+      const target = new URL("https://open-api-v4.coinglass.com" + endpoint);
+      for (const [key, value] of Object.entries(params)) target.searchParams.set(key, String(value));
+      const upstream = await fetch(target, { headers, signal: AbortSignal.timeout(15000) });
+      const payload = await upstream.json().catch(() => ({}));
+      if (!upstream.ok || String(payload.code ?? "0") !== "0") {
+        const error = new Error(String(payload.msg || payload.message || ("CoinGlass HTTP " + upstream.status)));
+        error.status = upstream.status || 502;
+        throw error;
+      }
+      return payload.data;
+    };
+    try {
+      const jobs = await Promise.allSettled([
+        call("/api/futures/supported-coins"),
+        call("/api/futures/open-interest/aggregated-history", { symbol, interval, limit }),
+        call("/api/futures/liquidation/aggregated-history", { symbol, interval, limit })
+      ]);
+      const names = ["supportedCoins", "openInterest", "liquidations"];
+      const data = {};
+      const errors = {};
+      jobs.forEach((job, index) => {
+        if (job.status === "fulfilled") data[names[index]] = job.value;
+        else errors[names[index]] = String(job.reason?.message || job.reason);
+      });
+      const code = jobs.every(x => x.status === "rejected") ? 502 : 200;
+      res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+      return res.end(JSON.stringify({ ok: code === 200, symbol, interval, fetchedAt: new Date().toISOString(), data, errors }));
+    } catch (error) {
+      res.writeHead(502, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, error: String(error.message || error) }));
+    }
+  }
+
   if (path === "/api/altfins") {
     const apiKey = process.env.ALTFINS_API_KEY;
     const view = String(url.searchParams.get("view") || "quota");
