@@ -39,6 +39,16 @@
 .af-controls{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px;align-items:end}.af-controls label{display:flex;flex-direction:column;gap:5px;color:#8298ac;font-size:8px;font-weight:900;letter-spacing:.1em}.af-controls select,.af-controls input{min-width:130px;max-width:100%;height:38px;padding:0 10px;border:1px solid #30465a;border-radius:7px;background:#0c1925;color:#eaf1f8;font-size:10px}.af-table-wrap{overflow:auto;border:1px solid #24394b;border-radius:9px;margin:10px 0 22px}.af-table{width:100%;border-collapse:collapse;min-width:760px;font-size:9px}.af-table th,.af-table td{padding:10px 9px;border-bottom:1px solid #1d3040;text-align:right;white-space:nowrap}.af-table th:first-child,.af-table td:first-child{text-align:left}.af-table th{position:sticky;top:0;background:#132333;color:#91a7bb;font-size:8px;letter-spacing:.08em}.af-table td{color:#c9d6e1}.af-table tr:last-child td{border-bottom:0}.af-metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:10px 0}.af-metric{padding:10px;border:1px solid #263b4d;border-radius:8px;background:#0d1a27;min-width:0}.af-metric small{display:block;color:#8399ad;font-size:8px}.af-metric b{display:block;margin-top:6px;font-size:13px;overflow-wrap:anywhere}.af-positive{color:#5edcb2!important}.af-negative{color:#f17e8d!important}.af-toolbar-note{color:#8499ad;font-size:8px;line-height:1.6;margin:8px 0 12px}.af-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.af-data-card{padding:12px;border:1px solid #26394b;border-radius:9px;background:#0d1a26}.af-data-card h3{font-size:11px;margin:0 0 8px;color:#e5eef6}.af-data-card p{font-size:9px;line-height:1.6;color:#9fb1c1;margin:4px 0}.af-data-card a{color:#8bd9c0;text-decoration:none}.af-status-ok{color:#60d9ae}.af-status-denied{color:#e5bd72}
 @media(max-width:680px){.af-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.af-detail-grid{grid-template-columns:1fr}.af-controls label{flex:1 1 42%}.af-controls select,.af-controls input{width:100%;min-width:0}}
 .af-signal-context{margin-top:10px;padding:10px;border:1px solid rgba(130,150,180,.22);border-radius:10px;background:rgba(100,130,170,.07);display:grid;gap:5px}.af-signal-context>small{font-size:10px;opacity:.7;letter-spacing:.08em}.af-signal-context>b{font-size:13px}.af-signal-context>span{font-size:11px;line-height:1.5}.af-signal-context i{font-style:normal;display:inline}.af-signal-context small:last-child{font-size:10px;opacity:.65}
+
+#coinglassBtn{display:block;margin:12px auto 0;padding:13px 22px;border:1px solid #287b70;border-radius:10px;background:linear-gradient(135deg,#102b2a,#132333);color:#9ff4d7;font-size:10px;font-weight:950;letter-spacing:.16em}
+#coinglassPanel{display:none;position:fixed;inset:0;z-index:20;overflow-y:auto;padding:0 16px max(28px,env(safe-area-inset-bottom));background:radial-gradient(ellipse at 50% -18%,rgba(27,139,117,.2),transparent 48%),#070e17;color:#eaf1f8;text-shadow:none}
+#coinglassPanel.show{display:block}.cg-wrap{max-width:1100px;margin:0 auto;padding-bottom:30px}.cg-head{position:sticky;top:0;z-index:3;height:62px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #24463f;background:rgba(7,14,23,.97)}
+.cg-head strong{font-size:13px;letter-spacing:.12em;color:#9ff4d7}.cg-head button,.cg-controls button{border:1px solid #365064;border-radius:8px;padding:9px 12px;background:#102131;color:#dceaf5}
+.cg-controls{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.cg-controls select{background:#102131;color:#eaf1f8;border:1px solid #365064;border-radius:8px;padding:9px}
+.cg-status{padding:10px 12px;border:1px solid #294c4a;border-radius:9px;color:#a6c5c1;font-size:11px;margin:10px 0}
+.cg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.cg-card{padding:13px;border:1px solid #263d4c;border-radius:11px;background:#101d2a;min-width:0}.cg-card small{display:block;color:#8ea2b6;font-size:9px;letter-spacing:.1em}.cg-card strong{display:block;margin-top:8px;font-size:18px;overflow-wrap:anywhere;color:#eaf6f3}.cg-card p{font-size:10px;color:#8ea2b6;line-height:1.5;margin:6px 0 0}.cg-section{font-size:11px;letter-spacing:.13em;color:#9ff4d7;margin:20px 0 9px}.cg-table{width:100%;border-collapse:collapse;font-size:10px}.cg-table th,.cg-table td{text-align:right;padding:9px 5px;border-bottom:1px solid #263747}.cg-table th:first-child,.cg-table td:first-child{text-align:left}.cg-note{font-size:10px;line-height:1.6;color:#a9bac8;margin:12px 0}
+@media(min-width:700px){.cg-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
 </style>
 </head>
 <body>
@@ -639,5 +649,53 @@ function renderCatalog(data,kind){const rows=arr(data);if(!rows.length)return em
 document.addEventListener('altfins-open',()=>load('signals'));$('afClose').onclick=()=>panel.classList.remove('show');document.querySelectorAll('.af-tab').forEach(b=>b.addEventListener('click',()=>load(b.dataset.view)));
 })();
 </script>
+
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const panel=$('coinglassPanel'),status=$('cgStatus'),cards=$('cgCards');
+if(!panel||!$('coinglassBtn'))return;
+const num=v=>{const n=Number(v);return Number.isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:2}):'—';};
+const safe=v=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function rowsTable(data,kind){
+ const rows=Array.isArray(data)?data.slice(-12).reverse():[];
+ if(!rows.length)return '<p class="cg-note">Bu veri için kayıt dönmedi veya abonelik planı erişim vermiyor.</p>';
+ const fields=kind==='oi'?['time','open','high','low','close']:['time','long_liquidation_usd','short_liquidation_usd','total_liquidation_usd'];
+ const labels=kind==='oi'?['ZAMAN','AÇILIŞ','YÜKSEK','DÜŞÜK','KAPANIŞ']:['ZAMAN','LONG LIQ.','SHORT LIQ.','TOPLAM'];
+ return '<div style="overflow-x:auto"><table class="cg-table"><thead><tr>'+labels.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+fields.map((f,i)=>'<td>'+safe(i===0&&r[f]?new Date(Number(r[f])).toLocaleString('tr-TR'):num(r[f]))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+}
+async function load(){
+ const symbol=$('cgSymbol').value,interval=$('cgInterval').value;
+ status.textContent='CoinGlass V4 verileri alınıyor…';cards.innerHTML='';
+ $('cgRefresh').disabled=true;
+ try{
+  const response=await fetch(API_ORIGIN+'/api/coinglass?symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(interval)+'&limit=30',{cache:'no-store'});
+  const payload=await response.json();
+  if(!response.ok||!payload.ok)throw Error(payload.error||'CoinGlass API bağlantısı başarısız');
+  const d=payload.data||{},oi=Array.isArray(d.openInterest)?d.openInterest:[],liq=Array.isArray(d.liquidations)?d.liquidations:[];
+  const lastOi=oi.at(-1)||{},lastLiq=liq.at(-1)||{};
+  const oiValue=lastOi.close??lastOi.openInterest??lastOi.open_interest;
+  const longLiq=lastLiq.long_liquidation_usd??lastLiq.longLiquidationUsd;
+  const shortLiq=lastLiq.short_liquidation_usd??lastLiq.shortLiquidationUsd;
+  cards.innerHTML=[
+   ['COIN',''+symbol,'CoinGlass desteklenen varlık'],
+   ['SON AÇIK POZİSYON',num(oiValue),'Aggregated OI · '+interval],
+   ['LONG LİKİDASYON',num(longLiq),'Son dönen periyot · USD'],
+   ['SHORT LİKİDASYON',num(shortLiq),'Son dönen periyot · USD'],
+   ['OI KAYDI',num(oi.length),'Dönen tarihsel kayıt'],
+   ['LİKİDASYON KAYDI',num(liq.length),'Dönen tarihsel kayıt']
+  ].map(x=>'<div class="cg-card"><small>'+x[0]+'</small><strong>'+x[1]+'</strong><p>'+x[2]+'</p></div>').join('');
+  $('cgOiTable').innerHTML=rowsTable(oi,'oi');$('cgLiqTable').innerHTML=rowsTable(liq,'liq');
+  const errors=Object.entries(payload.errors||{}).map(([k,v])=>k+': '+v);
+  status.textContent='Son güncelleme · '+new Date(payload.fetchedAt).toLocaleString('tr-TR')+(errors.length?' · Bazı kaynaklar alınamadı: '+errors.join(' | '):' · CoinGlass API bağlantısı başarılı');
+ }catch(e){status.textContent='CoinGlass: '+e.message;cards.innerHTML='<div class="cg-card"><strong>VERİ ALINAMADI</strong><p>Render ortam değişkeninde COINGLASS_API_KEY tanımlı mı? API planı ve endpoint izinlerini de kontrol edin.</p></div>';}
+ finally{$('cgRefresh').disabled=false;}
+}
+$('coinglassBtn').onclick=()=>{panel.classList.add('show');load();};
+$('cgClose').onclick=()=>panel.classList.remove('show');$('cgRefresh').onclick=load;
+$('cgSymbol').onchange=load;$('cgInterval').onchange=load;
+})();
+</script>
+
 </body>
 </html>
