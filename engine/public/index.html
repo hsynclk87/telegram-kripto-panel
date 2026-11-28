@@ -652,6 +652,7 @@ document.addEventListener('altfins-open',()=>load('signals'));$('afClose').oncli
 
 <script>
 (()=>{'use strict';
+const API_ORIGIN='https://telegram-kripto-analysis-engine.onrender.com';
 const $=id=>document.getElementById(id);
 const panel=$('coinglassPanel'),status=$('cgStatus'),cards=$('cgCards');
 if(!panel||!$('coinglassBtn'))return;
