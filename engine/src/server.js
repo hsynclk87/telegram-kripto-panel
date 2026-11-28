@@ -100,8 +100,10 @@ const server = http.createServer(async (req, res) => {
       const upstream = await fetch(target, { headers, signal: AbortSignal.timeout(15000) });
       const payload = await upstream.json().catch(() => ({}));
       if (!upstream.ok || String(payload.code ?? "0") !== "0") {
-        const error = new Error(String(payload.msg || payload.message || ("CoinGlass HTTP " + upstream.status)));
+        const details = payload.details ? " · " + (typeof payload.details === "string" ? payload.details : JSON.stringify(payload.details)) : "";
+        const error = new Error("CoinGlass " + (payload.code ? "code " + payload.code + ": " : "") + String(payload.msg || payload.message || ("HTTP " + upstream.status)) + details);
         error.status = upstream.status || 502;
+        error.upstreamCode = payload.code == null ? null : String(payload.code);
         throw error;
       }
       return payload.data;
@@ -119,9 +121,11 @@ const server = http.createServer(async (req, res) => {
         if (job.status === "fulfilled") data[names[index]] = job.value;
         else errors[names[index]] = String(job.reason?.message || job.reason);
       });
-      const code = jobs.every(x => x.status === "rejected") ? 502 : 200;
+      const failed = jobs.every(x => x.status === "rejected");
+      const code = failed ? 502 : 200;
+      const error = failed ? Object.values(errors).join(" | ") : undefined;
       res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
-      return res.end(JSON.stringify({ ok: code === 200, symbol, interval, fetchedAt: new Date().toISOString(), data, errors }));
+      return res.end(JSON.stringify({ ok: !failed, symbol, interval, fetchedAt: new Date().toISOString(), data, errors, ...(error ? { error } : {}) }));
     } catch (error) {
       res.writeHead(502, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
       return res.end(JSON.stringify({ ok: false, error: String(error.message || error) }));
