@@ -1,120 +1,19 @@
 <!doctype html>
-<html lang="tr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07111d">
-<title>GHE PRO · Whale Radar</title>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07111d"><title>GHE PRO · Whale Radar</title>
 <style>
-:root{color-scheme:dark;--bg:#07111d;--panel:#0d1b2a;--panel2:#112337;--line:#20384e;--muted:#8ba1b6;--text:#edf5fc;--green:#39d6a2;--red:#ff6f7f;--gold:#f0c36b;--blue:#75baff;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 12% -15%,#15344b 0,transparent 42%),var(--bg);color:var(--text);min-height:100vh}button,select{font:inherit}.wrap{width:min(1440px,100%);margin:auto;padding:20px clamp(12px,2.5vw,32px) 48px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 0 22px;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px}.mark{width:38px;height:38px;display:grid;place-items:center;border:1px solid #2d705f;border-radius:11px;background:linear-gradient(145deg,#143d37,#102b3b);color:#9bf0d0;font-weight:1000}.brand strong{display:block;font-size:14px;letter-spacing:.18em}.brand small{display:block;margin-top:4px;color:var(--muted);font-size:9px;letter-spacing:.17em}.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.1em}.led{width:8px;height:8px;border-radius:50%;background:var(--gold)}.led.live{background:var(--green);box-shadow:0 0 12px #39d6a2aa}.controls{display:flex;align-items:end;flex-wrap:wrap;gap:10px;padding:20px 0}.field{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:9px;font-weight:900;letter-spacing:.13em}.field select{min-width:118px;height:40px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font-weight:800}.btn{height:40px;padding:0 17px;border:1px solid #2b705f;border-radius:8px;background:linear-gradient(135deg,#16483d,#123444);color:#c6f5e5;font-size:10px;font-weight:950;letter-spacing:.12em}.btn:disabled{opacity:.55}.note{margin-left:auto;color:var(--muted);font-size:10px;align-self:center}.hero{display:grid;grid-template-columns:1.4fr repeat(3,minmax(0,1fr));gap:10px}.card{min-width:0;padding:16px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(145deg,#102235,#0b1724);box-shadow:0 12px 32px #0002}.card-label{color:var(--muted);font-size:9px;font-weight:950;letter-spacing:.13em}.big-price{margin-top:11px;font-size:clamp(28px,4vw,44px);font-weight:850;letter-spacing:-.05em;font-variant-numeric:tabular-nums}.change{margin-top:5px;font-size:11px;font-weight:800}.green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}.metric{margin-top:12px;font-size:clamp(22px,3vw,31px);font-weight:900;letter-spacing:-.04em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.sub{margin-top:7px;color:var(--muted);font-size:10px;line-height:1.5}.section{margin-top:16px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}.section-head h2{margin:0;font-size:11px;letter-spacing:.15em}.section-head span{color:var(--muted);font-size:9px}.grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:12px}.chart-card{min-height:250px}.chart{width:100%;height:190px;display:block;margin-top:10px}.chart-empty{height:190px;display:grid;place-items:center;color:var(--muted);font-size:11px}.bars{display:flex;align-items:end;gap:3px;height:160px;padding:12px 0 4px;border-bottom:1px solid var(--line)}.bar{flex:1;min-width:2px;border-radius:3px 3px 0 0;background:var(--green);opacity:.82}.bar.neg{background:var(--red)}.bar-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:8px;margin-top:8px}.split{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sidebox{padding:12px;border:1px solid var(--line);border-radius:9px;background:#0a1723}.sidebox strong{display:block;margin-top:8px;font-size:21px;font-variant-numeric:tabular-nums}.sidebox small{color:var(--muted);font-size:9px;font-weight:900;letter-spacing:.1em}.table-wrap{overflow:auto;margin-top:12px}table{width:100%;border-collapse:collapse;min-width:600px;font-size:10px}th,td{text-align:right;padding:10px 9px;border-bottom:1px solid #1d3245;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-size:8px;letter-spacing:.12em}td{color:#dbe7f1}.buy{color:var(--green);font-weight:900}.sell{color:var(--red);font-weight:900}.pill{display:inline-block;padding:5px 7px;border:1px solid var(--line);border-radius:5px;color:var(--muted);font-size:8px;font-weight:900}.feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.feed-item{padding:12px;border:1px solid var(--line);border-left:3px solid var(--green);border-radius:9px;background:#0c1a28}.feed-item.sell{border-left-color:var(--red)}.feed-top{display:flex;justify-content:space-between;gap:10px}.feed-item strong{font-size:14px}.feed-item p{margin:7px 0 0;color:var(--muted);font-size:9px;line-height:1.5}.empty{padding:20px;border:1px dashed #30485e;border-radius:9px;color:var(--muted);font-size:10px;line-height:1.6;text-align:center}.error{color:var(--gold)}.foot{margin-top:20px;color:#72899e;font-size:9px;line-height:1.6}.foot a{color:#9fc9ed}.hide{display:none!important}
-@media(max-width:850px){.hero{grid-template-columns:repeat(2,minmax(0,1fr))}.hero .price-card{grid-column:1/-1}.grid2{grid-template-columns:1fr}.note{width:100%;margin-left:0}.wrap{padding-top:12px}}
-@media(max-width:520px){.brand strong{font-size:12px}.status{font-size:8px}.hero{gap:8px}.card{padding:13px}.feed{grid-template-columns:1fr}.controls{gap:8px}.field{flex:1}.field select{width:100%;min-width:0}.btn{flex:1}.metric{font-size:22px}}
-</style>
-</head>
-<body>
-<div class="wrap">
-<header class="top">
- <div class="brand"><div class="mark">G</div><div><strong>GHE PRO · WHALE RADAR</strong><small>SMART MONEY / MARKET STRUCTURE</small></div></div>
- <div class="status"><i class="led" id="led"></i><span id="connection">BAĞLANTI BEKLENİYOR</span></div>
-</header>
-<section class="controls">
- <label class="field">VARLIK<select id="symbol"><option>BTCUSDT</option><option>ETHUSDT</option><option>SOLUSDT</option><option>BNBUSDT</option><option>XRPUSDT</option><option>DOGEUSDT</option><option>LINKUSDT</option><option>AVAXUSDT</option><option>HBARUSDT</option></select></label>
- <label class="field">BORSA<select id="exchange"><option>Binance</option><option>OKX</option><option>Bybit</option><option>Gate</option><option>HTX</option></select></label>
- <label class="field">ZAMAN DİLİMİ<select id="interval"><option value="4h">4 SAAT</option><option value="1d">1 GÜN</option><option value="1w">1 HAFTA</option></select></label>
- <button class="btn" id="refresh">VERİLERİ GÜNCELLE</button>
- <div class="note" id="updated">Henüz veri alınmadı</div>
+:root{color-scheme:dark;--bg:#07111d;--panel:#0d1b2a;--line:#20384e;--muted:#91a7bb;--text:#edf5fc;--green:#39d6a2;--gold:#f0c36b;font-family:Inter,system-ui,sans-serif}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 12% -15%,#15344b 0,transparent 42%),var(--bg);color:var(--text)}.wrap{max-width:1440px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:10px 0 20px}.brand{font-weight:900;letter-spacing:.12em}.brand small{display:block;color:var(--muted);font-size:10px;margin-top:5px}.status{font-size:10px;color:var(--green);font-weight:800}.controls{display:flex;gap:10px;flex-wrap:wrap;padding:18px 0}.controls label{display:grid;gap:6px;color:var(--muted);font-size:10px;font-weight:800}.controls select,.btn{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:11px 14px;font:inherit}.btn{cursor:pointer;text-decoration:none;font-size:11px;font-weight:800}.notice{padding:12px 14px;border:1px solid #6d5b32;background:#2c2618;border-radius:9px;color:#f4d99b;font-size:12px;line-height:1.6}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.card{min-width:0;border:1px solid var(--line);background:linear-gradient(145deg,#102235,#0b1724);border-radius:12px;padding:14px}.head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.head h2{font-size:12px;letter-spacing:.08em;margin:0}.head a{color:#9fc9ed;font-size:10px}.frame{width:100%;height:520px;border:1px solid var(--line);border-radius:8px;background:#fff}.wide{grid-column:1/-1}.wide .frame{height:680px}.hint{color:var(--muted);font-size:10px;line-height:1.6;margin-top:10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.actions a{color:#a9d1f5;font-size:11px}@media(max-width:850px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.frame{height:480px}.wide .frame{height:560px}.wrap{padding:12px}}
+</style></head><body><main class="wrap">
+<header class="top"><div class="brand">GHE PRO · WHALE RADAR<small>COINGLASS RESMÎ WEB SAYFALARI · API ANAHTARI YOK</small></div><div class="status">● WEB SAYFASI MODU</div></header>
+<section class="controls"><label>VARLIK<select id="coin"><option value="BTC">BITCOIN (BTC)</option><option value="ETH">ETHEREUM (ETH)</option><option value="SOL">SOLANA (SOL)</option><option value="XRP">XRP</option><option value="DOGE">DOGECOIN (DOGE)</option></select></label><label>GÖRÜNÜM<select id="view"><option value="map">Likidasyon haritası</option><option value="heat">Likidasyon ısı haritası</option><option value="whale">Hyperliquid balina takibi</option></select></label><button class="btn" id="reload">SAYFALARI YENİLE</button></section>
+<div class="notice"><b>Önemli:</b> Bu sürüm CoinGlass'ın herkese açık web sayfalarını doğrudan gösterir; API anahtarı kullanmaz ve sayfa verilerini arka planda kazımaz. CoinGlass, izinsiz toplu veri çekmeyi/kazımayı şartlarında yasaklıyor. Gömülü görüntüleme tarayıcı politikasıyla engellenirse aşağıdaki “CoinGlass'ta aç” bağlantısını kullan.</div>
+<section class="grid">
+<article class="card"><div class="head"><h2>COINGLASS · LİKİDASYON HARİTASI</h2><a id="mapLink" target="_blank" rel="noopener">CoinGlass'ta aç ↗</a></div><iframe class="frame" id="mapFrame" title="CoinGlass Liquidation Map" loading="lazy" referrerpolicy="no-referrer"></iframe><div class="hint">Fiyat seviyelerine göre tahmini likidasyon yoğunluğu. Yoğunluk değerleri gerçekleşmiş tasfiye tutarı değildir.</div></article>
+<article class="card"><div class="head"><h2>COINGLASS · LİKİDASYON ISI HARİTASI</h2><a id="heatLink" target="_blank" rel="noopener">CoinGlass'ta aç ↗</a></div><iframe class="frame" id="heatFrame" title="CoinGlass Liquidation Heatmap" loading="lazy" referrerpolicy="no-referrer"></iframe><div class="hint">Isı haritası olası likidasyon kümelerini görselleştirir; her küme gerçek bekleyen emir veya kesin tasfiye miktarı değildir.</div></article>
+<article class="card wide"><div class="head"><h2>COINGLASS · HYPERLIQUID BALİNA TAKİBİ</h2><a href="https://www.coinglass.com/hyperliquid" target="_blank" rel="noopener">CoinGlass'ta aç ↗</a></div><iframe class="frame" src="https://www.coinglass.com/hyperliquid" title="CoinGlass Hyperliquid Whale Tracker" loading="lazy" referrerpolicy="no-referrer"></iframe><div class="hint">Hyperliquid açık zincir verilerinden türetilen balina pozisyonları ve işlem takibi. Merkezi borsalardaki anonim müşteri pozisyonlarını göstermez.</div></article>
 </section>
-<section class="hero">
- <article class="card price-card"><div class="card-label" id="priceLabel">SEÇİLİ VARLIK · SON FİYAT</div><div class="big-price" id="price">—</div><div class="change" id="priceChange">Canlı piyasa verisi bekleniyor</div></article>
- <article class="card"><div class="card-label">COINGLASS WHALE INDEX</div><div class="metric" id="whaleValue">—</div><div class="sub" id="whaleNote">Endeks değeri · USD tutarı değildir</div></article>
- <article class="card"><div class="card-label">TOP TRADER LONG / SHORT</div><div class="metric" id="ratioValue">—</div><div class="sub" id="ratioNote">Pozisyon büyüklüğü oranı</div></article>
- <article class="card"><div class="card-label">TOPLAM AÇIK FAİZ</div><div class="metric" id="oiValue">—</div><div class="sub" id="oiNote">Birleşik vadeli piyasa</div></article>
-</section>
-<section class="section grid2">
- <article class="card chart-card"><div class="section-head"><h2>BALİNA ENDEKSİ GEÇMİŞİ</h2><span id="whaleRange">CoinGlass · tarihsel</span></div><div id="whaleChart" class="chart-empty">Veri bekleniyor</div></article>
- <article class="card chart-card"><div class="section-head"><h2>AÇIK FAİZ DEĞİŞİMİ</h2><span>Toplulaştırılmış OI</span></div><div id="oiChart" class="chart-empty">Veri bekleniyor</div></article>
-</section>
-<section class="section grid2">
- <article class="card"><div class="section-head"><h2>BÜYÜK YATIRIMCI POZİSYONLARI</h2><span id="ratioExchange">Binance</span></div><div class="split"><div class="sidebox"><small>LONG PAYI</small><strong class="green" id="longShare">—</strong></div><div class="sidebox"><small>SHORT PAYI</small><strong class="red" id="shortShare">—</strong></div></div><div class="sub" id="ratioExplain">CoinGlass top trader pozisyon büyüklüğü verisi</div></article>
- <article class="card"><div class="section-head"><h2>TASFİYE AKIŞI</h2><span>Birleşik borsalar</span></div><div class="split"><div class="sidebox"><small>LONG TASFİYE</small><strong class="red" id="longLiq">—</strong></div><div class="sidebox"><small>SHORT TASFİYE</small><strong class="green" id="shortLiq">—</strong></div></div><div class="sub" id="liqNote">Seçilen zaman dilimindeki toplamlar</div></article>
-</section>
-<section class="section card"><div class="section-head"><h2>BÜYÜK EMİR DEFTERİ</h2><span id="largeOrderAccess" class="pill">CoinGlass · Standard+ API</span></div><div class="sub">BTC için en az 1 milyon USD, ETH için 500 bin USD, diğer desteklenen varlıklarda 50 bin USD seviyesindeki açık limit emirleri. Emirler iptal edilebilir; tek başına gerçekleşmiş işlem sayılmaz.</div><div class="table-wrap"><table><thead><tr><th>YÖN</th><th>FİYAT</th><th>KALAN DEĞER</th><th>İLK DEĞER</th><th>DOLAN HACİM</th><th>DURUM</th><th>BORSA</th></tr></thead><tbody id="orders"><tr><td colspan="7" class="empty">Büyük emir verisi bekleniyor</td></tr></tbody></table></div></section>
-<section class="section card"><div class="section-head"><h2>GHE SMART MONEY RADAR</h2><span class="pill" id="signalConfidence">VERİ BEKLENİYOR</span></div><div class="metric" id="signal">—</div><div class="sub" id="signalText">Sinyal, veri kaynakları geldikten sonra kurallı olarak hesaplanır. Eksik kaynaklar tahminle doldurulmaz.</div><div class="feed" id="feed" style="margin-top:14px"><div class="empty">Önemli hareketler burada listelenecek.</div></div></section>
-<footer class="foot">Veri sağlayıcı: CoinGlass API ve Binance Futures ticker. Whale Index bir endeks değeridir; USD cinsinden para akışı değildir. Büyük limit emirleri açık emir defterini gösterir; gerçekleşmiş balina işlemi olarak yorumlanmamalıdır. Bu panel yatırım tavsiyesi vermez. <span id="sourceStatus"></span></footer>
-</div>
-<script>
-const API_BASE = "";
-const $ = id => document.getElementById(id);
-const fmt = (v, digits=2) => Number.isFinite(Number(v)) ? Number(v).toLocaleString("en-US",{maximumFractionDigits:digits}) : "—";
-const usd = v => Number.isFinite(Number(v)) ? "$"+Number(v).toLocaleString("en-US",{maximumFractionDigits:0}) : "—";
-const num = (...xs) => { for(const x of xs){const n=Number(x);if(Number.isFinite(n))return n;} return null; };
-const arr = x => Array.isArray(x)?x:[];
-let busy=false, last=null;
-function setStatus(ok,msg){$("led").classList.toggle("live",!!ok);$("connection").textContent=msg;}
-function latest(a){return arr(a).length?a[a.length-1]:null;}
-function valueFrom(o,keys){for(const k of keys){const n=num(o?.[k]);if(n!==null)return n;}return null;}
-function drawBars(target, data, getter, colorMode="sign"){
- const root=$(target), vals=arr(data).map(x=>getter(x)).filter(Number.isFinite);
- if(!vals.length){root.className="chart-empty";root.textContent="Bu veri bu planda veya seçilen aralıkta mevcut değil.";return;}
- const max=Math.max(...vals.map(Math.abs),1e-9);
- root.className="";root.innerHTML='<div class="bars">'+vals.slice(-72).map(v=>'<div class="bar '+(colorMode==="sign"&&v<0?'neg':'')+'" title="'+fmt(v,3)+'" style="height:'+Math.max(3,Math.abs(v)/max*145)+'px"></div>').join("")+'</div><div class="bar-labels"><span>Eski</span><span>Son</span></div>';
-}
-function sumBy(data, keys){return arr(data).reduce((s,x)=>s+(valueFrom(x,keys)||0),0);}
-function interpret(d){
- const signals=[];
- const w=latest(d.data.whaleIndex), r=latest(d.data.topTrader), oi=latest(d.data.openInterest);
- const wv=valueFrom(w,["whale_index_value"]), ratio=valueFrom(r,["top_position_long_short_ratio"]);
- const longPct=valueFrom(r,["top_position_long_percent"]), shortPct=valueFrom(r,["top_position_short_percent"]);
- const oiNow=valueFrom(oi,["close","open_interest","open_interest_usd","oi","open_interest_amount","open_interest_value"]);
- const oiPrev=arr(d.data.openInterest).length>1?valueFrom(d.data.openInterest.at(-2),["open_interest","open_interest_usd","oi","open_interest_amount","open_interest_value"]):null;
- if(wv!==null)signals.push({name:"Balina endeksi",value:wv,side:wv>0?"bull":wv<0?"bear":"neutral",detail:"Son endeks değeri "+fmt(wv,3)});
- if(ratio!==null)signals.push({name:"Büyük yatırımcı oranı",value:ratio,side:ratio>1?"bull":ratio<1?"bear":"neutral",detail:"Long/Short pozisyon oranı "+fmt(ratio,3)});
- if(oiNow!==null&&oiPrev!==null)signals.push({name:"Açık faiz değişimi",value:oiNow-oiPrev,side:oiNow>oiPrev?"up":"down",detail:"Son aralıkta açık faiz "+(oiNow>oiPrev?"arttı":"azaldı")});
- let bull=signals.filter(s=>s.side==="bull").length, bear=signals.filter(s=>s.side==="bear").length;
- let label="NÖTR / BEKLE",desc="Mevcut kaynaklar net yön birliği göstermiyor.";
- if(bull>=2&&bear===0){label="LONG BASKISI";desc="Balina endeksi ve büyük yatırımcı pozisyon verileri pozitif bölgede. Fiyat teyidi ayrıca izlenmeli.";}
- else if(bear>=2&&bull===0){label="SHORT BASKISI";desc="Balina endeksi ve büyük yatırımcı pozisyon verileri negatif bölgede. Fiyat teyidi ayrıca izlenmeli.";}
- else if(bull>0&&bear>0){label="KARMA SİNYAL";desc="Veri kaynakları farklı yönleri işaret ediyor; teyit oluşmadı.";}
- if(signals.length<2){label="YETERSİZ VERİ";desc="Sinyal üretmek için en az iki bağımsız CoinGlass kaynağı gerekli.";}
- $("signal").textContent=label;$("signal").className="metric "+(label==="LONG BASKISI"?"green":label==="SHORT BASKISI"?"red":"gold");$("signalText").textContent=desc;
- $("signalConfidence").textContent=signals.length+" / 3 KAYNAK";
- $("feed").innerHTML=signals.length?signals.map(s=>'<article class="feed-item '+(s.side==="bear"?'sell':'')+'"><div class="feed-top"><strong>'+s.name+'</strong><span class="pill">'+(s.side==="bull"?"POZİTİF":s.side==="bear"?"NEGATİF":s.side==="up"?"ARTIŞ":s.side==="down"?"AZALIŞ":"NÖTR")+'</span></div><p>'+s.detail+'</p></article>').join(""):'<div class="empty">Sinyal üretmek için yeterli veri alınamadı.</div>';
-}
-function render(d){
- const ticker=d.data.ticker;
- if(ticker){const p=num(ticker.lastPrice),c=num(ticker.priceChangePercent);$("priceLabel").textContent=d.symbol+" · SON FİYAT";$("price").textContent=p===null?"—":"$"+fmt(p,2);$("priceChange").textContent=c===null?"Binance Futures":"24s "+(c>=0?"+":"")+fmt(c,2)+"%";$("priceChange").className="change "+(c>=0?"green":"red");}
- const whale=arr(d.data.whaleIndex),w=latest(whale),wv=valueFrom(w,["whale_index_value"]);
- $("whaleValue").textContent=wv===null?"—":fmt(wv,3);$("whaleValue").className="metric "+(wv===null?"":wv>=0?"green":"red");
- $("whaleNote").textContent=wv===null?(d.errors.whaleIndex||"CoinGlass verisi yok"):"Son endeks değeri · "+new Date(Number(w.time)).toLocaleString("tr-TR");
- drawBars("whaleChart",whale,x=>valueFrom(x,["whale_index_value"]));
- const ratioData=arr(d.data.topTrader),r=latest(ratioData),ratio=valueFrom(r,["top_position_long_short_ratio"]),lp=valueFrom(r,["top_position_long_percent"]),sp=valueFrom(r,["top_position_short_percent"]);
- $("ratioValue").textContent=ratio===null?"—":fmt(ratio,3);$("ratioNote").textContent=ratio===null?(d.errors.topTrader||"Veri erişilemedi"):(ratio>1?"Long pozisyon büyüklüğü daha yüksek":ratio<1?"Short pozisyon büyüklüğü daha yüksek":"Dengeli");
- $("longShare").textContent=lp===null?"—":fmt(lp,2)+"%";$("shortShare").textContent=sp===null?"—":fmt(sp,2)+"%";$("ratioExchange").textContent=d.exchange;
- const oi=arr(d.data.openInterest),o=latest(oi),oiVal=valueFrom(o,["open_interest","open_interest_usd","oi","open_interest_amount","open_interest_value"]);
- $("oiValue").textContent=oiVal===null?"—":fmt(oiVal,2);$("oiNote").textContent=oiVal===null?(d.errors.openInterest||"Veri erişilemedi"):"Son veri · "+new Date(Number(o.time||o.timestamp)).toLocaleString("tr-TR");
- drawBars("oiChart",oi,x=>valueFrom(x,["open_interest","open_interest_usd","oi","open_interest_amount","open_interest_value"]),"none");
- const liq=arr(d.data.liquidations),longL=sumBy(liq,["aggregated_long_liquidation_usd","long_liquidation_usd","long_liquidation","long_liq_usd"]),shortL=sumBy(liq,["aggregated_short_liquidation_usd","short_liquidation_usd","short_liquidation","short_liq_usd"]);
- $("longLiq").textContent=liq.length?usd(longL):"—";$("shortLiq").textContent=liq.length?usd(shortL):"—";$("liqNote").textContent=liq.length?liq.length+" zaman aralığı kaydı":(d.errors.liquidations||"Veri erişilemedi");
- const orders=arr(d.data.largeOrders).slice().sort((a,b)=>(num(b.current_usd_value)||0)-(num(a.current_usd_value)||0)).slice(0,30);
- $("largeOrderAccess").textContent=orders.length?orders.length+" AÇIK KAYIT":(d.errors.largeOrders?"ERİŞİM / PLAN KONTROLÜ":"VERİ YOK");
- $("orders").innerHTML=orders.length?orders.map(x=>{const buy=Number(x.order_side)===2;return '<tr><td class="'+(buy?"buy":"sell")+'">'+(buy?"ALIM":"SATIŞ")+'</td><td>'+fmt(num(x.limit_price),2)+'</td><td>'+usd(num(x.current_usd_value))+'</td><td>'+usd(num(x.start_usd_value))+'</td><td>'+usd(num(x.executed_usd_value))+'</td><td>'+(Number(x.order_state)===1?"AÇIK":Number(x.order_state)===2?"TAMAMLANDI":"İPTAL")+'</td><td>'+String(x.exchange_name||"—")+'</td></tr>';}).join(""):'<tr><td colspan="7" class="empty">'+(d.errors.largeOrders||"Bu varlık için büyük emir verisi bulunamadı")+'</td></tr>';
- interpret(d);
- const errors=Object.entries(d.errors||{}).filter(([,v])=>v).map(([k,v])=>k+": "+v);
- $("sourceStatus").textContent=errors.length?" · Bazı veri kaynakları erişilemedi: "+errors.join(" | "):" · Tüm istenen kaynaklar yanıt verdi.";
- $("updated").textContent="Son güncelleme: "+new Date(d.fetchedAt).toLocaleTimeString("tr-TR");
-}
-async function load(){
- if(busy)return;busy=true;$("refresh").disabled=true;$("refresh").textContent="YÜKLENİYOR";setStatus(false,"VERİLER ALINIYOR");
- const symbol=$("symbol").value,exchange=$("exchange").value,interval=$("interval").value;
- try{
-  const u=new URL(API_BASE+"/api/whale-radar",location.origin);u.searchParams.set("symbol",symbol);u.searchParams.set("exchange",exchange);u.searchParams.set("interval",interval);u.searchParams.set("limit","48");
-  const res=await fetch(u,{cache:"no-store"});const d=await res.json();if(!res.ok&&!d.data)throw new Error(d.error||"API HTTP "+res.status);
-  if(!d.ok&&d.error)throw new Error(d.error);last=d;render(d);setStatus(true,Object.keys(d.errors||{}).length?"KISMİ VERİ":"COINGLASS BAĞLI");
- }catch(e){setStatus(false,"BAĞLANTI HATASI");$("sourceStatus").textContent=e.message;$("signal").textContent="VERİ ALINAMADI";$("signalText").textContent=e.message;}
- finally{$("refresh").disabled=false;$("refresh").textContent="VERİLERİ GÜNCELLE";busy=false;}
-}
-$("refresh").addEventListener("click",load);["symbol","exchange","interval"].forEach(id=>$(id).addEventListener("change",load));load();setInterval(()=>{if(!document.hidden)load();},60000);
-</script>
-</body>
-</html>
+<footer class="hint">Veri ve grafikler CoinGlass tarafından sağlanır. GHE PRO bu sayfaları gömülü olarak görüntüler; CoinGlass içeriğinin doğruluğu, erişilebilirliği veya güncelleme sıklığı üzerinde kontrol sahibi değildir. Bu panel yatırım tavsiyesi vermez.</footer>
+</main><script>
+const $=id=>document.getElementById(id);
+function urls(){const coin=$("coin").value;const map="https://www.coinglass.com/pro/futures/LiquidationMap?coin="+encodeURIComponent(coin);const heat="https://www.coinglass.com/tr/LiquidationHeatMap/"+encodeURIComponent(coin);$("mapFrame").src=map;$("mapLink").href=map;$("heatFrame").src=heat;$("heatLink").href=heat;}
+$("coin").addEventListener("change",urls);$("reload").addEventListener("click",()=>{urls();$("mapFrame").contentWindow?.location.reload();$("heatFrame").contentWindow?.location.reload();});urls();
+</script></body></html>
