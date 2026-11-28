@@ -66,6 +66,22 @@
 <div class="af-hero"><div><div class="af-kicker">CRYPTO MARKET SCANNER</div><h2>Piyasa fırsat merkezi</h2><p>Teknik sinyaller, hazır işlem senaryoları ve hesap kullanım durumu.</p></div><div class="af-live"><i></i><span id="afConnection">BAĞLANTI KONTROL EDİLİYOR</span></div></div>
 <div class="af-tabs"><button class="af-tab active" data-view="signals">KRİPTO AL / SAT SİNYALLERİ</button></div><div class="af-status" id="afStatus">AltFINS verisi bekleniyor</div><div id="afContent"></div></div></section>
 <button id="oscLabBtn" type="button" onclick="document.getElementById('oscLab').classList.add('show')" style="position:relative;z-index:10;pointer-events:auto">GÖSTERGE LABORATUVARI</button>
+<button id="coinglassBtn" type="button">COINGLASS · GHE DATA</button>
+<section id="coinglassPanel" aria-label="CoinGlass GHE PRO veri paneli">
+ <div class="cg-wrap">
+  <div class="cg-head"><strong>GHE PRO / COINGLASS V4</strong><button id="cgClose" type="button">KAPAT ✕</button></div>
+  <div class="cg-controls">
+   <select id="cgSymbol" aria-label="CoinGlass coin"><option>BTC</option><option>ETH</option><option>SOL</option><option>BNB</option><option>XRP</option><option>DOGE</option><option>LINK</option><option>AVAX</option><option>HBAR</option></select>
+   <select id="cgInterval" aria-label="CoinGlass zaman dilimi"><option value="4h">4 SAAT</option><option value="8h">8 SAAT</option><option value="12h">12 SAAT</option><option value="1d">1 GÜN</option><option value="1w">1 HAFTA</option></select>
+   <button id="cgRefresh" type="button">VERİLERİ YENİLE ↻</button>
+  </div>
+  <div class="cg-status" id="cgStatus">CoinGlass bağlantısı bekleniyor.</div>
+  <div class="cg-grid" id="cgCards"></div>
+  <div class="cg-section">AÇIK POZİSYON · AGGREGATED OPEN INTEREST</div><div id="cgOiTable"></div>
+  <div class="cg-section">LİKİDASYONLAR · AGGREGATED HISTORY</div><div id="cgLiqTable"></div>
+  <p class="cg-note">Veriler CoinGlass API V4 üzerinden sunucu tarafında alınır. API anahtarı tarayıcıya gönderilmez. Gösterilebilen veri ve zaman aralığı CoinGlass abonelik planına bağlıdır.</p>
+ </div>
+</section>
 </main>
 <section id="oscLab" aria-label="Gösterge ve uyumsuzluk laboratuvarı">
 <div class="osc-head"><strong>MATRIX · DIVERGENCE INTELLIGENCE</strong><button id="oscClose" type="button" onclick="document.getElementById('oscLab').classList.remove('show')">KAPAT ✕</button></div>
