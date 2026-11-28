@@ -66,7 +66,7 @@ function interpret(d){
  const w=latest(d.data.whaleIndex), r=latest(d.data.topTrader), oi=latest(d.data.openInterest);
  const wv=valueFrom(w,["whale_index_value"]), ratio=valueFrom(r,["top_position_long_short_ratio"]);
  const longPct=valueFrom(r,["top_position_long_percent"]), shortPct=valueFrom(r,["top_position_short_percent"]);
- const oiNow=valueFrom(oi,["open_interest","open_interest_usd","oi","open_interest_amount","open_interest_value"]);
+ const oiNow=valueFrom(oi,["close","open_interest","open_interest_usd","oi","open_interest_amount","open_interest_value"]);
  const oiPrev=arr(d.data.openInterest).length>1?valueFrom(d.data.openInterest.at(-2),["open_interest","open_interest_usd","oi","open_interest_amount","open_interest_value"]):null;
  if(wv!==null)signals.push({name:"Balina endeksi",value:wv,side:wv>0?"bull":wv<0?"bear":"neutral",detail:"Son endeks değeri "+fmt(wv,3)});
  if(ratio!==null)signals.push({name:"Büyük yatırımcı oranı",value:ratio,side:ratio>1?"bull":ratio<1?"bear":"neutral",detail:"Long/Short pozisyon oranı "+fmt(ratio,3)});
