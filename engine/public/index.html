@@ -677,7 +677,7 @@ const safe=v=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>
 function rowsTable(data,kind){
  const rows=Array.isArray(data)?data.slice(-12).reverse():[];
  if(!rows.length)return '<p class="cg-note">Bu veri için kayıt dönmedi veya abonelik planı erişim vermiyor.</p>';
- const fields=kind==='oi'?['time','open','high','low','close']:['time','long_liquidation_usd','short_liquidation_usd','total_liquidation_usd'];
+ const fields=kind==='oi'?['time','open','high','low','close']:['time','aggregated_long_liquidation_usd','aggregated_short_liquidation_usd'];
  const labels=kind==='oi'?['ZAMAN','AÇILIŞ','YÜKSEK','DÜŞÜK','KAPANIŞ']:['ZAMAN','LONG LIQ.','SHORT LIQ.','TOPLAM'];
  return '<div style="overflow-x:auto"><table class="cg-table"><thead><tr>'+labels.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+fields.map((f,i)=>'<td>'+safe(i===0&&r[f]?new Date(Number(r[f])).toLocaleString('tr-TR'):num(r[f]))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
 }
@@ -688,12 +688,12 @@ async function load(){
  try{
   const response=await fetch(API_ORIGIN+'/api/coinglass?symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(interval)+'&limit=30',{cache:'no-store'});
   const payload=await response.json();
-  if(!response.ok||!payload.ok)throw Error(payload.error||'CoinGlass API bağlantısı başarısız');
+  if(!response.ok||!payload.ok)throw Error((payload.code?payload.code+' · ':'')+(payload.error||'CoinGlass API bağlantısı başarısız'));
   const d=payload.data||{},oi=Array.isArray(d.openInterest)?d.openInterest:[],liq=Array.isArray(d.liquidations)?d.liquidations:[];
   const lastOi=oi.at(-1)||{},lastLiq=liq.at(-1)||{};
   const oiValue=lastOi.close??lastOi.openInterest??lastOi.open_interest;
-  const longLiq=lastLiq.long_liquidation_usd??lastLiq.longLiquidationUsd;
-  const shortLiq=lastLiq.short_liquidation_usd??lastLiq.shortLiquidationUsd;
+  const longLiq=lastLiq.aggregated_long_liquidation_usd??lastLiq.long_liquidation_usd??lastLiq.longLiquidationUsd;
+  const shortLiq=lastLiq.aggregated_short_liquidation_usd??lastLiq.short_liquidation_usd??lastLiq.shortLiquidationUsd;
   cards.innerHTML=[
    ['COIN',''+symbol,'CoinGlass desteklenen varlık'],
    ['SON AÇIK POZİSYON',num(oiValue),'Aggregated OI · '+interval],
