@@ -40,6 +40,16 @@
 .af-row p{margin:8px 0 0;color:#b7c5d3;font-size:10px;line-height:1.55}.af-up{color:#35d6a2!important}.af-down{color:#f06478!important}
 .af-note{padding:12px;border:1px solid #51452b;border-radius:10px;background:#1a1913;color:#cdbb8d;font-size:10px;line-height:1.6;margin:12px 0}
 @media(min-width:700px){.af-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+#coinglassBtn{display:block;margin:12px auto 0;padding:13px 22px;border:1px solid #287b70;border-radius:10px;background:linear-gradient(135deg,#102b2a,#132333);color:#9ff4d7;font-size:10px;font-weight:950;letter-spacing:.16em}
+#coinglassPanel{display:none;position:fixed;inset:0;z-index:20;overflow-y:auto;padding:0 16px max(28px,env(safe-area-inset-bottom));background:radial-gradient(ellipse at 50% -18%,rgba(27,139,117,.2),transparent 48%),#070e17;color:#eaf1f8;text-shadow:none}
+#coinglassPanel.show{display:block}.cg-wrap{max-width:1100px;margin:0 auto;padding-bottom:30px}.cg-head{position:sticky;top:0;z-index:3;height:62px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #24463f;background:rgba(7,14,23,.97)}
+.cg-head strong{font-size:13px;letter-spacing:.12em;color:#9ff4d7}.cg-head button,.cg-controls button{border:1px solid #365064;border-radius:8px;padding:9px 12px;background:#102131;color:#dceaf5}
+.cg-controls{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.cg-controls select{background:#102131;color:#eaf1f8;border:1px solid #365064;border-radius:8px;padding:9px}
+.cg-status{padding:10px 12px;border:1px solid #294c4a;border-radius:9px;color:#a6c5c1;font-size:11px;margin:10px 0}
+.cg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.cg-card{padding:13px;border:1px solid #263d4c;border-radius:11px;background:#101d2a;min-width:0}.cg-card small{display:block;color:#8ea2b6;font-size:9px;letter-spacing:.1em}.cg-card strong{display:block;margin-top:8px;font-size:18px;overflow-wrap:anywhere;color:#eaf6f3}.cg-card p{font-size:10px;color:#8ea2b6;line-height:1.5;margin:6px 0 0}.cg-section{font-size:11px;letter-spacing:.13em;color:#9ff4d7;margin:20px 0 9px}.cg-table{width:100%;border-collapse:collapse;font-size:10px}.cg-table th,.cg-table td{text-align:right;padding:9px 5px;border-bottom:1px solid #263747}.cg-table th:first-child,.cg-table td:first-child{text-align:left}.cg-note{font-size:10px;line-height:1.6;color:#a9bac8;margin:12px 0}
+@media(min-width:700px){.cg-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
 </style>
 </head>
 <body>
@@ -52,6 +62,24 @@
 <div class="pair" id="pair">BTC / USDT</div><div class="price" id="price">—</div><div class="unit">USDT</div>
 <button id="oscLabBtn" type="button" onclick="document.getElementById('oscLab').classList.add('show')" style="position:relative;z-index:10;pointer-events:auto">GÖSTERGE LABORATUVARI</button>
 <button id="altfinsBtn" type="button">ALTFINS · VERİ MERKEZİ</button>
+
+<button id="coinglassBtn" type="button">COINGLASS · GHE DATA</button>
+<section id="coinglassPanel" aria-label="CoinGlass GHE PRO veri paneli">
+ <div class="cg-wrap">
+  <div class="cg-head"><strong>GHE PRO / COINGLASS V4</strong><button id="cgClose" type="button">KAPAT ✕</button></div>
+  <div class="cg-controls">
+   <select id="cgSymbol" aria-label="CoinGlass coin"><option>BTC</option><option>ETH</option><option>SOL</option><option>BNB</option><option>XRP</option><option>DOGE</option><option>LINK</option><option>AVAX</option><option>HBAR</option></select>
+   <select id="cgInterval" aria-label="CoinGlass zaman dilimi"><option value="4h">4 SAAT</option><option value="8h">8 SAAT</option><option value="12h">12 SAAT</option><option value="1d">1 GÜN</option><option value="1w">1 HAFTA</option></select>
+   <button id="cgRefresh" type="button">VERİLERİ YENİLE ↻</button>
+  </div>
+  <div class="cg-status" id="cgStatus">CoinGlass bağlantısı bekleniyor.</div>
+  <div class="cg-grid" id="cgCards"></div>
+  <div class="cg-section">AÇIK POZİSYON · AGGREGATED OPEN INTEREST</div><div id="cgOiTable"></div>
+  <div class="cg-section">LİKİDASYONLAR · AGGREGATED HISTORY</div><div id="cgLiqTable"></div>
+  <p class="cg-note">Veriler CoinGlass API V4 üzerinden sunucu tarafında alınır. API anahtarı tarayıcıya gönderilmez. Gösterilebilen veri ve zaman aralığı CoinGlass abonelik planına bağlıdır.</p>
+ </div>
+</section>
+
 </main>
 <section id="altfinsPanel" aria-label="AltFINS veri merkezi">
 <div class="af-head"><strong>ALTFINS · MARKET DATA</strong><button id="afClose" type="button">KAPAT ✕</button></div>
@@ -524,5 +552,54 @@ function render(view,data){
 }
 $('altfinsBtn').onclick=()=>{panel.classList.add('show');load('quota');};$('afClose').onclick=()=>panel.classList.remove('show');document.querySelectorAll('.af-tab').forEach(b=>b.addEventListener('click',()=>load(b.dataset.view)));
 })();
-</script></body>
+</script>
+<script>
+(()=>{'use strict';
+const API_ORIGIN='https://telegram-kripto-analysis-engine.onrender.com';
+const $=id=>document.getElementById(id);
+const panel=$('coinglassPanel'),status=$('cgStatus'),cards=$('cgCards');
+if(!panel||!$('coinglassBtn'))return;
+const num=v=>{const n=Number(v);return Number.isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:2}):'—';};
+const safe=v=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function rowsTable(data,kind){
+ const rows=Array.isArray(data)?data.slice(-12).reverse():[];
+ if(!rows.length)return '<p class="cg-note">Bu veri için kayıt dönmedi veya abonelik planı erişim vermiyor.</p>';
+ const fields=kind==='oi'?['time','open','high','low','close']:['time','long_liquidation_usd','short_liquidation_usd','total_liquidation_usd'];
+ const labels=kind==='oi'?['ZAMAN','AÇILIŞ','YÜKSEK','DÜŞÜK','KAPANIŞ']:['ZAMAN','LONG LIQ.','SHORT LIQ.','TOPLAM'];
+ return '<div style="overflow-x:auto"><table class="cg-table"><thead><tr>'+labels.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+fields.map((f,i)=>'<td>'+safe(i===0&&r[f]?new Date(Number(r[f])).toLocaleString('tr-TR'):num(r[f]))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+}
+async function load(){
+ const symbol=$('cgSymbol').value,interval=$('cgInterval').value;
+ status.textContent='CoinGlass V4 verileri alınıyor…';cards.innerHTML='';
+ $('cgRefresh').disabled=true;
+ try{
+  const response=await fetch(API_ORIGIN+'/api/coinglass?symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(interval)+'&limit=30',{cache:'no-store'});
+  const payload=await response.json();
+  if(!response.ok||!payload.ok)throw Error(payload.error||'CoinGlass API bağlantısı başarısız');
+  const d=payload.data||{},oi=Array.isArray(d.openInterest)?d.openInterest:[],liq=Array.isArray(d.liquidations)?d.liquidations:[];
+  const lastOi=oi.at(-1)||{},lastLiq=liq.at(-1)||{};
+  const oiValue=lastOi.close??lastOi.openInterest??lastOi.open_interest;
+  const longLiq=lastLiq.long_liquidation_usd??lastLiq.longLiquidationUsd;
+  const shortLiq=lastLiq.short_liquidation_usd??lastLiq.shortLiquidationUsd;
+  cards.innerHTML=[
+   ['COIN',''+symbol,'CoinGlass desteklenen varlık'],
+   ['SON AÇIK POZİSYON',num(oiValue),'Aggregated OI · '+interval],
+   ['LONG LİKİDASYON',num(longLiq),'Son dönen periyot · USD'],
+   ['SHORT LİKİDASYON',num(shortLiq),'Son dönen periyot · USD'],
+   ['OI KAYDI',num(oi.length),'Dönen tarihsel kayıt'],
+   ['LİKİDASYON KAYDI',num(liq.length),'Dönen tarihsel kayıt']
+  ].map(x=>'<div class="cg-card"><small>'+x[0]+'</small><strong>'+x[1]+'</strong><p>'+x[2]+'</p></div>').join('');
+  $('cgOiTable').innerHTML=rowsTable(oi,'oi');$('cgLiqTable').innerHTML=rowsTable(liq,'liq');
+  const errors=Object.entries(payload.errors||{}).map(([k,v])=>k+': '+v);
+  status.textContent='Son güncelleme · '+new Date(payload.fetchedAt).toLocaleString('tr-TR')+(errors.length?' · Bazı kaynaklar alınamadı: '+errors.join(' | '):' · CoinGlass API bağlantısı başarılı');
+ }catch(e){status.textContent='CoinGlass: '+e.message;cards.innerHTML='<div class="cg-card"><strong>VERİ ALINAMADI</strong><p>Render ortam değişkeninde COINGLASS_API_KEY tanımlı mı? API planı ve endpoint izinlerini de kontrol edin.</p></div>';}
+ finally{$('cgRefresh').disabled=false;}
+}
+$('coinglassBtn').onclick=()=>{panel.classList.add('show');load();};
+$('cgClose').onclick=()=>panel.classList.remove('show');$('cgRefresh').onclick=load;
+$('cgSymbol').onchange=load;$('cgInterval').onchange=load;
+})();
+</script>
+
+</body>
 </html>
