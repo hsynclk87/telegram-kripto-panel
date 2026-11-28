@@ -110,7 +110,7 @@ const server = http.createServer(async (req, res) => {
       const jobs = await Promise.allSettled([
         call("/api/futures/supported-coins"),
         call("/api/futures/open-interest/aggregated-history", { symbol, interval, limit }),
-        call("/api/futures/liquidation/aggregated-history", { symbol, interval, limit })
+        call("/api/futures/liquidation/aggregated-history", { exchange_list: "Binance,OKX,Bybit", symbol, interval, limit })
       ]);
       const names = ["supportedCoins", "openInterest", "liquidations"];
       const data = {};
