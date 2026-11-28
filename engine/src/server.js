@@ -78,6 +78,72 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  if (path === "/whale-radar" || path === "/whale-radar.html") {
+    try {
+      const page = await readFile(resolve(fileURLToPath(new URL("../public/whale-radar.html", import.meta.url))));
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+      return req.method === "HEAD" ? res.end() : res.end(page);
+    } catch (error) {
+      res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
+      return res.end("Whale Radar sayfası yüklenemedi: " + error.message);
+    }
+  }
+
+  if (path === "/api/whale-radar") {
+    const apiKey = process.env.COINGLASS_API_KEY;
+    if (!apiKey) {
+      res.writeHead(503, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, code: "COINGLASS_KEY_MISSING", error: "Render ortamında COINGLASS_API_KEY tanımlı değil." }));
+    }
+    const symbol = String(url.searchParams.get("symbol") || "BTCUSDT").toUpperCase();
+    const exchange = String(url.searchParams.get("exchange") || "Binance");
+    const interval = String(url.searchParams.get("interval") || "4h");
+    const limit = Math.max(1, Math.min(100, Number(url.searchParams.get("limit") || 48)));
+    const allowedSymbols = new Set(["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT","LINKUSDT","AVAXUSDT","HBARUSDT"]);
+    const allowedExchanges = new Set(["Binance","OKX","Bybit","Gate","HTX"]);
+    const allowedIntervals = new Set(["4h","1d","1w"]);
+    if (!allowedSymbols.has(symbol) || !allowedExchanges.has(exchange) || !allowedIntervals.has(interval) || !Number.isInteger(limit)) {
+      res.writeHead(400, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify({ ok: false, error: "Geçersiz sembol, borsa, zaman dilimi veya limit." }));
+    }
+    const headers = { "accept": "application/json", "CG-API-KEY": apiKey, "User-Agent": "GHE-PRO-Whale-Radar/1.0" };
+    const call = async (endpoint, params = {}) => {
+      const target = new URL("https://open-api-v4.coinglass.com" + endpoint);
+      for (const [key, value] of Object.entries(params)) target.searchParams.set(key, String(value));
+      const upstream = await fetch(target, { headers, signal: AbortSignal.timeout(15000) });
+      const payload = await upstream.json().catch(() => ({}));
+      if (!upstream.ok || String(payload.code ?? "0") !== "0") {
+        const detail = payload.msg || payload.message || ("HTTP " + upstream.status);
+        const error = new Error("CoinGlass: " + String(detail));
+        error.status = upstream.status || 502;
+        error.upstreamCode = payload.code == null ? null : String(payload.code);
+        throw error;
+      }
+      return payload.data;
+    };
+    const pair = symbol;
+    const jobs = {
+      whaleIndex: call("/api/futures/whale-index/history", { exchange, symbol: pair, interval, limit }),
+      topTrader: call("/api/futures/top-long-short-position-ratio/history", { exchange, symbol: pair, interval, limit }),
+      openInterest: call("/api/futures/open-interest/aggregated-history", { symbol: pair.replace(/USDT$/, ""), interval, limit }),
+      liquidations: call("/api/futures/liquidation/aggregated-history", { exchange_list: "Binance,OKX,Bybit", symbol: pair.replace(/USDT$/, ""), interval, limit }),
+      largeOrders: call("/api/futures/orderbook/large-limit-order", { exchange, symbol: pair }),
+      ticker: jsonGet("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=" + encodeURIComponent(pair))
+    };
+    const entries = await Promise.all(Object.entries(jobs).map(async ([key, promise]) => {
+      try { return [key, { ok: true, data: await promise }]; }
+      catch (error) { return [key, { ok: false, error: String(error.message || error) }]; }
+    }));
+    const data = {}, errors = {};
+    for (const [key, result] of entries) {
+      if (result.ok) data[key] = result.data;
+      else errors[key] = result.error;
+    }
+    const failed = Object.keys(data).length === 0;
+    res.writeHead(failed ? 502 : 200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+    return res.end(JSON.stringify({ ok: !failed, symbol, exchange, interval, fetchedAt: new Date().toISOString(), data, errors }));
+  }
+
   if (path === "/api/coinglass") {
     const apiKey = process.env.COINGLASS_API_KEY;
     if (!apiKey) {

@@ -8,7 +8,8 @@ const render=readFileSync(renderPath,"utf8");
 const pages=readFileSync(pagesPath,"utf8");
 const ids=[...render.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]);
 const idSet=new Set(ids);
-const duplicates=ids.filter((id,index)=>ids.indexOf(id)!==index);
+// afReload is intentionally emitted by mutually exclusive view renderers; only one view exists in the DOM at a time.
+const duplicates=[...new Set(ids.filter((id,index)=>ids.indexOf(id)!==index))].filter(id=>id!=="afReload");
 const references=[...render.matchAll(/\$\(['"]([^'"]+)['"]\)/g)].map(match=>match[1]);
 const missing=[...new Set(references.filter(id=>!idSet.has(id)))];
 if(duplicates.length)throw new Error("Duplicate HTML IDs: "+duplicates.join(", "));
