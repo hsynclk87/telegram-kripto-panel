@@ -688,7 +688,10 @@ async function load(){
  try{
   const response=await fetch(API_ORIGIN+'/api/coinglass?symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(interval)+'&limit=30',{cache:'no-store'});
   const payload=await response.json();
-  if(!response.ok||!payload.ok)throw Error((payload.code?payload.code+' · ':'')+(payload.error||'CoinGlass API bağlantısı başarısız'));
+  if(!response.ok||!payload.ok){
+   const details=Object.entries(payload.errors||{}).map(([name,message])=>name+': '+message).join(' | ');
+   throw Error([payload.code,payload.error,details].filter(Boolean).join(' · ')||'CoinGlass API bağlantısı başarısız');
+  }
   const d=payload.data||{},oi=Array.isArray(d.openInterest)?d.openInterest:[],liq=Array.isArray(d.liquidations)?d.liquidations:[];
   const lastOi=oi.at(-1)||{},lastLiq=liq.at(-1)||{};
   const oiValue=lastOi.close??lastOi.openInterest??lastOi.open_interest;
