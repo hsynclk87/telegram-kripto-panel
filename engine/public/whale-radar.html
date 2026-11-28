@@ -26,7 +26,7 @@
  <div class="note" id="updated">Henüz veri alınmadı</div>
 </section>
 <section class="hero">
- <article class="card price-card"><div class="card-label">BTC / SEÇİLİ VARLIK · SON FİYAT</div><div class="big-price" id="price">—</div><div class="change" id="priceChange">Canlı piyasa verisi bekleniyor</div></article>
+ <article class="card price-card"><div class="card-label" id="priceLabel">SEÇİLİ VARLIK · SON FİYAT</div><div class="big-price" id="price">—</div><div class="change" id="priceChange">Canlı piyasa verisi bekleniyor</div></article>
  <article class="card"><div class="card-label">COINGLASS WHALE INDEX</div><div class="metric" id="whaleValue">—</div><div class="sub" id="whaleNote">Endeks değeri · USD tutarı değildir</div></article>
  <article class="card"><div class="card-label">TOP TRADER LONG / SHORT</div><div class="metric" id="ratioValue">—</div><div class="sub" id="ratioNote">Pozisyon büyüklüğü oranı</div></article>
  <article class="card"><div class="card-label">TOPLAM AÇIK FAİZ</div><div class="metric" id="oiValue">—</div><div class="sub" id="oiNote">Birleşik vadeli piyasa</div></article>
@@ -83,7 +83,7 @@ function interpret(d){
 }
 function render(d){
  const ticker=d.data.ticker;
- if(ticker){const p=num(ticker.lastPrice),c=num(ticker.priceChangePercent);$("price").textContent=p===null?"—":"$"+fmt(p,2);$("priceChange").textContent=c===null?"Binance Futures":"24s "+(c>=0?"+":"")+fmt(c,2)+"%";$("priceChange").className="change "+(c>=0?"green":"red");}
+ if(ticker){const p=num(ticker.lastPrice),c=num(ticker.priceChangePercent);$("priceLabel").textContent=d.symbol+" · SON FİYAT";$("price").textContent=p===null?"—":"$"+fmt(p,2);$("priceChange").textContent=c===null?"Binance Futures":"24s "+(c>=0?"+":"")+fmt(c,2)+"%";$("priceChange").className="change "+(c>=0?"green":"red");}
  const whale=arr(d.data.whaleIndex),w=latest(whale),wv=valueFrom(w,["whale_index_value"]);
  $("whaleValue").textContent=wv===null?"—":fmt(wv,3);$("whaleValue").className="metric "+(wv===null?"":wv>=0?"green":"red");
  $("whaleNote").textContent=wv===null?(d.errors.whaleIndex||"CoinGlass verisi yok"):"Son endeks değeri · "+new Date(Number(w.time)).toLocaleString("tr-TR");
