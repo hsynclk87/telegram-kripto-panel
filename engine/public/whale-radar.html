@@ -94,7 +94,7 @@ function render(d){
  const oi=arr(d.data.openInterest),o=latest(oi),oiVal=valueFrom(o,["open_interest","open_interest_usd","oi","open_interest_amount","open_interest_value"]);
  $("oiValue").textContent=oiVal===null?"—":fmt(oiVal,2);$("oiNote").textContent=oiVal===null?(d.errors.openInterest||"Veri erişilemedi"):"Son veri · "+new Date(Number(o.time||o.timestamp)).toLocaleString("tr-TR");
  drawBars("oiChart",oi,x=>valueFrom(x,["open_interest","open_interest_usd","oi","open_interest_amount","open_interest_value"]),"none");
- const liq=arr(d.data.liquidations),longL=sumBy(liq,["long_liquidation_usd","long_liquidation","long_liq_usd"]),shortL=sumBy(liq,["short_liquidation_usd","short_liquidation","short_liq_usd"]);
+ const liq=arr(d.data.liquidations),longL=sumBy(liq,["aggregated_long_liquidation_usd","long_liquidation_usd","long_liquidation","long_liq_usd"]),shortL=sumBy(liq,["aggregated_short_liquidation_usd","short_liquidation_usd","short_liquidation","short_liq_usd"]);
  $("longLiq").textContent=liq.length?usd(longL):"—";$("shortLiq").textContent=liq.length?usd(shortL):"—";$("liqNote").textContent=liq.length?liq.length+" zaman aralığı kaydı":(d.errors.liquidations||"Veri erişilemedi");
  const orders=arr(d.data.largeOrders).slice().sort((a,b)=>(num(b.current_usd_value)||0)-(num(a.current_usd_value)||0)).slice(0,30);
  $("largeOrderAccess").textContent=orders.length?orders.length+" AÇIK KAYIT":(d.errors.largeOrders?"ERİŞİM / PLAN KONTROLÜ":"VERİ YOK");
